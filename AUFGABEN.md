@@ -87,7 +87,7 @@
 - [x] Offline-Test · Install-Anleitung · A11y-Pass · Empty States · Responsive-Checks
 
 ## PHASE 10 — Abschluss ✅
-- [ ] typecheck/lint/build grün · 45-Punkte-Checkliste · README · Abschlussbericht
+- [x] typecheck/lint/build grün · 45-Punkte-Checkliste · README · Abschlussbericht
 
 ## SPÄTER (nie blockierend)
 - [x] Barcode-Kamera (BarcodeDetector) + Open Food Facts (Lookup mit Vorschau)
