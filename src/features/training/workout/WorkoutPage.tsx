@@ -22,6 +22,7 @@ import { Card } from "../../../components/ui/Card";
 import { NumberInput, TextInput } from "../../../components/ui/inputs";
 import { Stepper } from "../../../components/ui/Stepper";
 import { useRestTimer } from "../../../hooks/useRestTimer";
+import { armTimerSignal, playTimerSignal } from "../../../services/audio/timerSignal";
 import type {
   Exercise,
   ExerciseLog,
@@ -84,6 +85,19 @@ export default function WorkoutPage() {
   const pendingSave = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const restRemaining = useRestTimer(log?.restEndsAt);
+
+  // "Pause vorbei"-Signal: beep + vibration exactly when the timer hits 0.
+  const signalPlayed = useRef(false);
+  useEffect(() => {
+    if (restRemaining === null || restRemaining > 0) {
+      signalPlayed.current = false;
+      return;
+    }
+    if (!signalPlayed.current) {
+      signalPlayed.current = true;
+      playTimerSignal();
+    }
+  }, [restRemaining]);
 
   // Exercise library (labels, instructions, animation, add-exercise search).
   const allExercises = useLiveQuery(() => db.exercises.toArray(), []);
@@ -315,6 +329,8 @@ export default function WorkoutPage() {
 
   const handleCompleteSet = () => {
     if (!currentLog || firstOpenSet < 0) return;
+    // Unlock audio inside the tap gesture so the end-of-rest beep may play.
+    armTimerSignal();
     apply(completeSet(log, exerciseIndex, firstOpenSet, restSecondsFor(currentLog.exerciseId)), "now");
   };
 
