@@ -78,6 +78,19 @@ Figur ~1,75 m, Ursprung an den Füßen, eine gebackene Loop-Animation (ideal
 mit dem Namen „exercise"). Fehlt die Datei, zeigt die App automatisch den
 eingebauten prozeduralen 3D-Coach.
 
+Optional steuert ein Manifest `public/models/manifest.json` die Zuordnung
+(andere Dateinamen, Clip-Name, Kamera-Preset), Zod-validiert:
+
+```json
+{
+  "version": 1,
+  "assets": [
+    { "exerciseId": "seed-ch1", "modelUrl": "/models/bench-v2.glb",
+      "animationClip": "exercise", "cameraPreset": "side" }
+  ]
+}
+```
+
 ## E2E-Smoke-Test
 
 ```bash

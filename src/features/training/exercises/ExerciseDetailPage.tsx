@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { Box, Lightbulb, Pause, Pencil, Play, Trash2, X } from "lucide-react";
-import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ExerciseAnimation } from "../../../components/exercise/ExerciseAnimation";
 import { MuscleMap } from "../../../components/exercise/MuscleMap";
@@ -34,6 +34,11 @@ import {
   findExerciseRecords,
   findLastPerformance,
 } from "../../../services/calculations/workout";
+import {
+  loadAssetManifest,
+  resolveExerciseModel,
+  type AssetManifest,
+} from "../../../services/exercise3d/assetManifest";
 import { db, exerciseRepository, workoutLogRepository } from "../../../services/storage";
 import { formatDateShortGerman } from "../../../utils/dates";
 import {
@@ -160,6 +165,18 @@ export default function ExerciseDetailPage() {
   const [viewMode, setViewMode] = useState<"2d" | "3d">("2d");
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [assetManifest, setAssetManifest] = useState<AssetManifest | undefined>(undefined);
+
+  // Optional 3D manifest (§35) — absent/offline simply keeps the conventions.
+  useEffect(() => {
+    let cancelled = false;
+    void loadAssetManifest().then((manifest) => {
+      if (!cancelled) setAssetManifest(manifest);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // undefined = loading, null = not found — keeps the two states distinguishable.
   const exercise = useLiveQuery(
@@ -285,9 +302,9 @@ export default function ExerciseDetailPage() {
               >
                 <ExerciseCoach3D
                   type={exercise.animationType}
-                  // Blender exports drop into public/models/<id>.glb — found
-                  // automatically; missing file falls back to the procedural coach.
-                  modelUrl={exercise.animation3dUrl ?? `/models/${exercise.id}.glb`}
+                  // Manifest → animation3dUrl → /models/<id>.glb convention;
+                  // a missing file still falls back to the procedural coach.
+                  modelUrl={resolveExerciseModel(exercise, assetManifest).url}
                 />
               </Suspense>
             ) : (
