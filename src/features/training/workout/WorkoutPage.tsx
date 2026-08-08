@@ -10,6 +10,7 @@ import {
   Lightbulb,
   Plus,
   Timer,
+  TrendingUp,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useMemo, useState } from "react";
@@ -32,7 +33,11 @@ import type {
   WorkoutLog,
   WorkoutPlan,
 } from "../../../models";
-import { calculateWorkoutDuration } from "../../../services/calculations/workout";
+import {
+  calculateWorkoutDuration,
+  findLastPerformance,
+  suggestNextWeight,
+} from "../../../services/calculations/workout";
 import { db, workoutLogRepository, workoutPlanRepository } from "../../../services/storage";
 import {
   cancelWorkout,
@@ -41,14 +46,19 @@ import {
   finishWorkout,
   saveWorkout,
 } from "../../../services/workout/workoutService";
-import { formatDuration, formatTime } from "../../../utils/dates";
+import { formatDateShortGerman, formatDuration, formatTime } from "../../../utils/dates";
 import { newId } from "../../../utils/ids";
 import { equipmentLabels, muscleGroupLabels } from "../../../utils/labels";
-import { parseDecimalInput, roundTo } from "../../../utils/numbers";
+import { formatKg, parseDecimalInput, roundTo } from "../../../utils/numbers";
 
 const DEFAULT_REST_SECONDS = 90;
 const SAVE_DEBOUNCE_MS = 400;
 const REST_OVER_HIDE_MS = 1800;
+
+/** "80 kg × 8" — bodyweight sets (0 kg) fall back to plain reps. */
+function formatSetShort(set: Pick<SetLog, "weightKg" | "reps">): string {
+  return set.weightKg > 0 ? `${formatKg(set.weightKg)} × ${set.reps}` : `${set.reps} Wdh.`;
+}
 
 /** Subtle pulse for the running rest timer — disabled for reduced motion. */
 const REST_TIMER_CSS = `
@@ -104,6 +114,8 @@ export default function WorkoutPage() {
 
   // Exercise library (labels, instructions, animation, add-exercise search).
   const allExercises = useLiveQuery(() => db.exercises.toArray(), []);
+  // Previous sessions feed "Letztes Mal" + the progression suggestion.
+  const completedLogs = useLiveQuery(() => workoutLogRepository.listCompleted(30), []);
   const exercisesById = useMemo(() => {
     const map = new Map<string, Exercise>();
     for (const exercise of allExercises ?? []) map.set(exercise.id, exercise);
@@ -295,12 +307,23 @@ export default function WorkoutPage() {
   const incompleteCount = countIncompleteSets(log);
   const resting = restRemaining != null && log.restEndsAt != null;
 
+  const planSession = plan?.sessions.find((s) => s.id === log.sessionId);
+
   /** Rest seconds from the plan's matching exercise, else the 90 s default. */
   const restSecondsFor = (exerciseId: string): number => {
-    const session = plan?.sessions.find((s) => s.id === log.sessionId);
-    const planned = session?.exercises.find((e) => e.exerciseId === exerciseId);
+    const planned = planSession?.exercises.find((e) => e.exerciseId === exerciseId);
     return planned?.restSeconds ?? DEFAULT_REST_SECONDS;
   };
+
+  // "Letztes Mal" for the current exercise + progression hint: reached all
+  // target reps last session → suggest one increment more today.
+  const lastPerformance = currentLog
+    ? findLastPerformance(completedLogs ?? [], currentLog.exerciseId)
+    : undefined;
+  const plannedTargetReps = currentLog
+    ? planSession?.exercises.find((e) => e.exerciseId === currentLog.exerciseId)?.repsMax
+    : undefined;
+  const suggestedKg = suggestNextWeight(lastPerformance, plannedTargetReps);
 
   const updateSet = (
     setIndex: number,
@@ -541,6 +564,28 @@ export default function WorkoutPage() {
                 </Button>
               ) : null}
             </div>
+            {lastPerformance ? (
+              <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--text-muted)" }}>
+                Letztes Mal ({formatDateShortGerman(lastPerformance.date)}):{" "}
+                {lastPerformance.sets.map(formatSetShort).join(" · ")}
+              </p>
+            ) : null}
+            {suggestedKg != null ? (
+              <p
+                style={{
+                  margin: "6px 0 0",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--accent-2)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <TrendingUp size={16} aria-hidden="true" style={{ flexShrink: 0 }} />
+                Vorschlag: {formatKg(suggestedKg)} — letztes Mal alle Sätze geschafft
+              </p>
+            ) : null}
           </section>
 
           {/* Sets as big cards — fast to hit mid-workout, editable after completion. */}

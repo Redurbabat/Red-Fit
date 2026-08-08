@@ -30,7 +30,10 @@ import {
   type MuscleGroup,
   type SetLog,
 } from "../../../models";
-import { findExerciseRecords } from "../../../services/calculations/workout";
+import {
+  findExerciseRecords,
+  findLastPerformance,
+} from "../../../services/calculations/workout";
 import { db, exerciseRepository, workoutLogRepository } from "../../../services/storage";
 import { formatDateShortGerman } from "../../../utils/dates";
 import {
@@ -171,24 +174,10 @@ export default function ExerciseDetailPage() {
     return findExerciseRecords(completedLogs).get(exerciseId);
   }, [completedLogs, exerciseId]);
 
-  /** Top set of the most recent completed session containing this exercise. */
+  /** All completed sets of the most recent session containing this exercise. */
   const lastPerformance = useMemo(() => {
     if (!completedLogs || !exerciseId) return undefined;
-    for (const log of completedLogs) {
-      for (const exerciseLog of log.exerciseLogs) {
-        if (exerciseLog.exerciseId !== exerciseId) continue;
-        const completedSets = exerciseLog.setLogs.filter((s) => s.completed);
-        if (completedSets.length === 0) continue;
-        const topSet = completedSets.reduce((best, set) =>
-          set.weightKg > best.weightKg ||
-          (set.weightKg === best.weightKg && set.reps > best.reps)
-            ? set
-            : best,
-        );
-        return { set: topSet, date: log.date };
-      }
-    }
-    return undefined;
+    return findLastPerformance(completedLogs, exerciseId);
   }, [completedLogs, exerciseId]);
 
   const handleEdit = async (values: ExerciseFormValues) => {
@@ -490,9 +479,9 @@ export default function ExerciseDetailPage() {
           <section>
             <SectionHeader title="Letzte Leistung" />
             <Card>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <strong style={{ fontSize: 18 }}>
-                  {formatSetPerformance(lastPerformance.set)}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                <strong style={{ fontSize: 17 }}>
+                  {lastPerformance.sets.map(formatSetPerformance).join(" · ")}
                 </strong>
                 <span style={{ color: "var(--text-muted)", fontSize: 14 }}>
                   · {formatDateShortGerman(lastPerformance.date)}
@@ -516,6 +505,13 @@ export default function ExerciseDetailPage() {
                 value={formatKg(record.bestSetVolume)}
                 hint="Gewicht × Wdh."
               />
+              {record.bestE1rmKg > 0 && record.bestE1rmSet ? (
+                <StatCard
+                  label="1RM (geschätzt)"
+                  value={`≈ ${formatKg(Math.round(record.bestE1rmKg))}`}
+                  hint={`aus ${formatSetPerformance(record.bestE1rmSet)}`}
+                />
+              ) : null}
             </div>
           </section>
         ) : null}
