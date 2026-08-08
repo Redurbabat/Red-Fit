@@ -294,7 +294,12 @@ export default function ExerciseDetailPage() {
                   <div className="skeleton" style={{ width: "100%", height: "100%" }} />
                 }
               >
-                <ExerciseCoach3D type={exercise.animationType} />
+                <ExerciseCoach3D
+                  type={exercise.animationType}
+                  // Blender exports drop into public/models/<id>.glb — found
+                  // automatically; missing file falls back to the procedural coach.
+                  modelUrl={exercise.animation3dUrl ?? `/models/${exercise.id}.glb`}
+                />
               </Suspense>
             ) : (
               <>

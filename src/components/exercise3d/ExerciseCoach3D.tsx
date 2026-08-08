@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { AnimationType } from "../../models/exercise";
+import { ModelCoach, type ModelState } from "./ModelCoach";
 import {
   getPose,
   getSceneProps,
@@ -252,11 +253,15 @@ function CameraRig({ autoRotate, targetY }: { autoRotate: boolean; targetY: numb
 
 export interface ExerciseCoach3DProps {
   type: AnimationType;
+  /** Authored GLB animation (Exercise.animation3dUrl) — procedural fallback on error. */
+  modelUrl?: string;
   className?: string;
 }
 
-export function ExerciseCoach3D({ type, className }: ExerciseCoach3DProps) {
+export function ExerciseCoach3D({ type, modelUrl, className }: ExerciseCoach3DProps) {
   const [isPlaying, setIsPlaying] = useState(true);
+  const [modelState, setModelState] = useState<ModelState>("loading");
+  const useModel = !!modelUrl && modelState !== "error";
   const reducedMotion = useMemo(
     () =>
       typeof window !== "undefined" &&
@@ -296,7 +301,11 @@ export function ExerciseCoach3D({ type, className }: ExerciseCoach3DProps) {
           <meshBasicMaterial color={ACCENT} transparent opacity={0.25} />
         </mesh>
 
-        <Figure type={type} isPlaying={isPlaying} reducedMotion={reducedMotion} />
+        {useModel && modelUrl ? (
+          <ModelCoach url={modelUrl} isPlaying={isPlaying && !reducedMotion} onStateChange={setModelState} />
+        ) : (
+          <Figure type={type} isPlaying={isPlaying} reducedMotion={reducedMotion} />
+        )}
         <CameraRig
           autoRotate={isPlaying && !reducedMotion}
           targetY={getSceneProps(type).cameraTargetY}
