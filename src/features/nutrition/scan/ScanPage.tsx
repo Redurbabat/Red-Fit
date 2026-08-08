@@ -166,7 +166,14 @@ export default function ScanPage() {
               <div
                 style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}
               >
-                <Button onClick={() => navigate("/nutrition/meals/add")}>
+                <Button
+                  onClick={() =>
+                    // Hand the scanned food over so AddMealPage preselects it.
+                    navigate(
+                      `/nutrition/meals/add?foodId=${encodeURIComponent(result.food?.id ?? "")}`,
+                    )
+                  }
+                >
                   Zur Mahlzeit hinzufügen
                 </Button>
                 <Button

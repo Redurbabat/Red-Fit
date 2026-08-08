@@ -18,7 +18,7 @@ import { Button, IconButton } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { NumberInput, SelectInput, TextInput } from "../../components/ui/inputs";
 import type { ShoppingItem, ShoppingList } from "../../models";
-import { shoppingRepository } from "../../services/storage";
+import { db, shoppingRepository } from "../../services/storage";
 import { newId } from "../../utils/ids";
 import { parseDecimalInput, roundTo } from "../../utils/numbers";
 
@@ -64,27 +64,32 @@ export default function ShoppingPage() {
     }
   }
 
-  async function updateItems(nextItems: ShoppingItem[]) {
+  async function updateItems(updater: (items: ShoppingItem[]) => ShoppingItem[]) {
     if (!list) return;
+    const listId = list.id;
     // Keep working on this list even though the update bumps it to the top.
-    setSelectedListId(list.id);
+    setSelectedListId(listId);
     try {
-      await shoppingRepository.update(list.id, { items: nextItems });
+      // Read-modify-write on the fresh DB state inside one transaction so two
+      // quick taps never overwrite each other with stale rendered items.
+      await db.transaction("rw", db.shoppingLists, async () => {
+        const fresh = await shoppingRepository.get(listId);
+        if (!fresh) return;
+        await shoppingRepository.update(listId, { items: updater(fresh.items) });
+      });
     } catch {
       showToast("Änderung konnte nicht gespeichert werden. Bitte versuche es erneut.");
     }
   }
 
   async function toggleItem(item: ShoppingItem) {
-    if (!list) return;
-    await updateItems(
-      list.items.map((i) => (i.id === item.id ? { ...i, checked: !i.checked } : i)),
+    await updateItems((items) =>
+      items.map((i) => (i.id === item.id ? { ...i, checked: !i.checked } : i)),
     );
   }
 
   async function removeItem(item: ShoppingItem) {
-    if (!list) return;
-    await updateItems(list.items.filter((i) => i.id !== item.id));
+    await updateItems((items) => items.filter((i) => i.id !== item.id));
   }
 
   async function addItem() {
@@ -105,21 +110,19 @@ export default function ShoppingPage() {
       item.unit = unitInput;
     }
     setAddError(undefined);
-    await updateItems([...list.items, item]);
+    await updateItems((items) => [...items, item]);
     setNameInput("");
     setAmountInput("");
   }
 
   async function clearDone() {
-    if (!list) return;
-    await updateItems(list.items.filter((i) => !i.checked));
+    await updateItems((items) => items.filter((i) => !i.checked));
     setConfirmClearDone(false);
     showToast("Erledigte Artikel gelöscht.");
   }
 
   async function resetAll() {
-    if (!list) return;
-    await updateItems(list.items.map((i) => ({ ...i, checked: false })));
+    await updateItems((items) => items.map((i) => ({ ...i, checked: false })));
   }
 
   async function deleteList() {
@@ -373,7 +376,11 @@ export default function ShoppingPage() {
       <ConfirmDialog
         open={confirmClearDone}
         title="Erledigte löschen?"
-        text={`${doneCount} erledigte Artikel werden dauerhaft aus der Liste entfernt.`}
+        text={
+          doneCount === 1
+            ? "1 erledigter Artikel wird dauerhaft aus der Liste entfernt."
+            : `${doneCount} erledigte Artikel werden dauerhaft aus der Liste entfernt.`
+        }
         confirmLabel="Löschen"
         danger
         onConfirm={() => void clearDone()}

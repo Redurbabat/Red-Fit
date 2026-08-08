@@ -213,6 +213,27 @@ export default function WorkoutPage() {
     };
   }, []);
 
+  // Flush the pending debounced save when the page is hidden or unloaded —
+  // React's unmount cleanup never runs on reload/tab close/PWA kill, and
+  // suspended background timers would silently drop the last change (§128).
+  useEffect(() => {
+    const flushPendingSave = () => {
+      if (!pendingSave.current) return;
+      clearTimeout(pendingSave.current);
+      pendingSave.current = null;
+      if (logRef.current) void saveWorkout(logRef.current);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flushPendingSave();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", flushPendingSave);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", flushPendingSave);
+    };
+  }, []);
+
   if (log === undefined) {
     return (
       <div style={{ paddingTop: 20 }}>

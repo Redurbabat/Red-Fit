@@ -1,5 +1,71 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
+import type { ReactNode, RefObject } from "react";
 import { Button } from "../ui/Button";
+
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Dialog focus management: moves focus into the dialog on open, traps Tab
+ * inside it, closes on Escape and restores focus to the trigger on close.
+ * The returned ref must be attached to the dialog container (tabIndex={-1}).
+ */
+function useDialogFocus(open: boolean, onClose: () => void): RefObject<HTMLDivElement | null> {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialog.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      if (focusable.length === 0) {
+        // Nothing focusable inside — keep focus on the dialog container.
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey) {
+        if (active === first || active === dialog || !dialog.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !dialog.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+      previous?.focus();
+    };
+  }, [open]);
+
+  return dialogRef;
+}
 
 interface ModalProps {
   open: boolean;
@@ -9,11 +75,19 @@ interface ModalProps {
 }
 
 export function Modal({ open, title, onClose, children }: ModalProps) {
+  const dialogRef = useDialogFocus(open, onClose);
   if (!open) return null;
   return (
     <>
       <div className="overlay" onClick={onClose} />
-      <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
         <h2 className="modal__title">{title}</h2>
         {children}
       </div>
@@ -29,11 +103,19 @@ interface BottomSheetProps {
 }
 
 export function BottomSheet({ open, title, onClose, children }: BottomSheetProps) {
+  const dialogRef = useDialogFocus(open, onClose);
   if (!open) return null;
   return (
     <>
       <div className="overlay" onClick={onClose} />
-      <div className="bottom-sheet" role="dialog" aria-modal="true" aria-label={title ?? "Auswahl"}>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className="bottom-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title ?? "Auswahl"}
+      >
         <div className="bottom-sheet__handle" />
         {title ? <h2 className="bottom-sheet__title">{title}</h2> : null}
         {children}

@@ -11,7 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { BottomSheet, ConfirmDialog } from "../../components/feedback/Modal";
 import { EmptyState, LoadingState } from "../../components/feedback/states";
 import { useToast } from "../../components/feedback/ToastProvider";
@@ -20,7 +20,7 @@ import { Button, IconButton } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Field, NumberInput } from "../../components/ui/inputs";
 import { MacroBar, ProgressBar } from "../../components/ui/ProgressBar";
-import type { MealFoodEntry, MealLog, MealType, WaterLog } from "../../models";
+import type { FoodItem, MealFoodEntry, MealLog, MealType, WaterLog } from "../../models";
 import {
   buildEntryNutrition,
   calculateDailyNutrition,
@@ -34,7 +34,14 @@ import {
   mealRepository,
   waterRepository,
 } from "../../services/storage";
-import { addDays, formatDateGerman, formatTime, getLocalDateKey, nowIso } from "../../utils/dates";
+import {
+  addDays,
+  formatDateGerman,
+  formatTime,
+  getLocalDateKey,
+  nowIso,
+  parseDateKey,
+} from "../../utils/dates";
 import { mealTypeLabels } from "../../utils/labels";
 import {
   formatGrams,
@@ -82,18 +89,33 @@ const cardLabelStyle = {
   color: "var(--text-muted)",
 };
 
+/** Valid, calendar-checked date key from ?date=… — falls back to today. */
+function parseDateParam(raw: string | null): string {
+  const isValid =
+    raw !== null &&
+    /^\d{4}-\d{2}-\d{2}$/.test(raw) &&
+    getLocalDateKey(parseDateKey(raw)) === raw;
+  return isValid ? raw : getLocalDateKey();
+}
+
 interface EntryEditState {
   logId: string;
   mealType: MealType;
   entry: MealFoodEntry;
+  /** Current food record; null while loading or when the food was deleted. */
+  food: FoodItem | null;
 }
 
 export default function NutritionPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [searchParams] = useSearchParams();
   const today = getLocalDateKey();
 
-  const [selectedDate, setSelectedDate] = useState(today);
+  // AddMealPage returns with ?date=… so the saved entry's day stays visible.
+  const [selectedDate, setSelectedDate] = useState(() =>
+    parseDateParam(searchParams.get("date")),
+  );
   const isToday = selectedDate === today;
 
   const mealLogs = useLiveQuery(
@@ -129,9 +151,22 @@ export default function NutritionPage() {
   );
 
   function openEntryEditor(log: MealLog, entry: MealFoodEntry) {
-    setEditing({ logId: log.id, mealType: log.mealType, entry });
+    setEditing({ logId: log.id, mealType: log.mealType, entry, food: null });
     setAmountInput(toInputValue(entry.amountG));
     setAmountError(undefined);
+    // Load the current food so the preview matches what saveEntryAmount will
+    // store (per-100g truth); stays null when the food was deleted.
+    void foodRepository
+      .get(entry.foodId)
+      .then((food) => {
+        if (!food) return;
+        setEditing((current) =>
+          current && current.entry.id === entry.id ? { ...current, food } : current,
+        );
+      })
+      .catch(() => {
+        // Preview falls back to the snapshot; saving re-fetches anyway.
+      });
   }
 
   function closeEntryEditor() {
@@ -412,7 +447,7 @@ export default function NutritionPage() {
                 />
               )}
             </Field>
-            <EntryPreview entry={editing.entry} amountInput={amountInput} />
+            <EntryPreview entry={editing.entry} food={editing.food} amountInput={amountInput} />
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
               <Button onClick={() => void saveEntryAmount()}>Speichern</Button>
               <Button variant="danger" onClick={() => setConfirmDeleteOpen(true)}>
@@ -552,11 +587,25 @@ function MealSection({ type, log, onAdd, onEntryClick }: MealSectionProps) {
   );
 }
 
-/** Live preview while editing the amount, scaled from the stored snapshot. */
-function EntryPreview({ entry, amountInput }: { entry: MealFoodEntry; amountInput: string }) {
+/**
+ * Live preview while editing the amount. Mirrors saveEntryAmount: recompute
+ * from the current per-100g food values when the food still exists, and only
+ * scale the frozen snapshot when it was deleted.
+ */
+function EntryPreview({
+  entry,
+  food,
+  amountInput,
+}: {
+  entry: MealFoodEntry;
+  food: FoodItem | null;
+  amountInput: string;
+}) {
   const value = parseDecimalInput(amountInput);
   if (value == null || value <= 0) return null;
-  const n = scaleSnapshot(entry, value);
+  // Same rounding as saveEntryAmount so preview and stored values match.
+  const amountG = roundTo(value, 1);
+  const n = food ? buildEntryNutrition(food, amountG) : scaleSnapshot(entry, amountG);
   return (
     <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 4 }}>
       {formatKcal(n.kcal)} · {formatGrams(n.protein)} Protein · {formatGrams(n.carbs)} KH ·{" "}

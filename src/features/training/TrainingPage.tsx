@@ -180,18 +180,34 @@ export default function TrainingPage() {
               Dieser Plan enthält noch keine Einheiten.
             </p>
           )}
+          {todaySession && todaySession.exercises.length === 0 ? (
+            <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 10 }}>
+              Diese Einheit hat noch keine Übungen — bearbeite den Plan, um loszulegen.
+            </p>
+          ) : null}
           <div style={{ marginTop: 14 }}>
             {activeWorkout ? (
               <Button onClick={() => navigate(`/training/workout/${activeWorkout.id}`)}>
                 Training fortsetzen
               </Button>
             ) : (
-              <Button
-                onClick={handleStartPlannedWorkout}
-                disabled={starting || !todaySession}
-              >
-                <Play size={18} aria-hidden="true" /> Workout starten
-              </Button>
+              <>
+                <Button
+                  onClick={handleStartPlannedWorkout}
+                  disabled={starting || !todaySession || todaySession.exercises.length === 0}
+                >
+                  <Play size={18} aria-hidden="true" /> Workout starten
+                </Button>
+                {todaySession && todaySession.exercises.length === 0 ? (
+                  <Button
+                    variant="secondary"
+                    style={{ marginTop: 8 }}
+                    onClick={() => navigate(`/training/plans/${activePlan.id}`)}
+                  >
+                    Plan bearbeiten
+                  </Button>
+                ) : null}
+              </>
             )}
           </div>
         </Card>

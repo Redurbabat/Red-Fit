@@ -5,9 +5,10 @@ import {
   type BackupData,
   type RedFitBackup,
 } from "../../models/backup";
+import type { MealFoodEntry, MealLog } from "../../models/nutrition";
 import type { UserSettings } from "../../models/settings";
 import { getLocalDateKey, nowIso } from "../../utils/dates";
-import { db } from "../storage/database";
+import { db, SETTINGS_ID } from "../storage/database";
 import { settingsRepository } from "../storage/settingsRepository";
 import { APP_VERSION } from "../appVersion";
 
@@ -193,9 +194,87 @@ export interface ImportResult {
 }
 
 /**
- * Merge import — never deletes anything.
+ * A merge can leave the DB with two plans/workouts marked active or two meal
+ * logs for the same (date, mealType) slot — states the app assumes impossible.
+ * These helpers restore the invariants inside the import transaction.
+ * `preferIds` are the ids that existed locally BEFORE the merge (local wins).
+ */
+async function normalizeActivePlans(preferIds: Set<string>): Promise<void> {
+  const activePlans = (await db.workoutPlans.toArray()).filter((p) => p.active);
+  if (activePlans.length <= 1) return;
+  const keep =
+    activePlans.find((p) => preferIds.has(p.id)) ??
+    activePlans.reduce((a, b) => (b.updatedAt > a.updatedAt ? b : a));
+  for (const plan of activePlans) {
+    if (plan.id === keep.id) continue;
+    await db.workoutPlans.update(plan.id, { active: false, updatedAt: nowIso() });
+  }
+}
+
+async function normalizeActiveWorkouts(preferIds: Set<string>): Promise<void> {
+  const active = await db.workoutLogs.where("status").equals("active").toArray();
+  if (active.length <= 1) return;
+  const keep =
+    active.find((w) => preferIds.has(w.id)) ??
+    active.reduce((a, b) => (b.startedAt > a.startedAt ? b : a));
+  for (const workout of active) {
+    if (workout.id === keep.id) continue;
+    await db.workoutLogs.update(workout.id, {
+      status: "cancelled",
+      updatedAt: nowIso(),
+    });
+  }
+}
+
+/**
+ * Exactly one meal log per (date, mealType): duplicates are merged into the
+ * kept log (entries concatenated, deduplicated by entry id, notes joined) —
+ * no user data is lost, only the redundant container rows are removed.
+ */
+async function mergeDuplicateMealLogs(preferIds: Set<string>): Promise<void> {
+  const all = await db.mealLogs.toArray();
+  const bySlot = new Map<string, MealLog[]>();
+  for (const log of all) {
+    const slot = `${log.date}|${log.mealType}`;
+    const group = bySlot.get(slot);
+    if (group) group.push(log);
+    else bySlot.set(slot, [log]);
+  }
+  for (const group of bySlot.values()) {
+    if (group.length <= 1) continue;
+    group.sort(
+      (a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id),
+    );
+    const keep = group.find((l) => preferIds.has(l.id)) ?? group[0];
+    const entries: MealFoodEntry[] = [];
+    const seenEntryIds = new Set<string>();
+    const notes: string[] = [];
+    for (const log of [keep, ...group.filter((l) => l.id !== keep.id)]) {
+      for (const entry of log.entries) {
+        if (seenEntryIds.has(entry.id)) continue;
+        seenEntryIds.add(entry.id);
+        entries.push(entry);
+      }
+      if (log.notes && !notes.includes(log.notes)) notes.push(log.notes);
+    }
+    await db.mealLogs.put({
+      ...keep,
+      entries,
+      notes: notes.length > 0 ? notes.join("\n") : undefined,
+      updatedAt: nowIso(),
+    });
+    for (const log of group) {
+      if (log.id !== keep.id) await db.mealLogs.delete(log.id);
+    }
+  }
+}
+
+/**
+ * Merge import — never deletes user data.
  * New ids are added; existing ids follow the chosen strategy
- * (default: keep existing data untouched).
+ * (default: keep existing data untouched). Settings are restored via the
+ * singleton row, and app invariants (one active plan, one active workout,
+ * one meal log per slot) are re-established inside the same transaction.
  */
 export async function importBackup(
   backup: RedFitBackup,
@@ -237,8 +316,23 @@ export async function importBackup(
       db.mealPlans,
       db.recipes,
       db.userProfiles,
+      db.settings,
     ],
     async () => {
+      // Remember what existed locally BEFORE the merge — normalization
+      // prefers local rows over freshly imported ones.
+      const localActivePlanIds = new Set(
+        (await db.workoutPlans.toArray()).filter((p) => p.active).map((p) => p.id),
+      );
+      const localActiveWorkoutIds = new Set(
+        (await db.workoutLogs.where("status").equals("active").toArray()).map(
+          (w) => w.id,
+        ),
+      );
+      const localMealLogIds = new Set(
+        (await db.mealLogs.toArray()).map((m) => m.id),
+      );
+
       await mergeTable(db.exercises, d.exercises);
       await mergeTable(db.workoutPlans, d.workoutPlans);
       await mergeTable(db.workoutLogs, d.workoutLogs);
@@ -251,6 +345,26 @@ export async function importBackup(
       await mergeTable(db.mealPlans, d.mealPlans);
       await mergeTable(db.recipes, d.recipes);
       await mergeTable(db.userProfiles, d.userProfiles);
+
+      // Settings are a singleton row (no id in the backup) — restore via the
+      // repository path instead of mergeTable.
+      const backupSettings = d.settings[0];
+      if (backupSettings) {
+        const existing = await db.settings.get(SETTINGS_ID);
+        if (!existing) {
+          await settingsRepository.saveSettings(backupSettings);
+          result.added++;
+        } else if (strategy === "replaceWithBackup") {
+          await settingsRepository.saveSettings(backupSettings);
+          result.replaced++;
+        } else {
+          result.skipped++;
+        }
+      }
+
+      await normalizeActivePlans(localActivePlanIds);
+      await normalizeActiveWorkouts(localActiveWorkoutIds);
+      await mergeDuplicateMealLogs(localMealLogIds);
     },
   );
   return result;

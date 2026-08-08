@@ -177,6 +177,19 @@ export default function FoodFormPage() {
     };
   }, [foodId]);
 
+  /**
+   * Leave the form after save/delete. navigate(-1) is a dead end on a deep
+   * link (fresh tab has no previous entry) — fall back to the food list then.
+   */
+  function goBack() {
+    const historyIndex = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (historyIndex > 0) {
+      navigate(-1);
+    } else {
+      navigate("/nutrition/foods", { replace: true });
+    }
+  }
+
   function setField(key: FieldKey, value: string) {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => {
@@ -205,7 +218,7 @@ export default function FoodFormPage() {
         await foodRepository.create({ ...data, source: "manual" });
       }
       showToast("Lebensmittel gespeichert.");
-      navigate(-1);
+      goBack();
     } catch {
       setSaving(false);
       showToast(
@@ -220,7 +233,7 @@ export default function FoodFormPage() {
     try {
       await foodRepository.delete(foodId);
       showToast("Lebensmittel gelöscht.");
-      navigate(-1);
+      goBack();
     } catch {
       showToast("Löschen fehlgeschlagen. Bitte versuche es erneut.");
     }

@@ -165,23 +165,27 @@ export default function MealPlanPage() {
 
     setSaving(true);
     try {
-      // The plan is created on demand with the first entry of the week.
-      let current = await mealPlanRepository.findByWeekStart(weekStart);
-      if (!current) {
-        current = await mealPlanRepository.create({
-          name: `Woche ${weekStart}`,
-          weekStart,
-          days: buildWeekDays(weekStart),
+      // Read-modify-write on the fresh DB state inside one transaction so
+      // quick consecutive edits never overwrite each other with stale state.
+      await db.transaction("rw", db.mealPlans, async () => {
+        // The plan is created on demand with the first entry of the week.
+        let current = await mealPlanRepository.findByWeekStart(weekStart);
+        if (!current) {
+          current = await mealPlanRepository.create({
+            name: `Woche ${weekStart}`,
+            weekStart,
+            days: buildWeekDays(weekStart),
+          });
+        }
+        let matched = false;
+        const nextDays = current.days.map((day) => {
+          if (day.date !== sheetDate) return day;
+          matched = true;
+          return { ...day, entries: [...day.entries, entry] };
         });
-      }
-      let matched = false;
-      const nextDays = current.days.map((day) => {
-        if (day.date !== sheetDate) return day;
-        matched = true;
-        return { ...day, entries: [...day.entries, entry] };
+        if (!matched) nextDays.push({ date: sheetDate, entries: [entry] });
+        await mealPlanRepository.update(current.id, { days: nextDays });
       });
-      if (!matched) nextDays.push({ date: sheetDate, entries: [entry] });
-      await mealPlanRepository.update(current.id, { days: nextDays });
       closeSheet();
       showToast("Eintrag hinzugefügt.");
     } catch {
@@ -193,13 +197,21 @@ export default function MealPlanPage() {
 
   async function removeEntry(date: LocalDateKey, entryId: string) {
     if (!plan) return;
+    const planId = plan.id;
     try {
-      const nextDays = plan.days.map((day) =>
-        day.date === date
-          ? { ...day, entries: day.entries.filter((e) => e.id !== entryId) }
-          : day,
-      );
-      await mealPlanRepository.update(plan.id, { days: nextDays });
+      // Build nextDays from the fresh DB state (not the rendered liveQuery
+      // plan) inside one transaction, so removing two entries back-to-back
+      // never resurrects the first one from a stale snapshot.
+      await db.transaction("rw", db.mealPlans, async () => {
+        const current = await mealPlanRepository.get(planId);
+        if (!current) return;
+        const nextDays = current.days.map((day) =>
+          day.date === date
+            ? { ...day, entries: day.entries.filter((e) => e.id !== entryId) }
+            : day,
+        );
+        await mealPlanRepository.update(planId, { days: nextDays });
+      });
     } catch {
       showToast("Eintrag konnte nicht entfernt werden. Bitte versuche es erneut.");
     }

@@ -204,12 +204,20 @@ export default function OnboardingPage() {
       // Demo data first: it may seed a default nutrition goal we then align.
       if (demoChoice) await seedDemoData();
 
-      await profileRepository.create({
+      // Idempotent: a failed/interrupted earlier finish may already have
+      // created a profile — update it instead of adding a second one.
+      const profileData = {
         fitnessGoal,
         trainingLocation,
         trainingDaysPerWeek,
         nutritionTrackingMode,
-      });
+      };
+      const existingProfile = await profileRepository.getCurrent();
+      if (existingProfile) {
+        await profileRepository.update(existingProfile.id, profileData);
+      } else {
+        await profileRepository.create(profileData);
+      }
 
       const existingGoal = await goalRepository.getCurrent();
       if (!existingGoal) {

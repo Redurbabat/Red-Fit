@@ -8,9 +8,18 @@ export function StartRedirect() {
 
   useEffect(() => {
     let cancelled = false;
-    void settingsRepository.getMetadata().then((metadata) => {
-      if (!cancelled) setTarget(metadata.onboardingCompleted ? "/today" : "/onboarding");
-    });
+    settingsRepository
+      .getMetadata()
+      .then((metadata) => {
+        if (!cancelled) setTarget(metadata.onboardingCompleted ? "/today" : "/onboarding");
+      })
+      .catch((error: unknown) => {
+        // IndexedDB unavailable (private mode / corrupted storage): fall back to
+        // onboarding (matches DEFAULT_METADATA.onboardingCompleted = false)
+        // instead of leaving "/" blank forever.
+        console.error("StartRedirect: failed to read metadata", error);
+        if (!cancelled) setTarget("/onboarding");
+      });
     return () => {
       cancelled = true;
     };
