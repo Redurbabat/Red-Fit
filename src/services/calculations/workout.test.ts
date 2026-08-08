@@ -94,6 +94,28 @@ describe("records", () => {
     expect(records[0].maxWeightKg).toBe(85);
   });
 
+  it("reports exactly one record when the same exercise appears in two blocks", () => {
+    const old = workout({
+      id: "old",
+      date: "2026-08-01",
+      exerciseLogs: [{ id: "e", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(80, 8)] }],
+    });
+    // Same exercise added twice in one workout — both blocks beat the old record.
+    const fresh = workout({
+      id: "new",
+      date: "2026-08-08",
+      exerciseLogs: [
+        { id: "e1", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(85, 5)] },
+        { id: "e2", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(90, 3)] },
+      ],
+    });
+    const records = findNewRecords(fresh, [old]);
+    expect(records).toHaveLength(1);
+    expect(records[0].exerciseId).toBe("bench");
+    expect(records[0].maxWeightKg).toBe(90);
+    expect(records[0].maxRepsAtMaxWeight).toBe(3);
+  });
+
   it("does not flag a repeat of an old weight", () => {
     const old = workout({
       id: "old",

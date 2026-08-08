@@ -1,5 +1,5 @@
 import { Check, Dumbbell, Minus, Trophy } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { EmptyState, LoadingState } from "../../../components/feedback/states";
 import { useToast } from "../../../components/feedback/ToastProvider";
@@ -19,6 +19,8 @@ import { workoutLogRepository } from "../../../services/storage";
 import { formatDateGerman, formatDurationLong } from "../../../utils/dates";
 import { formatKg } from "../../../utils/numbers";
 
+const NOTES_SAVE_DEBOUNCE_MS = 400;
+
 /** "80 kg × 10" — bodyweight sets (0 kg) fall back to plain reps. */
 function formatSet(set: Pick<SetLog, "weightKg" | "reps">): string {
   return set.weightKg > 0 ? `${formatKg(set.weightKg)} × ${set.reps}` : `${set.reps} Wdh.`;
@@ -34,7 +36,11 @@ export default function WorkoutSummaryPage() {
   const [log, setLog] = useState<WorkoutLog | null | undefined>(undefined);
   const [records, setRecords] = useState<ExerciseRecord[]>([]);
   const [notes, setNotes] = useState("");
+  // Refs keep the latest value visible to flush handlers (hidden/pagehide/unmount).
+  const notesRef = useRef("");
   const lastSavedNotes = useRef("");
+  const logIdRef = useRef<string | null>(null);
+  const pendingNotesSave = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,8 +53,10 @@ export default function WorkoutSummaryPage() {
       .then((found) => {
         if (cancelled) return;
         setLog(found ?? null);
+        logIdRef.current = found?.id ?? null;
         const initialNotes = found?.notes ?? "";
         setNotes(initialNotes);
+        notesRef.current = initialNotes;
         lastSavedNotes.current = initialNotes;
       })
       .catch(() => {
@@ -76,20 +84,64 @@ export default function WorkoutSummaryPage() {
     };
   }, [log]);
 
-  const saveNotes = async () => {
-    if (!log) return;
-    const trimmed = notes.trim();
-    if (trimmed === lastSavedNotes.current) return;
-    try {
-      await workoutLogRepository.update(log.id, {
-        notes: trimmed === "" ? undefined : trimmed,
-      });
-      lastSavedNotes.current = trimmed;
-      showToast("Notiz gespeichert.");
-    } catch {
-      showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
-    }
+  /** Persist the current ref state; toast only on explicit saves (blur). */
+  const persistNotes = useCallback(
+    async (showFeedback: boolean) => {
+      const logId = logIdRef.current;
+      if (!logId) return;
+      const trimmed = notesRef.current.trim();
+      if (trimmed === lastSavedNotes.current) return;
+      try {
+        await workoutLogRepository.update(logId, {
+          notes: trimmed === "" ? undefined : trimmed,
+        });
+        lastSavedNotes.current = trimmed;
+        if (showFeedback) showToast("Notiz gespeichert.");
+      } catch {
+        if (showFeedback) showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
+      }
+    },
+    [showToast],
+  );
+
+  /** Cancel a pending debounced save and persist immediately. */
+  const flushNotes = useCallback(
+    (showFeedback: boolean) => {
+      if (pendingNotesSave.current) {
+        clearTimeout(pendingNotesSave.current);
+        pendingNotesSave.current = null;
+      }
+      void persistNotes(showFeedback);
+    },
+    [persistNotes],
+  );
+
+  /** Autosave while typing (debounced) — the note never lives only in state. */
+  const handleNotesChange = (value: string) => {
+    setNotes(value);
+    notesRef.current = value;
+    if (pendingNotesSave.current) clearTimeout(pendingNotesSave.current);
+    pendingNotesSave.current = setTimeout(() => {
+      pendingNotesSave.current = null;
+      void persistNotes(false);
+    }, NOTES_SAVE_DEBOUNCE_MS);
   };
+
+  // Flush on page hide (app switch/lock — no blur fires on iOS), page unload
+  // and unmount, so the typed note survives reload and PWA kill (Regel 1).
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flushNotes(false);
+    };
+    const onPageHide = () => flushNotes(false);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onPageHide);
+      flushNotes(false);
+    };
+  }, [flushNotes]);
 
   if (log === undefined) {
     return (
@@ -211,8 +263,8 @@ export default function WorkoutSummaryPage() {
         <textarea
           className="input"
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          onBlur={() => void saveNotes()}
+          onChange={(e) => handleNotesChange(e.target.value)}
+          onBlur={() => flushNotes(true)}
           placeholder="Wie lief das Training?"
           aria-label="Notiz zum Training"
           rows={3}

@@ -89,7 +89,13 @@ export default function FoodListPage() {
       <PageHeader
         title="Lebensmittel"
         back
-        subtitle={foods ? `${foods.length} Einträge` : undefined}
+        subtitle={
+          foods
+            ? foods.length === 1
+              ? "1 Eintrag"
+              : `${foods.length} Einträge`
+            : undefined
+        }
         trailing={
           <IconButton
             label="Lebensmittel erstellen"

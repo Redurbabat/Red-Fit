@@ -231,7 +231,13 @@ export default function RecipesPage() {
     <>
       <PageHeader
         title="Rezepte"
-        subtitle={recipes ? `${recipes.length} Rezepte` : undefined}
+        subtitle={
+          recipes
+            ? recipes.length === 1
+              ? "1 Rezept"
+              : `${recipes.length} Rezepte`
+            : undefined
+        }
         trailing={
           <IconButton label="Rezept erstellen" onClick={() => openEditor(null)}>
             <Plus size={22} />

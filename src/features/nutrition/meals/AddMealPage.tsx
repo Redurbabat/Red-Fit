@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { Plus, SearchX } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { BottomSheet } from "../../../components/feedback/Modal";
 import { EmptyState, LoadingState } from "../../../components/feedback/states";
@@ -16,7 +16,7 @@ import {
   calculateFoodNutrition,
 } from "../../../services/calculations/nutrition";
 import { foodRepository, mealRepository } from "../../../services/storage";
-import { formatDateGerman, getLocalDateKey } from "../../../utils/dates";
+import { formatDateGerman, getLocalDateKey, parseDateKey } from "../../../utils/dates";
 import { newId } from "../../../utils/ids";
 import { mealTypeLabels } from "../../../utils/labels";
 import { formatGrams, formatKcal, parseDecimalInput, roundTo } from "../../../utils/numbers";
@@ -28,7 +28,13 @@ function parseMealTypeParam(raw: string | null): MealType {
 }
 
 function parseDateParam(raw: string | null): string {
-  return raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : getLocalDateKey();
+  // Round-trip check rejects calendar-impossible values like "2026-13-45"
+  // that would otherwise be stored raw and never be reachable via day nav.
+  const isValid =
+    raw !== null &&
+    /^\d{4}-\d{2}-\d{2}$/.test(raw) &&
+    getLocalDateKey(parseDateKey(raw)) === raw;
+  return isValid ? raw : getLocalDateKey();
 }
 
 /** Decimal for a text input: German comma, no thousands separator. */
@@ -45,7 +51,8 @@ export default function AddMealPage() {
   const [mealType, setMealType] = useState<MealType>(() =>
     parseMealTypeParam(searchParams.get("mealType")),
   );
-  const [query, setQuery] = useState("");
+  // Scan flow can hand over an initial search text (?query=…, e.g. a barcode).
+  const [query, setQuery] = useState(() => searchParams.get("query") ?? "");
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [amountInput, setAmountInput] = useState("100");
   const [amountError, setAmountError] = useState<string | undefined>(undefined);
@@ -58,11 +65,29 @@ export default function AddMealPage() {
   const favorites = trimmedQuery === "" ? (foods ?? []).filter((f) => f.favorite) : [];
   const isToday = date === getLocalDateKey();
 
-  function selectFood(food: FoodItem) {
+  const selectFood = useCallback((food: FoodItem) => {
     setSelectedFood(food);
     setAmountInput(toInputValue(food.servingSizeG && food.servingSizeG > 0 ? food.servingSizeG : 100));
     setAmountError(undefined);
-  }
+  }, []);
+
+  // Scan flow: preselect the scanned food (?foodId=…) and open the amount sheet.
+  const foodIdParam = searchParams.get("foodId");
+  useEffect(() => {
+    if (!foodIdParam) return;
+    let cancelled = false;
+    foodRepository
+      .get(foodIdParam)
+      .then((food) => {
+        if (!cancelled && food) selectFood(food);
+      })
+      .catch(() => {
+        // Not fatal — the user can still search manually.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [foodIdParam, selectFood]);
 
   async function handleSave() {
     if (!selectedFood || saving) return;
@@ -92,7 +117,8 @@ export default function AddMealPage() {
       // Touch updatedAt so the food surfaces under "Zuletzt verwendet".
       await foodRepository.update(selectedFood.id, {});
       showToast("Mahlzeit hinzugefügt.");
-      navigate("/nutrition");
+      // Return to the day the entry was saved for, not blindly to today.
+      navigate(`/nutrition?date=${date}`);
     } catch {
       setSaving(false);
       setAmountError("Speichern fehlgeschlagen. Bitte versuche es erneut.");

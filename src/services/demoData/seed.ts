@@ -1,4 +1,3 @@
-import type { NutritionGoal } from "../../models";
 import { addDays, getLocalDateKey, nowIso } from "../../utils/dates";
 import { newId } from "../../utils/ids";
 import { db } from "../storage/database";
@@ -26,14 +25,9 @@ export async function seedBaseLibrary(): Promise<void> {
   });
 }
 
-export const DEFAULT_GOAL: Omit<NutritionGoal, "id" | "createdAt" | "updatedAt"> = {
-  dailyKcal: 2600,
-  dailyProtein: 160,
-  dailyCarbs: 300,
-  dailyFat: 80,
-  dailyWaterMl: 3000,
-  goalType: "buildMuscle",
-};
+import { DEFAULT_GOAL } from "./defaults";
+
+export { DEFAULT_GOAL };
 
 /**
  * Demo data (plans, logs, measurements) — only on explicit user choice in

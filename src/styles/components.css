@@ -51,7 +51,7 @@
 }
 
 .btn--small {
-  min-height: 40px;
+  min-height: 44px; /* touch target ≥ 44px; compact look via padding/font */
   padding: 0 14px;
   font-size: 14px;
   width: auto;
@@ -219,7 +219,7 @@ textarea.input {
 
 .segmented__option {
   flex: 1;
-  min-height: 42px;
+  min-height: 44px; /* touch target ≥ 44px */
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
@@ -238,7 +238,7 @@ textarea.input {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
+  min-height: 44px; /* touch target ≥ 44px; compact look via padding/font */
   padding: 0 14px;
   border-radius: 999px;
   background: var(--surface-2);
@@ -375,6 +375,12 @@ textarea.input {
   padding: 22px;
   z-index: 70;
   animation: modal-in 200ms var(--ease);
+}
+
+/* Dialog containers receive programmatic focus (focus trap) — no visible ring. */
+.modal:focus,
+.bottom-sheet:focus {
+  outline: none;
 }
 
 @keyframes modal-in {

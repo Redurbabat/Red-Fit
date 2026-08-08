@@ -13,6 +13,7 @@ import { MacroBar, ProgressBar } from "../../components/ui/ProgressBar";
 import { useActiveWorkout } from "../../hooks/useActiveWorkout";
 import type { WorkoutPlan, WorkoutPlanSession } from "../../models";
 import { calculateDailyNutrition } from "../../services/calculations/nutrition";
+import { calculateTrainingStats } from "../../services/calculations/progress";
 import {
   calculateTrainingWeekStreak,
   estimateSessionMinutes,
@@ -36,7 +37,6 @@ import {
   formatDateShortGerman,
   formatTime,
   getLocalDateKey,
-  getWeekStart,
   greetingForHour,
   nowIso,
 } from "../../utils/dates";
@@ -81,10 +81,9 @@ export default function TodayPage() {
   const waterTotalMl = (waterLogs ?? []).reduce((sum, log) => sum + log.amountMl, 0);
   const waterTargetMl = goal?.dailyWaterMl ?? 0;
   const streak = calculateTrainingWeekStreak(completedLogs ?? [], today);
-  const weekStart = getWeekStart(today);
-  const workoutsThisWeek = (completedLogs ?? []).filter(
-    (log) => getWeekStart(log.date) === weekStart,
-  ).length;
+  // Calendar-week count from the shared service — same label, same number
+  // as the progress screen (no inline re-implementation).
+  const workoutsThisWeek = calculateTrainingStats(completedLogs ?? [], today).workoutsThisWeek;
 
   async function handleStartWorkout(plan: WorkoutPlan, session: WorkoutPlanSession) {
     if (starting) return;
@@ -110,7 +109,9 @@ export default function TodayPage() {
 
   async function addWater(amountMl: number) {
     try {
-      await waterRepository.create({ date: today, amountMl, loggedAt: nowIso() });
+      // Compute the day key at action time — the render-time `today` goes
+      // stale when the app stays open across midnight.
+      await waterRepository.create({ date: getLocalDateKey(), amountMl, loggedAt: nowIso() });
       showToast("Wasser hinzugefügt.");
     } catch {
       showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
@@ -137,7 +138,8 @@ export default function TodayPage() {
     }
     try {
       // Append-only: always a NEW measurement, never overwriting history.
-      await bodyRepository.create({ date: today, weightKg: roundTo(value, 1) });
+      // Day key at action time — see addWater (midnight-stale render value).
+      await bodyRepository.create({ date: getLocalDateKey(), weightKg: roundTo(value, 1) });
       setWeightError(undefined);
       setWeightSheetOpen(false);
       setWeightInput("");

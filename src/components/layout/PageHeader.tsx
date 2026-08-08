@@ -7,15 +7,29 @@ interface PageHeaderProps {
   title: string;
   subtitle?: string;
   back?: boolean;
+  /** Target route when there is no history entry to go back to (deep link / fresh tab). */
+  backFallback?: string;
   trailing?: ReactNode;
 }
 
-export function PageHeader({ title, subtitle, back, trailing }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, back, backFallback, trailing }: PageHeaderProps) {
   const navigate = useNavigate();
+
+  const goBack = () => {
+    // React Router keeps its stack index in history.state.idx; 0 = first entry,
+    // so navigate(-1) would be a dead button on deep links / fresh tabs.
+    const historyIndex = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (historyIndex > 0) {
+      navigate(-1);
+    } else {
+      navigate(backFallback ?? "/today", { replace: true });
+    }
+  };
+
   return (
     <header className="page-header">
       {back ? (
-        <IconButton label="Zurück" onClick={() => navigate(-1)}>
+        <IconButton label="Zurück" onClick={goBack}>
           <ArrowLeft size={22} />
         </IconButton>
       ) : null}

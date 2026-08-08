@@ -1,5 +1,5 @@
 import type { BodyMeasurement, WorkoutLog } from "../../models";
-import { addDays, getLocalDateKey } from "../../utils/dates";
+import { addDays, getLocalDateKey, getWeekStart } from "../../utils/dates";
 import {
   calculateWorkoutDuration,
   calculateWorkoutVolume,
@@ -27,6 +27,7 @@ export function calculateWeightTrend(newestFirst: BodyMeasurement[]): WeightTren
 }
 
 export interface TrainingStats {
+  /** Workouts in the current calendar week (Monday-based), matching the "Diese Woche" label. */
   workoutsThisWeek: number;
   workoutsLast30Days: number;
   totalVolumeKg: number;
@@ -37,9 +38,9 @@ export function calculateTrainingStats(
   completedLogs: WorkoutLog[],
   today: string = getLocalDateKey(),
 ): TrainingStats {
-  const weekAgo = addDays(today, -6);
+  const weekStart = getWeekStart(today);
   const monthAgo = addDays(today, -29);
-  const thisWeek = completedLogs.filter((w) => w.date >= weekAgo && w.date <= today);
+  const thisWeek = completedLogs.filter((w) => getWeekStart(w.date) === weekStart);
   const last30 = completedLogs.filter((w) => w.date >= monthAgo && w.date <= today);
   const totalVolume = completedLogs.reduce((sum, w) => sum + calculateWorkoutVolume(w), 0);
   const durations = completedLogs
