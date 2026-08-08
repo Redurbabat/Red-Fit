@@ -65,13 +65,18 @@ export async function collectBackupData(): Promise<BackupData> {
 }
 
 export async function createBackup(): Promise<RedFitBackup> {
-  return {
+  const backup: RedFitBackup = {
     format: BACKUP_FORMAT,
     schemaVersion: BACKUP_SCHEMA_VERSION,
     appVersion: APP_VERSION,
     exportedAt: nowIso(),
     data: await collectBackupData(),
   };
+  // Remembered for Speicher & Diagnose — failure to stamp never blocks the export.
+  await settingsRepository
+    .updateMetadata({ lastBackupAt: backup.exportedAt })
+    .catch(() => undefined);
+  return backup;
 }
 
 export function backupFileName(): string {

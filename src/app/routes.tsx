@@ -26,6 +26,8 @@ const BodyHomePage = lazy(() => import("../features/body/BodyHomePage"));
 const ShoppingPage = lazy(() => import("../features/shopping/ShoppingPage"));
 const RecipesPage = lazy(() => import("../features/recipes/RecipesPage"));
 const MorePage = lazy(() => import("../features/more/MorePage"));
+const CoachPage = lazy(() => import("../features/coach/CoachPage"));
+const DiagnosticsPage = lazy(() => import("../features/more/DiagnosticsPage"));
 const BackupPage = lazy(() => import("../features/backup/BackupPage"));
 const SettingsPage = lazy(() => import("../features/settings/SettingsPage"));
 const PrivacyPage = lazy(() => import("../features/more/PrivacyPage"));
@@ -71,6 +73,8 @@ export const router = createBrowserRouter([
       { path: "/recipes", element: page(<RecipesPage />) },
 
       { path: "/more", element: page(<MorePage />) },
+      { path: "/coach", element: page(<CoachPage />) },
+      { path: "/diagnostics", element: page(<DiagnosticsPage />) },
       { path: "/backup", element: page(<BackupPage />) },
       { path: "/settings", element: page(<SettingsPage />) },
       { path: "/privacy", element: page(<PrivacyPage />) },
