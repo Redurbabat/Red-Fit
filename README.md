@@ -2,38 +2,83 @@
 
 **Training und Ernährung in einer App.**
 
-Eigenständige, mobile-first PWA fürs iPhone: Trainingspläne, Workout-Logging mit
-Pausentimer, Übungsbibliothek, Ernährungstracking (Werte pro 100 g), Wasser,
-Körperwerte, Fortschritt, Wochen-Essensplan, Einkaufsliste, Backup — alles lokal
-(IndexedDB), offline-fähig, ohne Konto und ohne Backend.
+RED Fit ist eine eigenständige, mobile-first Progressive Web App fürs iPhone:
+Trainingspläne, Workout-Logging mit Pausentimer, Übungsbibliothek mit animierten
+Bewegungsfiguren, Ernährungstracking (Nährwerte pro 100 g), Wasser, Körperwerte,
+Fortschritt, Wochen-Essensplan, Einkaufsliste und Backup — alles lokal auf dem
+Gerät (IndexedDB), offline-fähig, ohne Konto und ohne Backend.
 
-## Status
+## Voraussetzungen
 
-**Phase 0 abgeschlossen** — Quellenanalyse von 20 Open-Source-Fitness-/Ernährungs-Apps
-(aus [`gym-essen`](https://github.com/Redurbabat/gym-essen)) plus dem eigenen Projekt
-[`BABAT-RED`](https://github.com/Redurbabat/BABAT-RED). Die Implementierung (Phase 1+)
-folgt `docs/phase0/IMPLEMENTATION-ORDER.md`.
+- Node.js ≥ 20
+- npm ≥ 10
 
-## Zielstack
+## Installation & Entwicklung
 
-React · TypeScript · Vite · React Router · Dexie/IndexedDB · Zod · Lucide ·
-CSS-Variablen · vite-plugin-pwa · Vitest
+```bash
+npm install
+npm run dev        # Dev-Server (Vite)
+npm run build      # Produktions-Build (tsc + vite build)
+npm run preview    # gebaute App lokal testen
+npm run typecheck  # TypeScript strict
+npm run lint       # ESLint
+npm run test       # Vitest (Berechnungen, Backup-Validierung)
+```
 
-## Dokumente
+## Architektur
 
-| Datei | Inhalt |
-|---|---|
-| `CLAUDE.md` | verbindlicher Implementierungsauftrag + kritische Regeln |
-| `ARCHITEKTUR.md` | Stack, Prinzipien, App-Struktur |
-| `AUFGABEN.md` | Phasen-Checkliste (Phase 0 ✅, Phase 1–10 offen) |
-| `docs/phase0/SOURCE-MATRIX.md` | Bewertung aller 20 Quellen |
-| `docs/phase0/REPORT-*.md` | Erkenntnisse je Fachbereich (Workout, Nutrition, Storage, PWA, Barcode, Meal-Planning, 3D) |
-| `docs/phase0/FINAL-*.md` | Datenmodell, Routen, Quellen-Auswahl, Reihenfolge |
-| `docs/phase0/audits/` | Einzel-Audits aller Projekte + Archiv-Prüfsummen |
-| `sources/own/babat-red/` | eigener Code als Portierungsbasis (u. a. Übungskatalog) |
+React 19 · TypeScript (strict) · Vite · React Router 7 · **Dexie/IndexedDB** ·
+Zod · Lucide · CSS mit Design-Tokens · vite-plugin-pwa · Vitest.
+Details: `ARCHITEKTUR.md`, verbindliche Regeln: `CLAUDE.md`,
+Datenmodell: `docs/phase0/FINAL-DATA-MODEL.md`.
 
-## Eigenständigkeit
+```text
+src/
+├─ app/        AppShell, Routen, Provider
+├─ components/ ui/ (Buttons, Cards, Stepper …), layout/, feedback/, exercise/
+├─ features/   today, training (plans/exercises/workout), nutrition
+│              (foods/meals/scan/meal-plan), progress, shopping, recipes,
+│              onboarding, backup, settings, more
+├─ models/     TS-Typen + Zod-Schemas
+├─ services/   storage/ (Dexie + Repositories), calculations/, workout/,
+│              backup/, barcode/, pwa/, demoData/, planning/
+├─ hooks/      useActiveWorkout, useRestTimer, useSettings
+├─ utils/      dates (lokale Tages-Keys!), numbers, labels, ids
+└─ styles/     tokens.css (Nocturne), base, components, mobile
+```
 
-RED Fit gehört vollständig dem Projektinhaber. Aus den analysierten Fremdprojekten
-wurden ausschließlich Muster, Feldlisten und Algorithmus-Erkenntnisse dokumentiert —
-kein fremder Code ist oder wird Teil dieses Repos.
+## Lokale Speicherung
+
+Alle Daten liegen in IndexedDB (`red-fit`, 14 Stores: exercises, workoutPlans,
+workoutLogs, foodItems, mealLogs, nutritionGoals, waterLogs, bodyMeasurements,
+shoppingLists, mealPlans, recipes, userProfiles, settings, metadata).
+Ein aktives Workout ist ein persistenter Datensatz (`status: "active"`) mit
+Autosave — Reload oder App-Schließen verliert nie Daten. Der Pausentimer läuft
+über absolute Zeitstempel (`restEndsAt`) und übersteht Backgrounding.
+
+## Backup
+
+`Mehr → Backup & Import`: Export als `red-fit-backup-YYYY-MM-DD.json`
+(alle Stores, versioniertes Format). Import mit Runtime-Validierung (Zod),
+Schutz vor manipulierten Dateien, Vorschau und Merge-Strategie — bestehende
+Daten werden nie ungefragt gelöscht.
+
+## PWA / iPhone
+
+Manifest + Service Worker (Precache der App-Shell, Update nur nach Bestätigung).
+Nach dem ersten Laden funktioniert die Kern-App offline. Installation:
+RED Fit in Safari öffnen → Teilen → „Zum Home-Bildschirm“ → „Hinzufügen“.
+
+## Bekannte Einschränkungen
+
+- Barcode-Kamera-Scan nur in Browsern mit `BarcodeDetector` (manuelle Eingabe
+  funktioniert immer); Open-Food-Facts-Anbindung ist noch nicht aktiviert.
+- 3D: aktuell animierte SVG-Bewegungsfiguren; echtes Three.js-3D ist als
+  spätere Phase vorgesehen (`docs/phase0/REPORT-3D.md`).
+- KI-Coach ist bewusst nur als „Später“-Eintrag sichtbar — keine Fake-Funktion.
+
+## Projekt-Dokumentation
+
+- `AUFGABEN.md` — Phasenplan und Checklisten
+- `docs/phase0/` — Quellenanalyse (20 Projekte), Berichte, finale Entscheidungen
+- `sources/own/babat-red/` — eigener Code als Portierungsbasis
