@@ -1,0 +1,257 @@
+import {
+  BACKUP_FORMAT,
+  BACKUP_SCHEMA_VERSION,
+  backupSchema,
+  type BackupData,
+  type RedFitBackup,
+} from "../../models/backup";
+import type { UserSettings } from "../../models/settings";
+import { getLocalDateKey, nowIso } from "../../utils/dates";
+import { db } from "../storage/database";
+import { settingsRepository } from "../storage/settingsRepository";
+import { APP_VERSION } from "../appVersion";
+
+/** Import files above this size are rejected outright (§107). */
+export const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
+
+export async function collectBackupData(): Promise<BackupData> {
+  const settings = await settingsRepository.getSettings();
+  const [
+    exercises,
+    workoutPlans,
+    workoutLogs,
+    foodItems,
+    mealLogs,
+    nutritionGoals,
+    waterLogs,
+    bodyMeasurements,
+    shoppingLists,
+    mealPlans,
+    recipes,
+    userProfiles,
+  ] = await Promise.all([
+    db.exercises.toArray(),
+    db.workoutPlans.toArray(),
+    db.workoutLogs.toArray(),
+    db.foodItems.toArray(),
+    db.mealLogs.toArray(),
+    db.nutritionGoals.toArray(),
+    db.waterLogs.toArray(),
+    db.bodyMeasurements.toArray(),
+    db.shoppingLists.toArray(),
+    db.mealPlans.toArray(),
+    db.recipes.toArray(),
+    db.userProfiles.toArray(),
+  ]);
+  return {
+    exercises,
+    workoutPlans,
+    workoutLogs,
+    foodItems,
+    mealLogs,
+    nutritionGoals,
+    waterLogs,
+    bodyMeasurements,
+    shoppingLists,
+    mealPlans,
+    recipes,
+    userProfiles,
+    settings: [settings satisfies UserSettings],
+  };
+}
+
+export async function createBackup(): Promise<RedFitBackup> {
+  return {
+    format: BACKUP_FORMAT,
+    schemaVersion: BACKUP_SCHEMA_VERSION,
+    appVersion: APP_VERSION,
+    exportedAt: nowIso(),
+    data: await collectBackupData(),
+  };
+}
+
+export function backupFileName(): string {
+  return `red-fit-backup-${getLocalDateKey()}.json`;
+}
+
+/** Trigger a JSON download of the full backup. */
+export async function exportBackupFile(): Promise<void> {
+  const backup = await createBackup();
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = backupFileName();
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * JSON.parse does not protect against dangerous keys: an own "__proto__" or
+ * "constructor" key must never reach a merge path. The whole import is
+ * rejected early, without partial mutation.
+ */
+export function findDangerousKey(root: unknown): string | null {
+  const stack: { value: unknown; path: string }[] = [{ value: root, path: "data" }];
+  const seen = new WeakSet<object>();
+  while (stack.length > 0) {
+    const { value, path } = stack.pop()!;
+    if (value === null || typeof value !== "object") continue;
+    if (seen.has(value)) continue;
+    seen.add(value);
+    if (Array.isArray(value)) {
+      value.forEach((item, i) => stack.push({ value: item, path: `${path}[${i}]` }));
+      continue;
+    }
+    for (const key of Object.getOwnPropertyNames(value)) {
+      if (key === "__proto__" || key === "constructor" || key === "prototype") {
+        return `${path}.${key}`;
+      }
+      stack.push({
+        value: (value as Record<string, unknown>)[key],
+        path: `${path}.${key}`,
+      });
+    }
+  }
+  return null;
+}
+
+export type BackupReadResult =
+  | { ok: true; backup: RedFitBackup }
+  | { ok: false; error: string };
+
+/** Placeholder for future backup migrations (schemaVersion 1 needs none). */
+export function migrateBackupToCurrentVersion(backup: RedFitBackup): RedFitBackup {
+  return backup;
+}
+
+export function parseBackupJson(text: string): BackupReadResult {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return { ok: false, error: "Die Datei ist kein gültiges JSON." };
+  }
+  const dangerous = findDangerousKey(raw);
+  if (dangerous) {
+    return { ok: false, error: `Unzulässiger Schlüssel im Backup (${dangerous}).` };
+  }
+  const parsed = backupSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, error: "Die Datei passt nicht zum RED-Fit-Backup-Format." };
+  }
+  if (parsed.data.schemaVersion > BACKUP_SCHEMA_VERSION) {
+    return {
+      ok: false,
+      error: "Das Backup stammt aus einer neueren RED-Fit-Version.",
+    };
+  }
+  return { ok: true, backup: migrateBackupToCurrentVersion(parsed.data) };
+}
+
+export interface BackupPreview {
+  exercises: number;
+  workoutPlans: number;
+  workoutLogs: number;
+  foodItems: number;
+  mealLogs: number;
+  nutritionGoals: number;
+  waterLogs: number;
+  bodyMeasurements: number;
+  shoppingLists: number;
+  mealPlans: number;
+  recipes: number;
+}
+
+export function buildPreview(backup: RedFitBackup): BackupPreview {
+  const d = backup.data;
+  return {
+    exercises: d.exercises.length,
+    workoutPlans: d.workoutPlans.length,
+    workoutLogs: d.workoutLogs.length,
+    foodItems: d.foodItems.length,
+    mealLogs: d.mealLogs.length,
+    nutritionGoals: d.nutritionGoals.length,
+    waterLogs: d.waterLogs.length,
+    bodyMeasurements: d.bodyMeasurements.length,
+    shoppingLists: d.shoppingLists.length,
+    mealPlans: d.mealPlans.length,
+    recipes: d.recipes.length,
+  };
+}
+
+export type ImportStrategy = "keepExisting" | "replaceWithBackup";
+
+export interface ImportResult {
+  added: number;
+  replaced: number;
+  skipped: number;
+}
+
+/**
+ * Merge import — never deletes anything.
+ * New ids are added; existing ids follow the chosen strategy
+ * (default: keep existing data untouched).
+ */
+export async function importBackup(
+  backup: RedFitBackup,
+  strategy: ImportStrategy = "keepExisting",
+): Promise<ImportResult> {
+  const result: ImportResult = { added: 0, replaced: 0, skipped: 0 };
+
+  async function mergeTable<T extends { id: string }>(
+    table: import("dexie").EntityTable<T, "id">,
+    items: T[],
+  ): Promise<void> {
+    for (const item of items) {
+      const existing = await table.get(item.id as never);
+      if (!existing) {
+        await table.put(item as Parameters<typeof table.put>[0]);
+        result.added++;
+      } else if (strategy === "replaceWithBackup") {
+        await table.put(item as Parameters<typeof table.put>[0]);
+        result.replaced++;
+      } else {
+        result.skipped++;
+      }
+    }
+  }
+
+  const d = backup.data;
+  await db.transaction(
+    "rw",
+    [
+      db.exercises,
+      db.workoutPlans,
+      db.workoutLogs,
+      db.foodItems,
+      db.mealLogs,
+      db.nutritionGoals,
+      db.waterLogs,
+      db.bodyMeasurements,
+      db.shoppingLists,
+      db.mealPlans,
+      db.recipes,
+      db.userProfiles,
+    ],
+    async () => {
+      await mergeTable(db.exercises, d.exercises);
+      await mergeTable(db.workoutPlans, d.workoutPlans);
+      await mergeTable(db.workoutLogs, d.workoutLogs);
+      await mergeTable(db.foodItems, d.foodItems);
+      await mergeTable(db.mealLogs, d.mealLogs);
+      await mergeTable(db.nutritionGoals, d.nutritionGoals);
+      await mergeTable(db.waterLogs, d.waterLogs);
+      await mergeTable(db.bodyMeasurements, d.bodyMeasurements);
+      await mergeTable(db.shoppingLists, d.shoppingLists);
+      await mergeTable(db.mealPlans, d.mealPlans);
+      await mergeTable(db.recipes, d.recipes);
+      await mergeTable(db.userProfiles, d.userProfiles);
+    },
+  );
+  return result;
+}

@@ -1,0 +1,68 @@
+/* RED Fit design tokens — "Nocturne": dark-first, near-black, premium fitness. */
+:root {
+  --bg: #0f1012;
+  --bg-soft: #141518;
+  --surface: #1a1b1f;
+  --surface-2: #222329;
+  --surface-3: #2b2d34;
+
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  --text: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --text-soft: #71717a;
+  --text-disabled: #52525b;
+
+  --accent: #ef4444;
+  --accent-2: #f97316;
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --info: #38bdf8;
+  --danger: #ef4444;
+
+  --protein: #38bdf8;
+  --carbs: #f59e0b;
+  --fat: #a78bfa;
+  --calories: #ef4444;
+  --water: #06b6d4;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --content-padding: 22px;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Bottom nav height incl. safe area is handled in layout; base height here. */
+  --bottom-nav-height: 64px;
+
+  color-scheme: dark;
+}
+
+/* Light theme — simple but correct (§106). */
+:root[data-theme="light"] {
+  --bg: #f4f4f5;
+  --bg-soft: #ececee;
+  --surface: #ffffff;
+  --surface-2: #f1f1f3;
+  --surface-3: #e7e7ea;
+
+  --border-soft: rgba(0, 0, 0, 0.07);
+  --border: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.2);
+
+  --text: #18181b;
+  --text-muted: #52525b;
+  --text-soft: #71717a;
+  --text-disabled: #a1a1aa;
+
+  color-scheme: light;
+}

@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dev-dist/
+
+# Logs & caches
+*.log
+.vite/
+coverage/
+
+# OS / editor
+.DS_Store
