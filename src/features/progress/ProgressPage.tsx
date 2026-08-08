@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState, LoadingState } from "../../components/feedback/states";
 import { PageHeader, SectionHeader } from "../../components/layout/PageHeader";
+import { TrainingHeatmap } from "../../components/progress/TrainingHeatmap";
 import { Button } from "../../components/ui/Button";
 import { Card, StatCard } from "../../components/ui/Card";
 import { calculateAverages } from "../../services/calculations/nutrition";
@@ -309,6 +310,12 @@ export default function ProgressPage() {
               Wochen in Folge mit mindestens einem Training
             </span>
           </div>
+          <Card style={{ marginTop: 10 }}>
+            <span className="stat-card__label">Aktivität</span>
+            <div style={{ marginTop: 10 }}>
+              <TrainingHeatmap logs={completedLogs} />
+            </div>
+          </Card>
         </>
       )}
 
