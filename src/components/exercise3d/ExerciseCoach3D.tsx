@@ -229,11 +229,11 @@ function Figure({ type, isPlaying, reducedMotion }: FigureProps) {
   );
 }
 
-function CameraRig({ autoRotate }: { autoRotate: boolean }) {
+function CameraRig({ autoRotate, targetY }: { autoRotate: boolean; targetY: number }) {
   const { camera, gl } = useThree();
   useEffect(() => {
     const controls = new OrbitControls(camera, gl.domElement);
-    controls.target.set(0, 0.95, 0);
+    controls.target.set(0, targetY, 0);
     controls.enableDamping = true;
     controls.enablePan = false;
     controls.autoRotate = autoRotate;
@@ -246,7 +246,7 @@ function CameraRig({ autoRotate }: { autoRotate: boolean }) {
       clearInterval(id);
       controls.dispose();
     };
-  }, [camera, gl, autoRotate]);
+  }, [camera, gl, autoRotate, targetY]);
   return null;
 }
 
@@ -297,7 +297,10 @@ export function ExerciseCoach3D({ type, className }: ExerciseCoach3DProps) {
         </mesh>
 
         <Figure type={type} isPlaying={isPlaying} reducedMotion={reducedMotion} />
-        <CameraRig autoRotate={isPlaying && !reducedMotion} />
+        <CameraRig
+          autoRotate={isPlaying && !reducedMotion}
+          targetY={getSceneProps(type).cameraTargetY}
+        />
       </Canvas>
 
       <button

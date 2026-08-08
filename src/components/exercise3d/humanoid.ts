@@ -37,6 +37,8 @@ export interface SceneProps {
   bench: boolean;
   /** Show a floor mat (crunch/plank). */
   mat: boolean;
+  /** Camera orbit target height — lower for lying movements. */
+  cameraTargetY: number;
 }
 
 export const SEGMENTS: [JointName, JointName, number][] = [
@@ -184,21 +186,21 @@ const FOOT_Y = 0.06;
 export function getSceneProps(type: AnimationType): SceneProps {
   switch (type) {
     case "push":
-      return { equipment: "barbell", bench: true, mat: false };
+      return { equipment: "barbell", bench: true, mat: false, cameraTargetY: 0.6 };
     case "squat":
     case "hinge":
     case "press":
-      return { equipment: "barbell", bench: false, mat: false };
+      return { equipment: "barbell", bench: false, mat: false, cameraTargetY: 0.95 };
     case "curl":
     case "raise":
-      return { equipment: "dumbbells", bench: false, mat: false };
+      return { equipment: "dumbbells", bench: false, mat: false, cameraTargetY: 0.95 };
     case "pull":
-      return { equipment: "pulldownBar", bench: false, mat: false };
+      return { equipment: "pulldownBar", bench: false, mat: false, cameraTargetY: 1.1 };
     case "crunch":
     case "plank":
-      return { equipment: "none", bench: false, mat: true };
+      return { equipment: "none", bench: false, mat: true, cameraTargetY: 0.35 };
     case "lunges":
-      return { equipment: "dumbbells", bench: false, mat: false };
+      return { equipment: "dumbbells", bench: false, mat: false, cameraTargetY: 0.85 };
   }
 }
 
@@ -250,21 +252,22 @@ export function getPose(type: AnimationType, p: number): Pose {
     }
 
     case "push": {
-      // Bench press, lying on the bench along Z (head toward -Z).
-      const benchTop = 0.48;
-      const pelvis = v(0, benchTop + 0.05, 0.18);
-      const chestY = benchTop + 0.12;
-      const pressHeight = lerp(0.12, 0.42, p);
+      // Bench press: lying flat on the bench along Z (head toward -Z),
+      // bar travels straight up over the chest, elbows flare outward.
+      const benchTop = 0.46;
+      const pelvis = v(0, benchTop + 0.06, 0.22);
+      const chestY = benchTop + 0.1;
+      const pressHeight = lerp(0.1, 0.45, p);
       const pose = buildPose(
-        { pelvis, lean: -Math.PI / 2 + 0.06 }, // spine lies along -Z
+        { pelvis, lean: -Math.PI / 2 + 0.02 }, // spine flat along -Z
         {
-          handL: v(0.26, chestY + pressHeight, -0.18),
-          handR: v(-0.26, chestY + pressHeight, -0.18),
-          footL: v(0.2, FOOT_Y, 0.62),
-          footR: v(-0.2, FOOT_Y, 0.62),
-          elbowDirL: [1, 0, 0.15],
-          elbowDirR: [-1, 0, 0.15],
-          kneeDir: [0, 1, 0.2],
+          handL: v(0.28, chestY + pressHeight, -0.14),
+          handR: v(-0.28, chestY + pressHeight, -0.14),
+          footL: v(0.22, FOOT_Y, 0.58),
+          footR: v(-0.22, FOOT_Y, 0.58),
+          elbowDirL: [1, -0.15, 0],
+          elbowDirR: [-1, -0.15, 0],
+          kneeDir: [0, 1, 0.25],
         },
       );
       return pose;
