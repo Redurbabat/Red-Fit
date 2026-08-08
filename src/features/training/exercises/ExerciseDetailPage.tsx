@@ -4,6 +4,7 @@ import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ExerciseAnimation } from "../../../components/exercise/ExerciseAnimation";
 import { MuscleMap } from "../../../components/exercise/MuscleMap";
+import { ExerciseWeightChartSection } from "../../../components/progress/ExerciseWeightChart";
 
 // three loads only when the user switches the card to 3D (§104).
 const ExerciseCoach3D = lazy(() => import("../../../components/exercise3d"));
@@ -511,6 +512,12 @@ export default function ExerciseDetailPage() {
                 hint="Gewicht × Wdh."
               />
             </div>
+          </section>
+        ) : null}
+
+        {completedLogs && exerciseId ? (
+          <section>
+            <ExerciseWeightChartSection completedLogs={completedLogs} exerciseId={exerciseId} />
           </section>
         ) : null}
       </div>

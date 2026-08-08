@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Dumbbell,
+  Disc3,
   Info,
   Lightbulb,
   Plus,
@@ -22,6 +23,8 @@ import { Card } from "../../../components/ui/Card";
 import { NumberInput, TextInput } from "../../../components/ui/inputs";
 import { Stepper } from "../../../components/ui/Stepper";
 import { useRestTimer } from "../../../hooks/useRestTimer";
+import { PlateCalculatorSheet } from "../../../components/workout/PlateCalculatorSheet";
+import { armTimerSignal, playTimerSignal } from "../../../services/audio/timerSignal";
 import type {
   Exercise,
   ExerciseLog,
@@ -75,6 +78,7 @@ export default function WorkoutPage() {
   const [plan, setPlan] = useState<WorkoutPlan | undefined>(undefined);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [infoOpen, setInfoOpen] = useState(false);
+  const [platesOpen, setPlatesOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [finishOpen, setFinishOpen] = useState(false);
@@ -84,6 +88,19 @@ export default function WorkoutPage() {
   const pendingSave = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const restRemaining = useRestTimer(log?.restEndsAt);
+
+  // "Pause vorbei"-Signal: beep + vibration exactly when the timer hits 0.
+  const signalPlayed = useRef(false);
+  useEffect(() => {
+    if (restRemaining === null || restRemaining > 0) {
+      signalPlayed.current = false;
+      return;
+    }
+    if (!signalPlayed.current) {
+      signalPlayed.current = true;
+      playTimerSignal();
+    }
+  }, [restRemaining]);
 
   // Exercise library (labels, instructions, animation, add-exercise search).
   const allExercises = useLiveQuery(() => db.exercises.toArray(), []);
@@ -315,6 +332,8 @@ export default function WorkoutPage() {
 
   const handleCompleteSet = () => {
     if (!currentLog || firstOpenSet < 0) return;
+    // Unlock audio inside the tap gesture so the end-of-rest beep may play.
+    armTimerSignal();
     apply(completeSet(log, exerciseIndex, firstOpenSet, restSecondsFor(currentLog.exerciseId)), "now");
   };
 
@@ -514,6 +533,11 @@ export default function WorkoutPage() {
               {currentExercise ? (
                 <Button variant="ghost" autoWidth onClick={() => setInfoOpen(true)}>
                   <Info size={16} /> Anleitung
+                </Button>
+              ) : null}
+              {currentExercise?.equipment === "barbell" ? (
+                <Button variant="ghost" autoWidth onClick={() => setPlatesOpen(true)}>
+                  <Disc3 size={16} /> Scheiben
                 </Button>
               ) : null}
             </div>
@@ -754,6 +778,15 @@ export default function WorkoutPage() {
           )}
         </div>
       </BottomSheet>
+
+      {/* Plate calculator for the active set weight (barbell exercises). */}
+      <PlateCalculatorSheet
+        open={platesOpen}
+        targetKg={
+          currentLog?.setLogs[firstOpenSet >= 0 ? firstOpenSet : 0]?.weightKg ?? 20
+        }
+        onClose={() => setPlatesOpen(false)}
+      />
 
       {/* Finish with open sets — explicit confirmation (§52). */}
       <ConfirmDialog

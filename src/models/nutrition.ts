@@ -95,6 +95,11 @@ export const nutritionGoalSchema = baseEntitySchema.extend({
   dailyFat: nonNegativeNumber,
   dailyWaterMl: nonNegativeNumber,
   goalType: z.enum(FITNESS_GOALS),
+  /**
+   * Goal timeline: the goal applies from this local date onward. Goals
+   * without validFrom count as "since forever" (backward compatible).
+   */
+  validFrom: localDateKeySchema.optional(),
 });
 export type NutritionGoal = z.infer<typeof nutritionGoalSchema>;
 

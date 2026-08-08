@@ -126,7 +126,8 @@ export default function NutritionPage() {
     () => db.waterLogs.where("date").equals(selectedDate).toArray(),
     [selectedDate],
   );
-  const goal = useLiveQuery(() => goalRepository.getCurrent(), [], null);
+  // Goal timeline: browsing an older day shows the goal that applied then.
+  const goal = useLiveQuery(() => goalRepository.getForDate(selectedDate), [selectedDate], null);
 
   const [editing, setEditing] = useState<EntryEditState | null>(null);
   const [amountInput, setAmountInput] = useState("");

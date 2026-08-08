@@ -12,6 +12,7 @@ import { useSettings } from "../../hooks/useSettings";
 import { DEFAULT_GOAL } from "../../services/demoData/defaults";
 import { db } from "../../services/storage/database";
 import { goalRepository, settingsRepository } from "../../services/storage";
+import { getLocalDateKey } from "../../utils/dates";
 import { parseDecimalInput } from "../../utils/numbers";
 
 interface GoalDraft {
@@ -20,6 +21,7 @@ interface GoalDraft {
   dailyCarbs: string;
   dailyFat: string;
   dailyWaterMl: string;
+  validFrom: string;
 }
 
 function ToggleRow({
@@ -87,6 +89,7 @@ export default function SettingsPage() {
       dailyCarbs: String(source.dailyCarbs),
       dailyFat: String(source.dailyFat),
       dailyWaterMl: String(source.dailyWaterMl),
+      validFrom: ("validFrom" in source ? source.validFrom : undefined) ?? getLocalDateKey(),
     });
   }, [goal, goalDraft]);
 
@@ -110,10 +113,17 @@ export default function SettingsPage() {
       dailyFat: values.dailyFat!,
       dailyWaterMl: values.dailyWaterMl!,
     };
-    if (goal) {
-      await goalRepository.update(goal.id, data);
+    // Goal timeline: same validFrom updates that goal in place; a new
+    // start date creates a new goal and keeps the old one as history.
+    const validFrom = goalDraft.validFrom || getLocalDateKey();
+    const existingSameStart = (await goalRepository.list()).find(
+      (g) => g.validFrom === validFrom,
+    );
+    if (existingSameStart) {
+      await goalRepository.update(existingSameStart.id, { ...data, validFrom });
     } else {
-      await goalRepository.create({ ...DEFAULT_GOAL, ...data });
+      // New start date → new goal; older goals stay as history for past days.
+      await goalRepository.create({ ...DEFAULT_GOAL, ...data, validFrom });
     }
     showToast("Ziel gespeichert.");
   }
@@ -215,6 +225,22 @@ export default function SettingsPage() {
         {goalField("dailyCarbs", "Kohlenhydrate pro Tag (g)")}
         {goalField("dailyFat", "Fett pro Tag (g)")}
         {goalField("dailyWaterMl", "Wasser pro Tag (ml)")}
+        <Field label="Gilt ab">
+          {(id) => (
+            <input
+              id={id}
+              type="date"
+              className="input"
+              value={goalDraft?.validFrom ?? ""}
+              onChange={(e) =>
+                setGoalDraft((d) => (d ? { ...d, validFrom: e.target.value } : d))
+              }
+            />
+          )}
+        </Field>
+        <p style={{ fontSize: 13, color: "var(--text-soft)", marginBottom: 12 }}>
+          Frühere Tage behalten das Ziel, das damals galt.
+        </p>
         <Button onClick={() => void saveGoal()}>Ziel speichern</Button>
       </Card>
 
