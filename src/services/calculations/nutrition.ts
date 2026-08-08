@@ -102,6 +102,26 @@ export function calculateAverages(
   return { avgKcal: kcal / days, avgProtein: protein / days, daysWithLogs: days };
 }
 
+/**
+ * Goal timeline: pick the goal that applies on `date` — the one with the
+ * latest validFrom that is <= date; goals without validFrom count as
+ * "since forever". Ties break by updatedAt. Returns undefined only when
+ * no goal applies on that date (all start later).
+ */
+export function pickGoalForDate(
+  goals: NutritionGoal[],
+  date: string,
+): NutritionGoal | undefined {
+  const applicable = goals.filter((g) => (g.validFrom ?? "") <= date);
+  if (applicable.length === 0) return undefined;
+  return applicable.reduce((best, g) => {
+    const bestFrom = best.validFrom ?? "";
+    const gFrom = g.validFrom ?? "";
+    if (gFrom !== bestFrom) return gFrom > bestFrom ? g : best;
+    return g.updatedAt > best.updatedAt ? g : best;
+  });
+}
+
 /** Fraction of goal per macro, for the four progress bars. */
 export function goalProgress(totals: NutrientTotals, goal: NutritionGoal) {
   return {

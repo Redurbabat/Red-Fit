@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { ChevronLeft, ChevronRight, Plus, ShoppingCart, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, Plus, ShoppingCart, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet, ConfirmDialog } from "../../../components/feedback/Modal";
@@ -99,6 +99,15 @@ export default function MealPlanPage() {
   // ---- Shopping-list confirmation state ----
   const [pendingItems, setPendingItems] = useState<ShoppingItem[] | null>(null);
   const [latestList, setLatestList] = useState<ShoppingList | null>(null);
+
+  // ---- Day-copy state ----
+  const [copySourceDate, setCopySourceDate] = useState<LocalDateKey | null>(null);
+
+  // Previous week's plan — offered as a template when this week is still empty.
+  const previousPlan = useLiveQuery(
+    async () => (await mealPlanRepository.findByWeekStart(addDays(weekStart, -7))) ?? null,
+    [weekStart],
+  );
 
   const days: MealPlanDay[] = useMemo(() => {
     const defaults = buildWeekDays(weekStart);
@@ -217,6 +226,76 @@ export default function MealPlanPage() {
     }
   }
 
+  /** Copy all entries of one day onto another day (entries get fresh ids). */
+  async function copyDayEntries(sourceDate: LocalDateKey, targetDate: LocalDateKey) {
+    try {
+      await db.transaction("rw", db.mealPlans, async () => {
+        const current = await mealPlanRepository.findByWeekStart(weekStart);
+        if (!current) return;
+        const source = current.days.find((day) => day.date === sourceDate);
+        if (!source || source.entries.length === 0) return;
+        const copies: MealPlanEntry[] = source.entries.map((entry) => ({
+          ...entry,
+          id: newId(),
+        }));
+        let matched = false;
+        const nextDays = current.days.map((day) => {
+          if (day.date !== targetDate) return day;
+          matched = true;
+          return { ...day, entries: [...day.entries, ...copies] };
+        });
+        if (!matched) nextDays.push({ date: targetDate, entries: copies });
+        await mealPlanRepository.update(current.id, { days: nextDays });
+      });
+      setCopySourceDate(null);
+      showToast("Tag kopiert.");
+    } catch {
+      showToast("Kopieren fehlgeschlagen. Bitte versuche es erneut.");
+    }
+  }
+
+  /** Adopt the previous week's plan as a template for this (empty) week. */
+  async function adoptPreviousWeek() {
+    if (!previousPlan) return;
+    try {
+      await db.transaction("rw", db.mealPlans, async () => {
+        const source = await mealPlanRepository.get(previousPlan.id);
+        if (!source) return;
+        const shiftedDays: MealPlanDay[] = buildWeekDays(weekStart).map((day) => {
+          const sourceDay = source.days.find(
+            (d) => d.date === addDays(day.date, -7),
+          );
+          return {
+            date: day.date,
+            entries: (sourceDay?.entries ?? []).map((entry) => ({
+              ...entry,
+              id: newId(),
+            })),
+          };
+        });
+        const current = await mealPlanRepository.findByWeekStart(weekStart);
+        if (current) {
+          // Merge: only fill days that are still empty (never overwrite).
+          const nextDays = buildWeekDays(weekStart).map((day) => {
+            const existing = current.days.find((d) => d.date === day.date);
+            if (existing && existing.entries.length > 0) return existing;
+            return shiftedDays.find((d) => d.date === day.date) ?? day;
+          });
+          await mealPlanRepository.update(current.id, { days: nextDays });
+        } else {
+          await mealPlanRepository.create({
+            name: `Woche ${weekStart}`,
+            weekStart,
+            days: shiftedDays,
+          });
+        }
+      });
+      showToast("Vorwoche übernommen.");
+    } catch {
+      showToast("Übernehmen fehlgeschlagen. Bitte versuche es erneut.");
+    }
+  }
+
   async function handleCreateShoppingList() {
     if (!plan) {
       showToast("Der Plan enthält noch keine Einträge.");
@@ -298,6 +377,13 @@ export default function MealPlanPage() {
         <LoadingState rows={5} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {days.every((day) => day.entries.length === 0) &&
+          (previousPlan?.days.some((day) => day.entries.length > 0) ?? false) ? (
+            <Button variant="secondary" onClick={() => void adoptPreviousWeek()}>
+              Vorwoche als Vorlage übernehmen
+            </Button>
+          ) : null}
+
           {days.map((day) => (
             <DayCard
               key={day.date}
@@ -305,6 +391,7 @@ export default function MealPlanPage() {
               foodById={foodById}
               recipeById={recipeById}
               onAdd={() => openSheet(day.date)}
+              onCopy={day.entries.length > 0 ? () => setCopySourceDate(day.date) : undefined}
               onRemoveEntry={(entryId) => void removeEntry(day.date, entryId)}
             />
           ))}
@@ -447,6 +534,43 @@ export default function MealPlanPage() {
         ) : null}
       </BottomSheet>
 
+      <BottomSheet
+        open={copySourceDate !== null}
+        title={
+          copySourceDate
+            ? `${weekdayNameDe(getDayIndex(parseDateKey(copySourceDate)))} kopieren nach …`
+            : undefined
+        }
+        onClose={() => setCopySourceDate(null)}
+      >
+        {copySourceDate ? (
+          <div>
+            {days
+              .filter((day) => day.date !== copySourceDate)
+              .map((day) => (
+                <button
+                  key={day.date}
+                  type="button"
+                  className="list-row"
+                  onClick={() => void copyDayEntries(copySourceDate, day.date)}
+                >
+                  <span className="list-row__body">
+                    <span className="list-row__title">
+                      {weekdayNameDe(getDayIndex(parseDateKey(day.date)))}
+                    </span>
+                    <span className="list-row__subtitle">
+                      {formatDateShortGerman(day.date)}
+                      {day.entries.length > 0
+                        ? ` · ${day.entries.length === 1 ? "1 Eintrag" : `${day.entries.length} Einträge`} (wird ergänzt)`
+                        : " · leer"}
+                    </span>
+                  </span>
+                </button>
+              ))}
+          </div>
+        ) : null}
+      </BottomSheet>
+
       <ConfirmDialog
         open={pendingItems !== null}
         title="Bestehende Liste gefunden"
@@ -472,10 +596,11 @@ interface DayCardProps {
   foodById: Map<string, FoodItem>;
   recipeById: Map<string, Recipe>;
   onAdd: () => void;
+  onCopy?: () => void;
   onRemoveEntry: (entryId: string) => void;
 }
 
-function DayCard({ day, foodById, recipeById, onAdd, onRemoveEntry }: DayCardProps) {
+function DayCard({ day, foodById, recipeById, onAdd, onCopy, onRemoveEntry }: DayCardProps) {
   const date = parseDateKey(day.date);
   const isToday = day.date === getLocalDateKey();
 
@@ -509,6 +634,14 @@ function DayCard({ day, foodById, recipeById, onAdd, onRemoveEntry }: DayCardPro
             </p>
           ) : null}
         </div>
+        {onCopy ? (
+          <IconButton
+            label={`${weekdayNameDe(getDayIndex(date))} auf anderen Tag kopieren`}
+            onClick={onCopy}
+          >
+            <Copy size={18} />
+          </IconButton>
+        ) : null}
         <IconButton label={`Eintrag für ${weekdayNameDe(getDayIndex(date))} hinzufügen`} onClick={onAdd}>
           <Plus size={20} />
         </IconButton>
