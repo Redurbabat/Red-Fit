@@ -4,6 +4,7 @@ import { newId } from "../../utils/ids";
 import { db } from "../storage/database";
 import { settingsRepository } from "../storage/settingsRepository";
 import { SEED_EXERCISES } from "./exerciseCatalog";
+import { SEED_FOOD_CATALOG } from "./foodCatalog";
 import { SEED_FOODS } from "./foods";
 import { instantiateTemplate, PLAN_TEMPLATES } from "./planTemplates";
 
@@ -19,7 +20,8 @@ export async function seedBaseLibrary(): Promise<void> {
     if (newExercises.length > 0) await db.exercises.bulkAdd(newExercises);
 
     const existingFoodIds = new Set(await db.foodItems.toCollection().primaryKeys());
-    const newFoods = SEED_FOODS.filter((f) => !existingFoodIds.has(f.id));
+    const allSeedFoods = [...SEED_FOODS, ...SEED_FOOD_CATALOG];
+    const newFoods = allSeedFoods.filter((f) => !existingFoodIds.has(f.id));
     if (newFoods.length > 0) await db.foodItems.bulkAdd(newFoods);
   });
 }
