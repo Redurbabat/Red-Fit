@@ -30,7 +30,8 @@ import {
   profileRepository,
   settingsRepository,
 } from "../../services/storage";
-import { DEFAULT_GOAL, seedDemoData } from "../../services/demoData/seed";
+import { DEFAULT_GOAL } from "../../services/demoData/defaults";
+import { seedDemoData } from "../../services/demoData/seed";
 import {
   fitnessGoalLabels,
   nutritionTrackingModeLabels,

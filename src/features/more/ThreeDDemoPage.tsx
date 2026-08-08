@@ -1,11 +1,12 @@
-import { Pause, Play } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { ExerciseAnimation } from "../../components/exercise/ExerciseAnimation";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Card } from "../../components/ui/Card";
-import { IconButton } from "../../components/ui/Button";
-import { Chip } from "../../components/ui/inputs";
+import { Chip, SegmentedControl } from "../../components/ui/inputs";
 import { ANIMATION_TYPES, type AnimationType } from "../../models/exercise";
+
+// three enters the app ONLY through this lazy chunk (§104: 3D never blocks core).
+const ExerciseCoach3D = lazy(() => import("../../components/exercise3d"));
 
 const TYPE_LABELS: Record<AnimationType, string> = {
   push: "Drücken",
@@ -20,24 +21,44 @@ const TYPE_LABELS: Record<AnimationType, string> = {
   lunges: "Ausfallschritt",
 };
 
+function Loading3D() {
+  return (
+    <div
+      aria-hidden="true"
+      className="skeleton"
+      style={{ width: "100%", height: "100%", borderRadius: "inherit" }}
+    />
+  );
+}
+
 export default function ThreeDDemoPage() {
   const [type, setType] = useState<AnimationType>("squat");
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [mode, setMode] = useState<"3d" | "2d">("3d");
 
   return (
     <>
       <PageHeader title="3D Coach" back backFallback="/more" />
 
-      <Card style={{ position: "relative", height: 300 }}>
-        <ExerciseAnimation type={type} isPlaying={isPlaying} />
-        <div style={{ position: "absolute", bottom: 10, right: 10 }}>
-          <IconButton
-            label={isPlaying ? "Animation pausieren" : "Animation abspielen"}
-            onClick={() => setIsPlaying((p) => !p)}
-          >
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-          </IconButton>
-        </div>
+      <SegmentedControl
+        ariaLabel="Ansicht"
+        options={[
+          { value: "3d", label: "3D" },
+          { value: "2d", label: "Figur" },
+        ]}
+        value={mode}
+        onChange={setMode}
+      />
+
+      <Card style={{ position: "relative", height: 340, padding: 0, overflow: "hidden", marginTop: 14 }}>
+        {mode === "3d" ? (
+          <Suspense fallback={<Loading3D />}>
+            <ExerciseCoach3D type={type} />
+          </Suspense>
+        ) : (
+          <div style={{ padding: 18, height: "100%" }}>
+            <ExerciseAnimation type={type} isPlaying />
+          </div>
+        )}
       </Card>
 
       <div className="chip-row" style={{ marginTop: 14, flexWrap: "wrap" }}>
@@ -52,8 +73,8 @@ export default function ThreeDDemoPage() {
       </div>
 
       <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 16 }}>
-        Hier entsteht der 3D-Coach. Die Bewegungsfiguren zeigen die Grundmuster
-        jeder Übung — die vollständige 3D-Ansicht mit drehbarer Kamera folgt.
+        Der 3D-Coach zeigt das Bewegungsmuster jeder Übung — Kamera drehen mit
+        einem Finger, zoomen mit zwei.
       </p>
     </>
   );

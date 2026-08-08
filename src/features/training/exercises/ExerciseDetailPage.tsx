@@ -1,9 +1,12 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { Box, Lightbulb, Pause, Pencil, Play, Trash2, X } from "lucide-react";
-import { useMemo, useState, type CSSProperties } from "react";
+import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ExerciseAnimation } from "../../../components/exercise/ExerciseAnimation";
 import { MuscleMap } from "../../../components/exercise/MuscleMap";
+
+// three loads only when the user switches the card to 3D (§104).
+const ExerciseCoach3D = lazy(() => import("../../../components/exercise3d"));
 import { BottomSheet, ConfirmDialog } from "../../../components/feedback/Modal";
 import { EmptyState, LoadingState } from "../../../components/feedback/states";
 import { useToast } from "../../../components/feedback/ToastProvider";
@@ -150,6 +153,7 @@ export default function ExerciseDetailPage() {
   const { settings } = useSettings();
 
   const [isPlaying, setIsPlaying] = useState(true);
+  const [viewMode, setViewMode] = useState<"2d" | "3d">("2d");
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -275,16 +279,54 @@ export default function ExerciseDetailPage() {
         </div>
 
         {exercise.animationType ? (
-          <Card style={{ position: "relative", height: 220 }}>
-            <ExerciseAnimation type={exercise.animationType} isPlaying={isPlaying} />
-            <div style={{ position: "absolute", top: 10, right: 10 }}>
-              <IconButton
-                label={isPlaying ? "Animation pausieren" : "Animation abspielen"}
-                onClick={() => setIsPlaying((playing) => !playing)}
+          <Card
+            style={{
+              position: "relative",
+              height: viewMode === "3d" ? 320 : 220,
+              padding: viewMode === "3d" ? 0 : 18,
+              overflow: "hidden",
+            }}
+          >
+            {viewMode === "3d" ? (
+              <Suspense
+                fallback={
+                  <div className="skeleton" style={{ width: "100%", height: "100%" }} />
+                }
               >
-                {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-              </IconButton>
-            </div>
+                <ExerciseCoach3D type={exercise.animationType} />
+              </Suspense>
+            ) : (
+              <>
+                <ExerciseAnimation type={exercise.animationType} isPlaying={isPlaying} />
+                <div style={{ position: "absolute", top: 10, right: 10 }}>
+                  <IconButton
+                    label={isPlaying ? "Animation pausieren" : "Animation abspielen"}
+                    onClick={() => setIsPlaying((playing) => !playing)}
+                  >
+                    {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                  </IconButton>
+                </div>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => setViewMode((m) => (m === "3d" ? "2d" : "3d"))}
+              style={{
+                position: "absolute",
+                top: 10,
+                left: 10,
+                minHeight: 44,
+                padding: "0 16px",
+                borderRadius: 12,
+                background: "rgba(34, 35, 41, 0.85)",
+                border: "1px solid var(--border)",
+                color: viewMode === "3d" ? "var(--accent)" : "var(--text-muted)",
+                fontWeight: 700,
+                fontSize: 14,
+              }}
+            >
+              {viewMode === "3d" ? "Figur" : "3D"}
+            </button>
           </Card>
         ) : showPlaceholderCard ? (
           <Card

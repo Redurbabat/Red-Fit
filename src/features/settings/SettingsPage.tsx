@@ -9,7 +9,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Field, NumberInput, SegmentedControl } from "../../components/ui/inputs";
 import { useSettings } from "../../hooks/useSettings";
-import { DEFAULT_GOAL } from "../../services/demoData/seed";
+import { DEFAULT_GOAL } from "../../services/demoData/defaults";
 import { db } from "../../services/storage/database";
 import { goalRepository, settingsRepository } from "../../services/storage";
 import { parseDecimalInput } from "../../utils/numbers";
