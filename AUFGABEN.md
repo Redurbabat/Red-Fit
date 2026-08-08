@@ -94,3 +94,24 @@
 - [x] 3D: SVG-Figuren + echter Three.js/R3F-Coach (10 Bewegungsmuster, prozedural)
 - [ ] KI (Foto→Nährwerte, Empfehlungen)
 - [ ] Goal-Timeline, Meal-Plan-Templates, Rezept-URL-Import, Trainings-Heatmap
+
+## RED Fit 2031 — Phase A (Navigation, Körper, Recovery, Quick Log, Coach) ✅
+
+- [x] Navigation 2031: Heute · Training · Ernährung · **Körper** · Mehr (exakt 5 Einträge)
+- [x] Körper-Startseite `/body`: Readiness, Gewichtstrend (30 Tage), Körperstatus, Bereichs-Links
+- [x] Alte Routen kompatibel: `/progress` bleibt, `/progress/body` → `/body/measurements`
+- [x] Recovery-Check-in (Schlaf/Energie/Stress/Muskelkater 1–5, Schlafstunden) — DB v2, additiv
+- [x] Erklärbarer Readiness-Score (Faktoren mit Vorzeichen, keine Blackbox) + Tests
+- [x] Globales Quick Log: FAB + kontextpriorisiertes Bottom Sheet (Wasser direkt, Gewicht/Recovery als Sheet)
+- [x] Heute-Seite: Readiness-Karte + Coach-Sektion (max. 2 deterministische Insights) + Tests
+- [x] Backup: recoveryLogs additiv (v1-Backups bleiben importierbar), Vorschau-Label
+- [x] docs/2031/ (Vision, IA, Datenmodell V2, 3D-Pipeline, Coach, Mobile Design, Privacy, Integrationen, Migration)
+- [x] CLAUDE.md/ARCHITEKTUR.md an Code angeglichen (Three.js-Widerspruch entfernt, Dependency-Regel, Nav 2031)
+
+## RED Fit 2031 — nächste Phasen
+
+- [ ] Phase B: core/-Plattformschicht, Event-System, zentrale Analytics-Engine
+- [ ] Phase C: Datenmodell V2 (goals, mediaAssets, progressPhotos additiv), Backup V2, Food-Provenance
+- [ ] Phase D: Coach-Ausbau (Weekly Review, Progression-Engine je Plan-Übung), AI-Gateway + Scopes
+- [ ] Phase E: 3D-Pipeline (Asset-Manifest, Viewer-Controls, Muscle-Highlighting, Kamera-Presets)
+- [ ] Phase F: iPhone-E2E 428×926, Screenshot-Regression, Speicher & Diagnose

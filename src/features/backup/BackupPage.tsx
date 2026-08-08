@@ -35,6 +35,7 @@ const PREVIEW_LABELS: [keyof BackupPreview, string, string][] = [
   ["shoppingLists", "Einkaufsliste", "Einkaufslisten"],
   ["mealPlans", "Essensplan", "Essenspläne"],
   ["recipes", "Rezept", "Rezepte"],
+  ["recoveryLogs", "Recovery-Check-in", "Recovery-Check-ins"],
 ];
 
 export default function BackupPage() {

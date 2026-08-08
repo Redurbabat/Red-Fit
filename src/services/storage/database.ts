@@ -8,6 +8,7 @@ import type {
   MealPlan,
   NutritionGoal,
   Recipe,
+  RecoveryLog,
   ShoppingList,
   UserProfile,
   UserSettings,
@@ -17,7 +18,7 @@ import type {
 } from "../../models";
 
 export const DB_NAME = "red-fit";
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 /** Singleton row wrappers — settings/metadata live under fixed ids. */
 export interface SettingsRow extends UserSettings {
@@ -42,6 +43,7 @@ class RedFitDatabase extends Dexie {
   mealPlans!: EntityTable<MealPlan, "id">;
   recipes!: EntityTable<Recipe, "id">;
   userProfiles!: EntityTable<UserProfile, "id">;
+  recoveryLogs!: EntityTable<RecoveryLog, "id">;
   settings!: EntityTable<SettingsRow, "id">;
   metadata!: EntityTable<MetadataRow, "id">;
 
@@ -49,7 +51,7 @@ class RedFitDatabase extends Dexie {
     super(DB_NAME);
     // Migrations are additive: later versions add stores/indexes via
     // this.version(n+1).stores({...}).upgrade(...) — existing data is never dropped.
-    this.version(DB_VERSION).stores({
+    this.version(1).stores({
       exercises: "id, name, muscleGroup, equipment",
       workoutPlans: "id, active",
       workoutLogs: "id, date, status, planId",
@@ -64,6 +66,10 @@ class RedFitDatabase extends Dexie {
       userProfiles: "id",
       settings: "id",
       metadata: "id",
+    });
+    // v2 (RED Fit 2031, Phase A): recovery check-ins — purely additive.
+    this.version(DB_VERSION).stores({
+      recoveryLogs: "id, date",
     });
   }
 }

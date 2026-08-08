@@ -99,3 +99,29 @@ export const nutritionTrackingModeLabels: Record<NutritionTrackingMode, string> 
   mealPlan: "Essensplan nutzen",
   simple: "Nur grob tracken",
 };
+
+/** "+ Guter Schlaf" / "- Energie niedrig" — readiness factors as short German phrases. */
+export function describeReadinessFactor(factor: {
+  key: string;
+  delta: number;
+  value: number;
+}): string | null {
+  if (factor.delta === 0) return null;
+  const positive = factor.delta > 0;
+  switch (factor.key) {
+    case "sleep":
+      return positive ? "Guter Schlaf" : "Wenig Schlaf";
+    case "energy":
+      return positive ? "Viel Energie" : "Energie niedrig";
+    case "stress":
+      return positive ? "Entspannt" : "Hoher Stress";
+    case "soreness":
+      return positive ? "Kein Muskelkater" : "Muskelkater";
+    case "restDays":
+      return factor.value === 1 ? "1 Tag Erholung" : `${factor.value} Tage Erholung`;
+    case "trainedToday":
+      return "Heute schon trainiert";
+    default:
+      return null;
+  }
+}

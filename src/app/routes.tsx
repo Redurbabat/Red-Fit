@@ -22,6 +22,7 @@ const ScanPage = lazy(() => import("../features/nutrition/scan/ScanPage"));
 const MealPlanPage = lazy(() => import("../features/nutrition/meal-plan/MealPlanPage"));
 const ProgressPage = lazy(() => import("../features/progress/ProgressPage"));
 const BodyPage = lazy(() => import("../features/progress/body/BodyPage"));
+const BodyHomePage = lazy(() => import("../features/body/BodyHomePage"));
 const ShoppingPage = lazy(() => import("../features/shopping/ShoppingPage"));
 const RecipesPage = lazy(() => import("../features/recipes/RecipesPage"));
 const MorePage = lazy(() => import("../features/more/MorePage"));
@@ -60,8 +61,11 @@ export const router = createBrowserRouter([
       { path: "/nutrition/scan", element: page(<ScanPage />) },
       { path: "/nutrition/meal-plan", element: page(<MealPlanPage />) },
 
+      { path: "/body", element: page(<BodyHomePage />) },
+      { path: "/body/measurements", element: page(<BodyPage />) },
       { path: "/progress", element: page(<ProgressPage />) },
-      { path: "/progress/body", element: page(<BodyPage />) },
+      // Pre-2031 deep link — Körperwerte moved under the Körper tab.
+      { path: "/progress/body", element: <Navigate to="/body/measurements" replace /> },
 
       { path: "/shopping", element: page(<ShoppingPage />) },
       { path: "/recipes", element: page(<RecipesPage />) },

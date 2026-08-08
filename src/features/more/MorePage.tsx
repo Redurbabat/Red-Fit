@@ -35,7 +35,7 @@ const ENTRIES: MoreEntry[] = [
   { icon: ChefHat, label: "Rezepte", to: "/recipes" },
   { icon: CalendarDays, label: "Essensplan", to: "/nutrition/meal-plan" },
   { icon: ShoppingCart, label: "Einkaufsliste", to: "/shopping" },
-  { icon: Scale, label: "Körperwerte", to: "/progress/body" },
+  { icon: Scale, label: "Körperwerte", to: "/body/measurements" },
   { icon: Download, label: "Backup & Import", to: "/backup" },
   { icon: Settings, label: "Einstellungen", to: "/settings" },
   { icon: Shield, label: "Datenschutz", to: "/privacy" },

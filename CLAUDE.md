@@ -7,17 +7,23 @@ mobile-first PWA für Training, Ernährung, Fortschritt und Planung, täglich nu
 dem iPhone. Keine Demo, kein Mockup — jeder wichtige Button funktioniert, jede Eingabe
 wird gespeichert, Daten überleben Reload und App-Neustart.
 
-Phase 0 (Quellenanalyse) ist abgeschlossen. Verbindliche Grundlagen:
+Phase 0 (Quellenanalyse) und der Grundausbau sind abgeschlossen; es gilt der
+Zielhorizont **RED Fit 2031** („dein persönliches Performance-System").
+Verbindliche Grundlagen:
 
 | Dokument | Inhalt |
 |---|---|
 | `ARCHITEKTUR.md` | Stack, Prinzipien, App-Struktur (nach BABAT-RED-Vorbild) |
+| `docs/2031/` | Zielbild 2031: Vision, IA, Datenmodell V2, 3D-Pipeline, Coach, Privacy, Migration |
 | `docs/phase0/FINAL-DATA-MODEL.md` | alle Typen, Zod-Regeln, Dexie-Stores + Indizes |
-| `docs/phase0/FINAL-ROUTES.md` | Routenbaum + Navigations-Regeln |
+| `docs/phase0/FINAL-ROUTES.md` | Routenbaum + Navigations-Regeln (Nav 2031: siehe `docs/2031/INFORMATION_ARCHITECTURE.md`) |
 | `docs/phase0/IMPLEMENTATION-ORDER.md` | Umsetzungsreihenfolge P1–P10 |
 | `docs/phase0/FINAL-SOURCE-SELECTION.md` | welches Muster woher kommt |
 | `AUFGABEN.md` | Checkliste je Phase |
 | `sources/own/babat-red/` | eigener Code als Portierungsbasis (Übungskatalog!) |
+
+Bei Widersprüchen zwischen Doku und Code ist der Code Source of Truth —
+Widersprüche werden dokumentiert und behoben.
 
 ## Eigenständigkeit (harte Regel)
 
@@ -28,18 +34,25 @@ RED Fit gehört vollständig dem Projektinhaber:
 - Keine externen Dienste als Voraussetzung; Open Food Facts u. Ä. nur als optionale
   Erweiterung mit Fallback.
 
-## Stack (fixiert — nichts anderes installieren)
+## Stack (Basis fixiert — kein Framework-Wechsel)
 
 React · TypeScript strict · Vite · React Router · **Dexie**/IndexedDB · Zod ·
-Lucide React · CSS mit Variablen · vite-plugin-pwa · Vitest.
-Verboten: UI-Frameworks (MUI/AntD/Chakra/Bootstrap/Tailwind), Redux/MobX,
-Chart-Bibliotheken (Charts als SVG/CSS), Backend-SDKs. Three.js/R3F erst Phase 13.
+Lucide React · CSS mit Variablen · vite-plugin-pwa · Vitest ·
+**Three.js/@react-three/fiber** (3D-Coach, nur im Lazy-Chunk — nie im Initial-Bundle) ·
+playwright-core (E2E).
+Verboten bleiben: UI-Frameworks (MUI/AntD/Chakra/Bootstrap/Tailwind), Redux/MobX,
+Chart-Bibliotheken (Charts als SVG/CSS), Backend-SDKs, Wechsel auf
+Flutter/React Native/Angular/Vue/Next.js.
+Neue Dependencies sind erlaubt, wenn sie ein reales Architekturproblem lösen,
+gepflegt sind, vertretbare Bundlekosten haben, nichts Vorhandenes duplizieren
+und dokumentiert werden — keine Dependency aus Bequemlichkeit.
 
 ## Sprache
 
 - Code (Variablen, Typen, Dateien, Kommentare): **Englisch**
 - UI-Texte: **Deutsch** (Label-Mapper für Enums, z. B. `chest → "Brust"`)
-- Produktname: RED Fit · Slogan: "Training und Ernährung in einer App."
+- Produktname: RED Fit · Zielbild 2031: "Dein persönliches Performance-System."
+  (Übergangs-Slogan bis dahin: "Training und Ernährung in einer App.")
 
 ## Kritische Regeln (Vorrang vor allem)
 

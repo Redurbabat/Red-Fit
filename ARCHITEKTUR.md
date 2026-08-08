@@ -24,8 +24,8 @@ Lucide React            Icons
 CSS + CSS-Variablen     Styling (kein UI-Framework, kein Tailwind)
 vite-plugin-pwa         Manifest + Service Worker (Prompt-Update)
 Vitest                  Unit-Tests (Berechnungen, Backup-Validierung)
-Playwright              später (E2E)
-Three.js / R3F          später (Phase 13, erst wenn Kern fertig)
+playwright-core         E2E-Smoke (tools/e2e-smoke.mjs, npm run test:e2e)
+Three.js / R3F          3D-Übungs-Coach (lazy Chunk; GLB-Loader + prozeduraler Fallback)
 ```
 
 Bewusst NICHT: Redux/MobX, Material/Chakra/Bootstrap, schwere Chart-Libs (Charts als
@@ -132,7 +132,9 @@ Abschluss       → status:"completed", endedAt, durationSeconds → Summary
 Richtung "Nocturne": Dark-first, near-black `#0f1012`, dunkle Cards, Akzent Rot/Orange
 (`#ef4444`/`#f97316`), Makro-Farben (Protein blau, Carbs orange, Fett violett, Wasser cyan).
 Vollständige Token-Palette, Typografie und Animationszeiten: Master-Prompt §§7–14
-(in `CLAUDE.md` referenziert). Bottom Nav: Heute · Training · Ernährung · Fortschritt · Mehr.
+(in `CLAUDE.md` referenziert). Bottom Nav (2031): Heute · Training · Ernährung · Körper · Mehr —
+„Fortschritt" ist im Körper-Tab aufgegangen (`/progress` bleibt als Trainings-Analytics-Seite,
+`/progress/body` leitet auf `/body/measurements` um). Details: `docs/2031/INFORMATION_ARCHITECTURE.md`.
 
 ## Quellen-Herkunft
 
