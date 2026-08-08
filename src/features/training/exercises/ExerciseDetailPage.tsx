@@ -3,6 +3,7 @@ import { Box, Lightbulb, Pause, Pencil, Play, Trash2, X } from "lucide-react";
 import { useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ExerciseAnimation } from "../../../components/exercise/ExerciseAnimation";
+import { MuscleMap } from "../../../components/exercise/MuscleMap";
 import { BottomSheet, ConfirmDialog } from "../../../components/feedback/Modal";
 import { EmptyState, LoadingState } from "../../../components/feedback/states";
 import { useToast } from "../../../components/feedback/ToastProvider";
@@ -304,6 +305,51 @@ export default function ExerciseDetailPage() {
             </p>
           </Card>
         ) : null}
+
+        <section>
+          <SectionHeader title="Muskelanatomie" />
+          <Card>
+            <MuscleMap
+              primary={exercise.muscleGroup}
+              secondary={exercise.secondaryMuscles}
+            />
+            <div
+              style={{
+                display: "flex",
+                gap: 16,
+                justifyContent: "center",
+                marginTop: 10,
+                fontSize: 13,
+                color: "var(--text-muted)",
+              }}
+            >
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 3,
+                    background: "var(--accent)",
+                    display: "inline-block",
+                  }}
+                />
+                Hauptmuskeln
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 3,
+                    background: "var(--accent-2)",
+                    display: "inline-block",
+                  }}
+                />
+                Sekundäre Muskeln
+              </span>
+            </div>
+          </Card>
+        </section>
 
         {exercise.instructions.length > 0 ? (
           <section>
