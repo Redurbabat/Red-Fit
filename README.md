@@ -69,6 +69,25 @@ Manifest + Service Worker (Precache der App-Shell, Update nur nach Bestätigung)
 Nach dem ersten Laden funktioniert die Kern-App offline. Installation:
 RED Fit in Safari öffnen → Teilen → „Zum Home-Bildschirm“ → „Hinzufügen“.
 
+## 3D-Modelle (Blender)
+
+Eigene Übungs-Animationen als GLB werden automatisch geladen: Datei nach
+`public/models/<übungs-id>.glb` legen (z. B. `seed-ch1.glb` für Bankdrücken —
+die IDs stehen in `src/services/demoData/exerciseCatalog.ts`). Vorgaben:
+Figur ~1,75 m, Ursprung an den Füßen, eine gebackene Loop-Animation (ideal
+mit dem Namen „exercise"). Fehlt die Datei, zeigt die App automatisch den
+eingebauten prozeduralen 3D-Coach.
+
+## E2E-Smoke-Test
+
+```bash
+npm run dev          # Terminal 1
+npm run test:e2e     # Terminal 2 (braucht Chrome; sonst CHROME_PATH setzen)
+```
+
+Prüft die kritischen Flows im echten Browser: Onboarding → Workout →
+Satz loggen → Reload ohne Datenverlust → Resume-Banner → 80 g = 296 kcal.
+
 ## Bekannte Einschränkungen
 
 - Barcode-Kamera-Scan nur in Browsern mit `BarcodeDetector` (manuelle Eingabe

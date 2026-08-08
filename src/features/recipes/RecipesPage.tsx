@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { CookingPot, Plus, Utensils, X } from "lucide-react";
+import { ClipboardPaste, CookingPot, Plus, Utensils, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { BottomSheet, ConfirmDialog } from "../../components/feedback/Modal";
 import { EmptyState, LoadingState } from "../../components/feedback/states";
@@ -9,6 +9,10 @@ import { Button, IconButton } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Chip, Field, IntegerInput, NumberInput, TextInput } from "../../components/ui/inputs";
 import { Stepper } from "../../components/ui/Stepper";
+import {
+  parseRecipeText,
+  type ParsedIngredientLine,
+} from "../../services/nutrition/recipeTextParser";
 import type {
   FoodItem,
   MealFoodEntry,
@@ -59,6 +63,8 @@ export default function RecipesPage() {
 
   // ---- Editor state ----
   const [editorOpen, setEditorOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [draftName, setDraftName] = useState("");
   const [servingsInput, setServingsInput] = useState("2");
@@ -117,6 +123,31 @@ export default function RecipesPage() {
     setIngredientQuery("");
     setIngredientAmount("100");
     setIngredientError(undefined);
+  }
+
+  // ---- Zutaten aus Text (paste import) ----
+  const parsedImport: ParsedIngredientLine[] = useMemo(
+    () => (importOpen ? parseRecipeText(importText, foods ?? []) : []),
+    [importOpen, importText, foods],
+  );
+  const importMatches = parsedImport.filter((line) => line.food && line.amountG);
+
+  function applyImport() {
+    const additions: RecipeIngredient[] = importMatches.map((line) => ({
+      id: newId(),
+      foodId: line.food!.id,
+      amountG: line.amountG!,
+    }));
+    if (additions.length === 0) return;
+    setDraftIngredients((current) => [...current, ...additions]);
+    const skipped = parsedImport.length - importMatches.length;
+    showToast(
+      skipped > 0
+        ? `${additions.length} Zutaten übernommen, ${skipped} nicht erkannt.`
+        : `${additions.length} Zutaten übernommen.`,
+    );
+    setImportOpen(false);
+    setImportText("");
   }
 
   async function handleSaveRecipe() {
@@ -432,6 +463,13 @@ export default function RecipesPage() {
             </>
           )}
 
+          <div style={{ margin: "4px 0 14px" }}>
+            <Button small autoWidth variant="secondary" onClick={() => setImportOpen(true)}>
+              <ClipboardPaste size={16} aria-hidden="true" style={{ marginRight: 6 }} />
+              Zutaten aus Text einfügen
+            </Button>
+          </div>
+
           <Field label="Zubereitung (ein Schritt pro Zeile)">
             {(id) => (
               <textarea
@@ -468,6 +506,64 @@ export default function RecipesPage() {
               Abbrechen
             </Button>
           </div>
+        </div>
+      </BottomSheet>
+
+      {/* Zutaten aus eingefügtem Text — offline, ohne URL-Abruf. */}
+      <BottomSheet
+        open={importOpen}
+        title="Zutaten aus Text"
+        onClose={() => setImportOpen(false)}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <p style={{ fontSize: 14, color: "var(--text-muted)" }}>
+            Zutatenliste einfügen — eine Zutat pro Zeile, z. B. „200 g
+            Haferflocken“ oder „2 Bananen“.
+          </p>
+          <textarea
+            className="input"
+            rows={6}
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+            placeholder={"200 g Haferflocken\n1 Banane\n300 ml Milch"}
+            aria-label="Zutatenliste"
+          />
+          {parsedImport.length > 0 ? (
+            <div>
+              {parsedImport.map((line, i) => (
+                <div key={i} className="list-row" style={{ minHeight: 44 }}>
+                  <span className="list-row__body">
+                    <span
+                      className="list-row__title"
+                      style={{
+                        fontWeight: 500,
+                        color: line.food ? undefined : "var(--text-soft)",
+                      }}
+                    >
+                      {line.food ? line.food.name : line.name}
+                    </span>
+                    <span className="list-row__subtitle">
+                      {line.food && line.amountG
+                        ? `${String(line.amountG).replace(".", ",")} g${line.approximate ? " (geschätzt)" : ""}`
+                        : line.food
+                          ? "Menge nicht erkannt"
+                          : "Nicht in der Bibliothek gefunden"}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <Button disabled={importMatches.length === 0} onClick={applyImport}>
+            {importMatches.length === 0
+              ? "Übernehmen"
+              : importMatches.length === 1
+                ? "1 Zutat übernehmen"
+                : `${importMatches.length} Zutaten übernehmen`}
+          </Button>
+          <Button variant="ghost" onClick={() => setImportOpen(false)}>
+            Abbrechen
+          </Button>
         </div>
       </BottomSheet>
 
