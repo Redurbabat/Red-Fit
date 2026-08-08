@@ -1,0 +1,96 @@
+# AUFGABEN.md — RED Fit
+
+## PHASE 0 — Quellenanalyse und Konsolidierung ✅ ABGESCHLOSSEN
+
+### 0.1 Archive sichern ✅
+- [x] Originale bleiben unverändert in `Redurbabat/gym-essen`
+- [x] 53 Teile → 20 Archive zusammengesetzt (`cat *.zip.* > *.zip`)
+- [x] Integrität geprüft (`unzip -t`: 20/20 OK)
+- [x] SHA256-Prüfsummen dokumentiert (`docs/phase0/audits/ARCHIVE-INTEGRITY.md`)
+
+### 0.2 Projekte rekonstruieren ✅
+- [x] alle 20 Projekte entpackt (615 MB, 21.334 Dateien)
+
+### 0.3 Inventarisieren ✅
+- [x] Stack, Source Roots, Datenmodelle, Storage, Features je Projekt
+- [x] Audits: `docs/phase0/audits/` (Einzel-Audits + Sammel-Audits + BABAT-RED)
+- [x] KEEP/PARTIAL/REFERENCE/DROP vergeben (Workout Tracker → DROP)
+
+### 0.4 Bereinigung ✅
+- [x] Kein Build-Artefakt, kein node_modules, kein Secret ins Repo übernommen
+- [x] Entscheidung Eigenständigkeit: **kein fremder Code im Repo** — nur destilliertes
+      Wissen in Reports; einzige Code-Basis ist eigener BABAT-RED-Extrakt (`sources/own/`)
+
+### 0.5 Source Matrix ✅
+- [x] `docs/phase0/SOURCE-MATRIX.md` vollständig
+- [x] beste Quelle je Fachbereich: `docs/phase0/FINAL-SOURCE-SELECTION.md`
+
+### 0.6 Architektur ✅
+- [x] Zielstack fixiert (TS/React/Vite/Dexie/Zod/Lucide/CSS/vite-plugin-pwa/Vitest)
+- [x] Datenmodell: `docs/phase0/FINAL-DATA-MODEL.md`
+- [x] Storage-Schema: 14 Dexie-Stores + Indizes
+- [x] Backup-Format: `red-fit-backup` v1
+- [x] Routen: `docs/phase0/FINAL-ROUTES.md`
+- [x] Reihenfolge: `docs/phase0/IMPLEMENTATION-ORDER.md`
+
+### 0.7 Themenberichte ✅
+- [x] REPORT-WORKOUT · REPORT-NUTRITION · REPORT-STORAGE · REPORT-PWA ·
+      REPORT-BARCODE · REPORT-MEAL-PLANNING · REPORT-3D
+
+### Offene Nacharbeiten (blockieren Phase 1 nicht)
+- [ ] Red-Max als Quelle nachziehen (vor Phase 13: Three.js/R3F/Dexie-Muster)
+- [ ] Redion als Quelle nachziehen (vor P8-Feinschliff: zweite Backup-/Restore-Referenz)
+- [ ] Kalender als Quelle nachziehen (vor P7: Wochenansicht-UX)
+
+---
+
+## PHASE 1 — Fundament (P1 in IMPLEMENTATION-ORDER.md)
+- [ ] Vite + React + TS strict + Router + ESLint (Scripts: dev/build/preview/typecheck/lint)
+- [ ] Design Tokens (Nocturne) + base.css + Safe Areas
+- [ ] Dexie v1: 14 Stores + Indizes + Migrationsgerüst
+- [ ] Models + Zod-Schemas · utils (dates/ids/numbers)
+- [ ] Repositories (storage-Schicht)
+- [ ] AppShell, BottomNav, ErrorBoundary, Toast/Modal/BottomSheet
+
+## PHASE 2 — Onboarding + Seed
+- [ ] Seed-Logik (einmalig; Basis-Übungen ≠ Demo-Logs)
+- [ ] Übungskatalog aus `sources/own/babat-red/gym/uebungen.ts` portieren
+- [ ] Onboarding (5 Schritte) → UserProfile + NutritionGoal
+
+## PHASE 3 — Training (höchste Priorität)
+- [ ] Übungsbibliothek (Suche, Filter, Custom, Detail + 3D-Platzhalter)
+- [ ] Pläne + Vorlagen (PPL, Ganzkörper 3T, OK/UK, Zuhause)
+- [ ] Workout-Modus: aktiver Log, Stepper, Satz fertig, Timer (restEndsAt), Summary
+- [ ] Resume-Banner + Autosave + History
+- [ ] calculations/workout.ts (Volumen, PRs, Streak) + Tests
+
+## PHASE 4 — Ernährung
+- [ ] Foods CRUD + Suche + Favoriten + zuletzt verwendet
+- [ ] Meal Logging (Live-Berechnung, Snapshot-Entries, editierbar/löschbar)
+- [ ] Nutrition-Dashboard (Tagesnavigation, Makro-Bars)
+- [ ] Wasser · calculations/nutrition.ts + Tests
+
+## PHASE 5 — Today-Dashboard
+- [ ] Greeting, TodayWorkoutCard, MacroSummary, WaterCard, QuickActions, Streak
+
+## PHASE 6 — Fortschritt
+- [ ] Körperwerte + SVG-Gewichtschart · Trainingsstatistik · Rekorde · Ø kcal/Protein 7 Tage
+
+## PHASE 7 — Planung
+- [ ] Essensplan (Woche) · Rezepte (MVP) · Einkaufsliste (manuell + aus Plan, Aggregation)
+
+## PHASE 8 — Backup
+- [ ] Export JSON · Import (Zod, __proto__-Schutz, Vorschau, Merge) + Tests
+
+## PHASE 9 — PWA + iPhone
+- [ ] vite-plugin-pwa (Prompt-Update) · Manifest + Icons · iPhone-Metas
+- [ ] Offline-Test · Install-Anleitung · A11y-Pass · Empty States · Responsive-Checks
+
+## PHASE 10 — Abschluss
+- [ ] typecheck/lint/build grün · 45-Punkte-Checkliste · README · Abschlussbericht
+
+## SPÄTER (nie blockierend)
+- [ ] Barcode-Kamera (BarcodeDetector) + Open Food Facts
+- [ ] 3D: CSS/SVG-Figur → Three.js/R3F (mit Red-Max)
+- [ ] KI (Foto→Nährwerte, Empfehlungen)
+- [ ] Goal-Timeline, Meal-Plan-Templates, Rezept-URL-Import, Trainings-Heatmap
