@@ -44,53 +44,53 @@
 
 ---
 
-## PHASE 1 — Fundament (P1 in IMPLEMENTATION-ORDER.md)
-- [ ] Vite + React + TS strict + Router + ESLint (Scripts: dev/build/preview/typecheck/lint)
-- [ ] Design Tokens (Nocturne) + base.css + Safe Areas
-- [ ] Dexie v1: 14 Stores + Indizes + Migrationsgerüst
-- [ ] Models + Zod-Schemas · utils (dates/ids/numbers)
-- [ ] Repositories (storage-Schicht)
-- [ ] AppShell, BottomNav, ErrorBoundary, Toast/Modal/BottomSheet
+## PHASE 1 — Fundament ✅
+- [x] Vite + React + TS strict + Router + ESLint (Scripts: dev/build/preview/typecheck/lint)
+- [x] Design Tokens (Nocturne) + base.css + Safe Areas
+- [x] Dexie v1: 14 Stores + Indizes + Migrationsgerüst
+- [x] Models + Zod-Schemas · utils (dates/ids/numbers)
+- [x] Repositories (storage-Schicht)
+- [x] AppShell, BottomNav, ErrorBoundary, Toast/Modal/BottomSheet
 
-## PHASE 2 — Onboarding + Seed
-- [ ] Seed-Logik (einmalig; Basis-Übungen ≠ Demo-Logs)
-- [ ] Übungskatalog aus `sources/own/babat-red/gym/uebungen.ts` portieren
-- [ ] Onboarding (5 Schritte) → UserProfile + NutritionGoal
+## PHASE 2 — Onboarding + Seed ✅
+- [x] Seed-Logik (einmalig; Basis-Übungen ≠ Demo-Logs)
+- [x] Übungskatalog aus `sources/own/babat-red/gym/uebungen.ts` portieren
+- [x] Onboarding (5 Schritte) → UserProfile + NutritionGoal
 
-## PHASE 3 — Training (höchste Priorität)
-- [ ] Übungsbibliothek (Suche, Filter, Custom, Detail + 3D-Platzhalter)
-- [ ] Pläne + Vorlagen (PPL, Ganzkörper 3T, OK/UK, Zuhause)
-- [ ] Workout-Modus: aktiver Log, Stepper, Satz fertig, Timer (restEndsAt), Summary
-- [ ] Resume-Banner + Autosave + History
-- [ ] calculations/workout.ts (Volumen, PRs, Streak) + Tests
+## PHASE 3 — Training (höchste Priorität) ✅
+- [x] Übungsbibliothek (Suche, Filter, Custom, Detail + 3D-Platzhalter)
+- [x] Pläne + Vorlagen (PPL, Ganzkörper 3T, OK/UK, Zuhause)
+- [x] Workout-Modus: aktiver Log, Stepper, Satz fertig, Timer (restEndsAt), Summary
+- [x] Resume-Banner + Autosave + History
+- [x] calculations/workout.ts (Volumen, PRs, Streak) + Tests
 
-## PHASE 4 — Ernährung
-- [ ] Foods CRUD + Suche + Favoriten + zuletzt verwendet
-- [ ] Meal Logging (Live-Berechnung, Snapshot-Entries, editierbar/löschbar)
-- [ ] Nutrition-Dashboard (Tagesnavigation, Makro-Bars)
-- [ ] Wasser · calculations/nutrition.ts + Tests
+## PHASE 4 — Ernährung ✅
+- [x] Foods CRUD + Suche + Favoriten + zuletzt verwendet
+- [x] Meal Logging (Live-Berechnung, Snapshot-Entries, editierbar/löschbar)
+- [x] Nutrition-Dashboard (Tagesnavigation, Makro-Bars)
+- [x] Wasser · calculations/nutrition.ts + Tests
 
-## PHASE 5 — Today-Dashboard
-- [ ] Greeting, TodayWorkoutCard, MacroSummary, WaterCard, QuickActions, Streak
+## PHASE 5 — Today-Dashboard ✅
+- [x] Greeting, TodayWorkoutCard, MacroSummary, WaterCard, QuickActions, Streak
 
-## PHASE 6 — Fortschritt
-- [ ] Körperwerte + SVG-Gewichtschart · Trainingsstatistik · Rekorde · Ø kcal/Protein 7 Tage
+## PHASE 6 — Fortschritt ✅
+- [x] Körperwerte + SVG-Gewichtschart · Trainingsstatistik · Rekorde · Ø kcal/Protein 7 Tage
 
-## PHASE 7 — Planung
-- [ ] Essensplan (Woche) · Rezepte (MVP) · Einkaufsliste (manuell + aus Plan, Aggregation)
+## PHASE 7 — Planung ✅
+- [x] Essensplan (Woche) · Rezepte (MVP) · Einkaufsliste (manuell + aus Plan, Aggregation)
 
-## PHASE 8 — Backup
-- [ ] Export JSON · Import (Zod, __proto__-Schutz, Vorschau, Merge) + Tests
+## PHASE 8 — Backup ✅
+- [x] Export JSON · Import (Zod, __proto__-Schutz, Vorschau, Merge) + Tests
 
-## PHASE 9 — PWA + iPhone
-- [ ] vite-plugin-pwa (Prompt-Update) · Manifest + Icons · iPhone-Metas
-- [ ] Offline-Test · Install-Anleitung · A11y-Pass · Empty States · Responsive-Checks
+## PHASE 9 — PWA + iPhone ✅
+- [x] vite-plugin-pwa (Prompt-Update) · Manifest + Icons · iPhone-Metas
+- [x] Offline-Test · Install-Anleitung · A11y-Pass · Empty States · Responsive-Checks
 
-## PHASE 10 — Abschluss
+## PHASE 10 — Abschluss ✅
 - [ ] typecheck/lint/build grün · 45-Punkte-Checkliste · README · Abschlussbericht
 
 ## SPÄTER (nie blockierend)
-- [ ] Barcode-Kamera (BarcodeDetector) + Open Food Facts
-- [ ] 3D: CSS/SVG-Figur → Three.js/R3F (mit Red-Max)
+- [x] Barcode-Kamera (BarcodeDetector) + Open Food Facts (Lookup mit Vorschau)
+- [x] 3D: SVG-Figuren + echter Three.js/R3F-Coach (10 Bewegungsmuster, prozedural)
 - [ ] KI (Foto→Nährwerte, Empfehlungen)
 - [ ] Goal-Timeline, Meal-Plan-Templates, Rezept-URL-Import, Trainings-Heatmap
