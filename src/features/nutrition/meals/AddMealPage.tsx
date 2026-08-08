@@ -231,6 +231,30 @@ export default function AddMealPage() {
                 />
               )}
             </Field>
+            {/* Quick amounts: portion multiples when known, gram presets otherwise. */}
+            <div className="chip-row" aria-label="Schnellmengen">
+              {(selectedFood.servingSizeG && selectedFood.servingSizeG > 0
+                ? [
+                    { label: "½ Portion", grams: selectedFood.servingSizeG / 2 },
+                    { label: "1 Portion", grams: selectedFood.servingSizeG },
+                    { label: "2 Portionen", grams: selectedFood.servingSizeG * 2 },
+                    { label: "100 g", grams: 100 },
+                  ]
+                : [
+                    { label: "50 g", grams: 50 },
+                    { label: "100 g", grams: 100 },
+                    { label: "150 g", grams: 150 },
+                    { label: "200 g", grams: 200 },
+                  ]
+              ).map((preset) => (
+                <Chip
+                  key={preset.label}
+                  label={preset.label}
+                  selected={parseDecimalInput(amountInput) === roundTo(preset.grams, 1)}
+                  onClick={() => setAmountInput(toInputValue(roundTo(preset.grams, 1)))}
+                />
+              ))}
+            </div>
             <LiveNutrition food={selectedFood} amountInput={amountInput} />
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
               <Button disabled={saving} onClick={() => void handleSave()}>
