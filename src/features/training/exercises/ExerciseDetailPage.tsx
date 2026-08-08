@@ -305,6 +305,7 @@ export default function ExerciseDetailPage() {
                   // Manifest → animation3dUrl → /models/<id>.glb convention;
                   // a missing file still falls back to the procedural coach.
                   modelUrl={resolveExerciseModel(exercise, assetManifest).url}
+                  cameraPreset={resolveExerciseModel(exercise, assetManifest).cameraPreset}
                 />
               </Suspense>
             ) : (
