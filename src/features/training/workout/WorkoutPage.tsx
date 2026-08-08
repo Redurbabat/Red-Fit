@@ -320,10 +320,10 @@ export default function WorkoutPage() {
   const lastPerformance = currentLog
     ? findLastPerformance(completedLogs ?? [], currentLog.exerciseId)
     : undefined;
-  const plannedTargetReps = currentLog
-    ? planSession?.exercises.find((e) => e.exerciseId === currentLog.exerciseId)?.repsMax
+  const plannedExercise = currentLog
+    ? planSession?.exercises.find((e) => e.exerciseId === currentLog.exerciseId)
     : undefined;
-  const suggestedKg = suggestNextWeight(lastPerformance, plannedTargetReps);
+  const suggestedKg = suggestNextWeight(lastPerformance, plannedExercise?.repsMax);
 
   const updateSet = (
     setIndex: number,
@@ -551,6 +551,15 @@ export default function WorkoutPage() {
               {currentExercise ? (
                 <span style={{ color: "var(--text-muted)", fontSize: 14 }}>
                   {muscleGroupLabels[currentExercise.muscleGroup]}
+                </span>
+              ) : null}
+              {plannedExercise ? (
+                <span style={{ color: "var(--text-muted)", fontSize: 14 }}>
+                  · Ziel{" "}
+                  {plannedExercise.repsMin === plannedExercise.repsMax
+                    ? plannedExercise.repsMax
+                    : `${plannedExercise.repsMin}–${plannedExercise.repsMax}`}{" "}
+                  Wdh.
                 </span>
               ) : null}
               {currentExercise ? (
