@@ -149,7 +149,7 @@ export default function WorkoutSummaryPage() {
                   {record.exerciseName}: {formatKg(record.maxWeightKg)}
                 </div>
                 <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                  Neuer Bestwert · × {record.maxRepsAtMaxWeight} Wdh.
+                  Neuer Bestwert · {record.maxRepsAtMaxWeight} Wdh.
                 </div>
               </div>
             </Card>

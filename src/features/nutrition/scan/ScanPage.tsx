@@ -8,6 +8,11 @@ import { Card } from "../../../components/ui/Card";
 import { Field, IntegerInput } from "../../../components/ui/inputs";
 import type { FoodItem } from "../../../models";
 import { barcodeService } from "../../../services/barcode/barcodeService";
+import {
+  lookupBarcodeOnline,
+  lookupToFoodDraft,
+  type FoodLookupResult,
+} from "../../../services/nutrition/openFoodFacts";
 import { foodRepository } from "../../../services/storage";
 import { formatGrams, formatKcal } from "../../../utils/numbers";
 
@@ -16,6 +21,12 @@ interface ScanResult {
   food: FoodItem | null;
 }
 
+type OnlineLookupState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "found"; result: FoodLookupResult }
+  | { status: "notFound" };
+
 export default function ScanPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -23,6 +34,7 @@ export default function ScanPage() {
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState<string | undefined>(undefined);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [online, setOnline] = useState<OnlineLookupState>({ status: "idle" });
   const [scanning, setScanning] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -38,6 +50,7 @@ export default function ScanPage() {
         return;
       }
       setCodeError(undefined);
+      setOnline({ status: "idle" });
       try {
         const food = await foodRepository.findByBarcode(code);
         setResult({ code, food: food ?? null });
@@ -47,6 +60,25 @@ export default function ScanPage() {
     },
     [showToast],
   );
+
+  /** Optional online lookup — an enhancement only, never a requirement. */
+  async function searchOnline(code: string) {
+    setOnline({ status: "loading" });
+    const found = await lookupBarcodeOnline(code);
+    setOnline(found ? { status: "found", result: found } : { status: "notFound" });
+  }
+
+  /** Store a confirmed online result as a local food (§65: preview first). */
+  async function saveOnlineResult(found: FoodLookupResult) {
+    try {
+      const created = await foodRepository.create(lookupToFoodDraft(found));
+      showToast("Lebensmittel gespeichert.");
+      setOnline({ status: "idle" });
+      setResult({ code: found.barcode, food: created });
+    } catch {
+      showToast("Lebensmittel konnte nicht gespeichert werden. Bitte prüfe die Werte und versuche es erneut.");
+    }
+  }
 
   // Camera lifecycle: scan while `scanning` is true, abort on toggle-off,
   // page change and unmount via the effect cleanup.
@@ -154,7 +186,16 @@ export default function ScanPage() {
               <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 4 }}>
                 Für den Barcode {result.code} ist noch kein Lebensmittel gespeichert.
               </p>
-              <div style={{ marginTop: 14 }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}
+              >
+                <Button
+                  variant="secondary"
+                  disabled={online.status === "loading"}
+                  onClick={() => void searchOnline(result.code)}
+                >
+                  {online.status === "loading" ? "Suche läuft …" : "Online suchen"}
+                </Button>
                 <Button
                   onClick={() =>
                     navigate(`/nutrition/foods/new?barcode=${encodeURIComponent(result.code)}`)
@@ -163,8 +204,39 @@ export default function ScanPage() {
                   Lebensmittel erstellen
                 </Button>
               </div>
+              {online.status === "notFound" ? (
+                <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 10 }}>
+                  Online nichts gefunden. Du kannst die Nährwerte selbst speichern.
+                </p>
+              ) : null}
             </Card>
           )
+        ) : null}
+
+        {online.status === "found" ? (
+          <Card>
+            <p style={{ fontSize: 13, color: "var(--text-soft)" }}>Online gefunden — vor dem Speichern prüfen:</p>
+            <p style={{ fontSize: 17, fontWeight: 600, marginTop: 6 }}>{online.result.name}</p>
+            {online.result.brand ? (
+              <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 2 }}>
+                {online.result.brand}
+              </p>
+            ) : null}
+            <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 6 }}>
+              {formatKcal(online.result.kcalPer100g)} / 100 g ·{" "}
+              {formatGrams(online.result.proteinPer100g)} Protein ·{" "}
+              {formatGrams(online.result.carbsPer100g)} KH ·{" "}
+              {formatGrams(online.result.fatPer100g)} Fett
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
+              <Button onClick={() => void saveOnlineResult(online.result)}>
+                Lebensmittel speichern
+              </Button>
+              <Button variant="ghost" onClick={() => setOnline({ status: "idle" })}>
+                Verwerfen
+              </Button>
+            </div>
+          </Card>
         ) : null}
 
         <SectionHeader title="Mit Kamera scannen" />
