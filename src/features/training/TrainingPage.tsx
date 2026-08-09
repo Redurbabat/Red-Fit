@@ -23,9 +23,12 @@ import {
   startPlannedWorkout,
 } from "../../services/workout/workoutService";
 import {
+  addDays,
   formatDateShortGerman,
   formatDurationLong,
   formatTime,
+  getLocalDateKey,
+  getWeekStart,
   weekdayNameDe,
 } from "../../utils/dates";
 import {
@@ -35,6 +38,55 @@ import {
 } from "../../utils/labels";
 
 const EXERCISE_PREVIEW_COUNT = 4;
+
+/** Mon–Sun strip (§89): ✓ trained, ● today (untrained), – rest day. */
+function WeekOverview() {
+  const completed = useLiveQuery(() => workoutLogRepository.listCompleted(20), []);
+  const today = getLocalDateKey();
+  const weekStart = getWeekStart(today);
+  const trainedDates = new Set((completed ?? []).map((w) => w.date));
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  return (
+    <Card>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 4 }}>
+        {days.map((date, i) => {
+          const trained = trainedDates.has(date);
+          const isToday = date === today;
+          return (
+            <div
+              key={date}
+              style={{ textAlign: "center", flex: 1, minWidth: 0 }}
+              aria-label={`${weekdayNameDe(i)}: ${trained ? "trainiert" : isToday ? "heute" : "kein Training"}`}
+            >
+              <div style={{ fontSize: 12, color: "var(--text-soft)", marginBottom: 6 }}>
+                {weekdayNameDe(i).slice(0, 2)}
+              </div>
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  margin: "0 auto",
+                  borderRadius: 999,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  background: trained ? "var(--accent)" : "var(--surface-3)",
+                  color: trained ? "#fff" : "var(--text-soft)",
+                  border: isToday ? "2px solid var(--accent-2)" : "1px solid var(--border)",
+                }}
+              >
+                {trained ? "✓" : isToday ? "●" : "–"}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
 
 /** Non-interactive "Aktiv" badge in chip look (no nested buttons in rows). */
 function ActiveBadge() {
@@ -221,6 +273,9 @@ export default function TrainingPage() {
           />
         </Card>
       )}
+
+      <SectionHeader title="Diese Woche" />
+      <WeekOverview />
 
       <SectionHeader
         title="Trainingspläne"

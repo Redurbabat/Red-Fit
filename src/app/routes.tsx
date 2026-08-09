@@ -22,9 +22,13 @@ const ScanPage = lazy(() => import("../features/nutrition/scan/ScanPage"));
 const MealPlanPage = lazy(() => import("../features/nutrition/meal-plan/MealPlanPage"));
 const ProgressPage = lazy(() => import("../features/progress/ProgressPage"));
 const BodyPage = lazy(() => import("../features/progress/body/BodyPage"));
+const BodyHomePage = lazy(() => import("../features/body/BodyHomePage"));
+const PhotosPage = lazy(() => import("../features/body/PhotosPage"));
 const ShoppingPage = lazy(() => import("../features/shopping/ShoppingPage"));
 const RecipesPage = lazy(() => import("../features/recipes/RecipesPage"));
 const MorePage = lazy(() => import("../features/more/MorePage"));
+const CoachPage = lazy(() => import("../features/coach/CoachPage"));
+const DiagnosticsPage = lazy(() => import("../features/more/DiagnosticsPage"));
 const BackupPage = lazy(() => import("../features/backup/BackupPage"));
 const SettingsPage = lazy(() => import("../features/settings/SettingsPage"));
 const PrivacyPage = lazy(() => import("../features/more/PrivacyPage"));
@@ -60,13 +64,19 @@ export const router = createBrowserRouter([
       { path: "/nutrition/scan", element: page(<ScanPage />) },
       { path: "/nutrition/meal-plan", element: page(<MealPlanPage />) },
 
+      { path: "/body", element: page(<BodyHomePage />) },
+      { path: "/body/measurements", element: page(<BodyPage />) },
+      { path: "/body/photos", element: page(<PhotosPage />) },
       { path: "/progress", element: page(<ProgressPage />) },
-      { path: "/progress/body", element: page(<BodyPage />) },
+      // Pre-2031 deep link — Körperwerte moved under the Körper tab.
+      { path: "/progress/body", element: <Navigate to="/body/measurements" replace /> },
 
       { path: "/shopping", element: page(<ShoppingPage />) },
       { path: "/recipes", element: page(<RecipesPage />) },
 
       { path: "/more", element: page(<MorePage />) },
+      { path: "/coach", element: page(<CoachPage />) },
+      { path: "/diagnostics", element: page(<DiagnosticsPage />) },
       { path: "/backup", element: page(<BackupPage />) },
       { path: "/settings", element: page(<SettingsPage />) },
       { path: "/privacy", element: page(<PrivacyPage />) },

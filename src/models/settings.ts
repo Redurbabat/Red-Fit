@@ -24,6 +24,8 @@ export const appMetadataSchema = z.object({
   onboardingCompleted: z.boolean(),
   onboardingVersion: z.number().int().min(0),
   demoDataSeeded: z.boolean(),
+  /** Set on every successful export — shown under Speicher & Diagnose. */
+  lastBackupAt: z.string().optional(),
 });
 export type AppMetadata = z.infer<typeof appMetadataSchema>;
 

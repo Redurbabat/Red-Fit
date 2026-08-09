@@ -78,6 +78,19 @@ Figur ~1,75 m, Ursprung an den Füßen, eine gebackene Loop-Animation (ideal
 mit dem Namen „exercise"). Fehlt die Datei, zeigt die App automatisch den
 eingebauten prozeduralen 3D-Coach.
 
+Optional steuert ein Manifest `public/models/manifest.json` die Zuordnung
+(andere Dateinamen, Clip-Name, Kamera-Preset), Zod-validiert:
+
+```json
+{
+  "version": 1,
+  "assets": [
+    { "exerciseId": "seed-ch1", "modelUrl": "/models/bench-v2.glb",
+      "animationClip": "exercise", "cameraPreset": "side" }
+  ]
+}
+```
+
 ## E2E-Smoke-Test
 
 ```bash
@@ -91,9 +104,11 @@ Satz loggen → Reload ohne Datenverlust → Resume-Banner → 80 g = 296 kcal.
 ## Bekannte Einschränkungen
 
 - Barcode-Kamera-Scan nur in Browsern mit `BarcodeDetector` (manuelle Eingabe
-  funktioniert immer); Open-Food-Facts-Anbindung ist noch nicht aktiviert.
-- 3D: aktuell animierte SVG-Bewegungsfiguren; echtes Three.js-3D ist als
-  spätere Phase vorgesehen (`docs/phase0/REPORT-3D.md`).
+  funktioniert immer); die optionale Open-Food-Facts-Suche braucht Internet —
+  offline bleibt die manuelle Anlage der Weg.
+- 3D-Coach: eingebaute prozedurale Figur für alle Übungstypen; eigene
+  Blender-GLBs werden automatisch geladen (Abschnitt „3D-Modelle“), der
+  Feinschliff einzelner Animationen folgt mit den echten Modellen.
 - KI-Coach ist bewusst nur als „Später“-Eintrag sichtbar — keine Fake-Funktion.
 
 ## Projekt-Dokumentation

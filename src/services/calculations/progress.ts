@@ -26,6 +26,26 @@ export function calculateWeightTrend(newestFirst: BodyMeasurement[]): WeightTren
   };
 }
 
+/**
+ * Weight change over a window (§62: trend beats day-to-day noise): newest
+ * weight minus the oldest weight inside the last `days` days. Needs two
+ * measurements in the window, otherwise undefined.
+ */
+export function calculateWeightChangeOverDays(
+  newestFirst: BodyMeasurement[],
+  days: number,
+  today: string = getLocalDateKey(),
+): number | undefined {
+  const cutoff = addDays(today, -(days - 1));
+  const window = newestFirst.filter(
+    (m) => m.weightKg != null && m.date >= cutoff && m.date <= today,
+  );
+  if (window.length < 2) return undefined;
+  const newest = window[0].weightKg!;
+  const oldest = window[window.length - 1].weightKg!;
+  return Math.round((newest - oldest) * 10) / 10;
+}
+
 export interface TrainingStats {
   /** Workouts in the current calendar week (Monday-based), matching the "Diese Woche" label. */
   workoutsThisWeek: number;

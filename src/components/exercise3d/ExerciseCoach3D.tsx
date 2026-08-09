@@ -251,14 +251,24 @@ function CameraRig({ autoRotate, targetY }: { autoRotate: boolean; targetY: numb
   return null;
 }
 
+/** Initial viewing angle per exercise (§38) — orbit controls stay free. */
+export type CameraPreset = "front" | "side" | "threeQuarter";
+
+const CAMERA_POSITIONS: Record<CameraPreset, [number, number, number]> = {
+  front: [0, 1.5, 3.4],
+  side: [3.2, 1.5, 0.3],
+  threeQuarter: [2.2, 1.5, 2.6],
+};
+
 export interface ExerciseCoach3DProps {
   type: AnimationType;
   /** Authored GLB animation (Exercise.animation3dUrl) — procedural fallback on error. */
   modelUrl?: string;
+  cameraPreset?: CameraPreset;
   className?: string;
 }
 
-export function ExerciseCoach3D({ type, modelUrl, className }: ExerciseCoach3DProps) {
+export function ExerciseCoach3D({ type, modelUrl, cameraPreset, className }: ExerciseCoach3DProps) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [modelState, setModelState] = useState<ModelState>("loading");
   const useModel = !!modelUrl && modelState !== "error";
@@ -277,7 +287,7 @@ export function ExerciseCoach3D({ type, modelUrl, className }: ExerciseCoach3DPr
       <Canvas
         shadows
         dpr={[1, 2]}
-        camera={{ position: [2.2, 1.5, 2.6], fov: 42 }}
+        camera={{ position: CAMERA_POSITIONS[cameraPreset ?? "threeQuarter"], fov: 42 }}
         style={{ borderRadius: "inherit", touchAction: "none" }}
         gl={{ antialias: true, alpha: true }}
       >

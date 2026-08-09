@@ -13,6 +13,7 @@ import {
 } from "./planning";
 import { userProfileSchema } from "./profile";
 import { bodyMeasurementSchema } from "./progress";
+import { recoveryLogSchema } from "./recovery";
 import { userSettingsSchema } from "./settings";
 import { workoutLogSchema, workoutPlanSchema } from "./workout";
 
@@ -38,6 +39,8 @@ export const backupSchema = z.object({
     recipes: z.array(recipeSchema),
     userProfiles: z.array(userProfileSchema),
     settings: z.array(userSettingsSchema),
+    // Added in app v2 (recovery check-ins) — optional so v1 backups stay importable.
+    recoveryLogs: z.array(recoveryLogSchema).optional(),
   }),
 });
 

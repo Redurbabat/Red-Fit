@@ -6,7 +6,11 @@ import {
   calculateTrainingWeekStreak,
   calculateWorkoutDuration,
   calculateWorkoutVolume,
+  estimateOneRepMax,
+  findExerciseRecords,
+  findLastPerformance,
   findNewRecords,
+  suggestNextWeight,
 } from "./workout";
 
 function set(weightKg: number, reps: number, completed = true): SetLog {
@@ -128,6 +132,105 @@ describe("records", () => {
       exerciseLogs: [{ id: "e", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(80, 10)] }],
     });
     expect(findNewRecords(fresh, [old])).toHaveLength(0);
+  });
+});
+
+describe("estimated 1RM (Epley)", () => {
+  it("returns the weight itself for a single rep", () => {
+    expect(estimateOneRepMax(100, 1)).toBe(100);
+  });
+
+  it("computes 80 kg × 10 ≈ 106,7 kg", () => {
+    expect(estimateOneRepMax(80, 10)).toBeCloseTo(106.67, 1);
+  });
+
+  it("yields 0 for bodyweight or empty sets", () => {
+    expect(estimateOneRepMax(0, 12)).toBe(0);
+    expect(estimateOneRepMax(80, 0)).toBe(0);
+  });
+
+  it("tracks the best e1RM set in records — high-rep set can beat max weight", () => {
+    const w = workout({
+      exerciseLogs: [
+        {
+          id: "e",
+          exerciseId: "bench",
+          name: "Bankdrücken",
+          // 85×1 → 85 e1RM; 80×10 → 106,7 e1RM (better despite lower weight)
+          setLogs: [set(85, 1), set(80, 10)],
+        },
+      ],
+    });
+    const record = findExerciseRecords([w]).get("bench");
+    expect(record?.maxWeightKg).toBe(85);
+    expect(record?.bestE1rmKg).toBeCloseTo(106.67, 1);
+    expect(record?.bestE1rmSet).toEqual({ weightKg: 80, reps: 10 });
+  });
+});
+
+describe("last performance", () => {
+  const older = workout({
+    id: "old",
+    date: "2026-08-01",
+    exerciseLogs: [
+      { id: "e", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(75, 10)] },
+    ],
+  });
+  const newer = workout({
+    id: "new",
+    date: "2026-08-05",
+    exerciseLogs: [
+      {
+        id: "e",
+        exerciseId: "bench",
+        name: "Bankdrücken",
+        setLogs: [set(80, 10), set(80, 9), set(80, 8, false)],
+      },
+    ],
+  });
+
+  it("returns completed sets of the most recent session (newest-first input)", () => {
+    const last = findLastPerformance([newer, older], "bench");
+    expect(last?.date).toBe("2026-08-05");
+    expect(last?.sets.map((s) => s.reps)).toEqual([10, 9]);
+  });
+
+  it("skips workouts without completed sets of the exercise", () => {
+    const empty = workout({
+      id: "empty",
+      date: "2026-08-07",
+      exerciseLogs: [
+        { id: "e", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(80, 10, false)] },
+      ],
+    });
+    expect(findLastPerformance([empty, older], "bench")?.date).toBe("2026-08-01");
+  });
+
+  it("returns undefined for an unknown exercise", () => {
+    expect(findLastPerformance([newer], "squat")).toBeUndefined();
+  });
+});
+
+describe("progression suggestion", () => {
+  it("suggests +2,5 kg when all sets reached the target reps", () => {
+    const last = { date: "2026-08-05", sets: [set(80, 10), set(80, 10), set(80, 10)] };
+    expect(suggestNextWeight(last, 10)).toBe(82.5);
+  });
+
+  it("stays silent when a set missed the target", () => {
+    const last = { date: "2026-08-05", sets: [set(80, 10), set(80, 9)] };
+    expect(suggestNextWeight(last, 10)).toBeUndefined();
+  });
+
+  it("stays silent for bodyweight sets and missing targets", () => {
+    expect(suggestNextWeight({ date: "d", sets: [set(0, 15)] }, 12)).toBeUndefined();
+    expect(suggestNextWeight({ date: "d", sets: [set(80, 10)] }, undefined)).toBeUndefined();
+    expect(suggestNextWeight(undefined, 10)).toBeUndefined();
+  });
+
+  it("uses a custom increment", () => {
+    const last = { date: "2026-08-05", sets: [set(40, 12)] };
+    expect(suggestNextWeight(last, 12, 5)).toBe(45);
   });
 });
 

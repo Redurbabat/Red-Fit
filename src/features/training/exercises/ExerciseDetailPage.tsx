@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { Box, Lightbulb, Pause, Pencil, Play, Trash2, X } from "lucide-react";
-import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ExerciseAnimation } from "../../../components/exercise/ExerciseAnimation";
 import { MuscleMap } from "../../../components/exercise/MuscleMap";
@@ -30,7 +30,15 @@ import {
   type MuscleGroup,
   type SetLog,
 } from "../../../models";
-import { findExerciseRecords } from "../../../services/calculations/workout";
+import {
+  findExerciseRecords,
+  findLastPerformance,
+} from "../../../services/calculations/workout";
+import {
+  loadAssetManifest,
+  resolveExerciseModel,
+  type AssetManifest,
+} from "../../../services/exercise3d/assetManifest";
 import { db, exerciseRepository, workoutLogRepository } from "../../../services/storage";
 import { formatDateShortGerman } from "../../../utils/dates";
 import {
@@ -157,6 +165,18 @@ export default function ExerciseDetailPage() {
   const [viewMode, setViewMode] = useState<"2d" | "3d">("2d");
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [assetManifest, setAssetManifest] = useState<AssetManifest | undefined>(undefined);
+
+  // Optional 3D manifest (§35) — absent/offline simply keeps the conventions.
+  useEffect(() => {
+    let cancelled = false;
+    void loadAssetManifest().then((manifest) => {
+      if (!cancelled) setAssetManifest(manifest);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // undefined = loading, null = not found — keeps the two states distinguishable.
   const exercise = useLiveQuery(
@@ -171,24 +191,10 @@ export default function ExerciseDetailPage() {
     return findExerciseRecords(completedLogs).get(exerciseId);
   }, [completedLogs, exerciseId]);
 
-  /** Top set of the most recent completed session containing this exercise. */
+  /** All completed sets of the most recent session containing this exercise. */
   const lastPerformance = useMemo(() => {
     if (!completedLogs || !exerciseId) return undefined;
-    for (const log of completedLogs) {
-      for (const exerciseLog of log.exerciseLogs) {
-        if (exerciseLog.exerciseId !== exerciseId) continue;
-        const completedSets = exerciseLog.setLogs.filter((s) => s.completed);
-        if (completedSets.length === 0) continue;
-        const topSet = completedSets.reduce((best, set) =>
-          set.weightKg > best.weightKg ||
-          (set.weightKg === best.weightKg && set.reps > best.reps)
-            ? set
-            : best,
-        );
-        return { set: topSet, date: log.date };
-      }
-    }
-    return undefined;
+    return findLastPerformance(completedLogs, exerciseId);
   }, [completedLogs, exerciseId]);
 
   const handleEdit = async (values: ExerciseFormValues) => {
@@ -296,9 +302,10 @@ export default function ExerciseDetailPage() {
               >
                 <ExerciseCoach3D
                   type={exercise.animationType}
-                  // Blender exports drop into public/models/<id>.glb — found
-                  // automatically; missing file falls back to the procedural coach.
-                  modelUrl={exercise.animation3dUrl ?? `/models/${exercise.id}.glb`}
+                  // Manifest → animation3dUrl → /models/<id>.glb convention;
+                  // a missing file still falls back to the procedural coach.
+                  modelUrl={resolveExerciseModel(exercise, assetManifest).url}
+                  cameraPreset={resolveExerciseModel(exercise, assetManifest).cameraPreset}
                 />
               </Suspense>
             ) : (
@@ -490,9 +497,9 @@ export default function ExerciseDetailPage() {
           <section>
             <SectionHeader title="Letzte Leistung" />
             <Card>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <strong style={{ fontSize: 18 }}>
-                  {formatSetPerformance(lastPerformance.set)}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                <strong style={{ fontSize: 17 }}>
+                  {lastPerformance.sets.map(formatSetPerformance).join(" · ")}
                 </strong>
                 <span style={{ color: "var(--text-muted)", fontSize: 14 }}>
                   · {formatDateShortGerman(lastPerformance.date)}
@@ -516,6 +523,13 @@ export default function ExerciseDetailPage() {
                 value={formatKg(record.bestSetVolume)}
                 hint="Gewicht × Wdh."
               />
+              {record.bestE1rmKg > 0 && record.bestE1rmSet ? (
+                <StatCard
+                  label="1RM (geschätzt)"
+                  value={`≈ ${formatKg(Math.round(record.bestE1rmKg))}`}
+                  hint={`aus ${formatSetPerformance(record.bestE1rmSet)}`}
+                />
+              ) : null}
             </div>
           </section>
         ) : null}

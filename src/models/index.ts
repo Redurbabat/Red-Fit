@@ -3,6 +3,8 @@ export * from "./exercise";
 export * from "./workout";
 export * from "./nutrition";
 export * from "./progress";
+export * from "./recovery";
+export * from "./media";
 export * from "./planning";
 export * from "./profile";
 export * from "./settings";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { WorkoutLog } from "../../models";
-import { calculateTrainingStats, calculateWeightTrend } from "./progress";
+import { calculateTrainingStats, calculateWeightChangeOverDays, calculateWeightTrend } from "./progress";
 
 function completedWorkout(id: string, date: string): WorkoutLog {
   return {
@@ -56,5 +56,24 @@ describe("calculateWeightTrend", () => {
     expect(trend.currentKg).toBe(81.2);
     expect(trend.previousKg).toBe(82.0);
     expect(trend.changeKg).toBe(-0.8);
+  });
+});
+
+describe("calculateWeightChangeOverDays", () => {
+  const measurements = [
+    { id: "1", date: "2026-08-08", weightKg: 78.2, createdAt: "x", updatedAt: "x" },
+    { id: "2", date: "2026-07-25", weightKg: 78.9, createdAt: "x", updatedAt: "x" },
+    { id: "3", date: "2026-07-12", weightKg: 79.4, createdAt: "x", updatedAt: "x" },
+    { id: "4", date: "2026-06-01", weightKg: 81.0, createdAt: "x", updatedAt: "x" },
+  ];
+
+  it("uses newest minus oldest inside the window", () => {
+    // 30-day window from 2026-08-08 reaches back to 2026-07-10 — excludes June.
+    expect(calculateWeightChangeOverDays(measurements, 30, "2026-08-08")).toBeCloseTo(-1.2, 5);
+  });
+
+  it("needs two measurements in the window", () => {
+    expect(calculateWeightChangeOverDays(measurements, 7, "2026-08-08")).toBeUndefined();
+    expect(calculateWeightChangeOverDays([], 30, "2026-08-08")).toBeUndefined();
   });
 });

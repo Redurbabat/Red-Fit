@@ -38,6 +38,17 @@ export function countTotalReps(workout: WorkoutLog): number {
   );
 }
 
+/**
+ * Estimated one-rep max (Epley): weight × (1 + reps / 30). A single rep is
+ * the weight itself; bodyweight sets (0 kg) and empty sets yield 0. Above
+ * ~12 reps the estimate gets unreliable — it is a hint, never a target.
+ */
+export function estimateOneRepMax(weightKg: number, reps: number): number {
+  if (weightKg <= 0 || reps <= 0) return 0;
+  if (reps === 1) return weightKg;
+  return weightKg * (1 + reps / 30);
+}
+
 export interface ExerciseRecord {
   exerciseId: string;
   exerciseName: string;
@@ -45,6 +56,8 @@ export interface ExerciseRecord {
   maxRepsAtMaxWeight: number;
   bestSetVolume: number;
   bestExerciseVolume: number;
+  bestE1rmKg: number;
+  bestE1rmSet?: Pick<SetLog, "weightKg" | "reps">;
 }
 
 /** Fold one exercise block into the per-exercise record map (mutates `records`). */
@@ -61,8 +74,14 @@ function accumulateExerciseRecord(
     maxRepsAtMaxWeight: 0,
     bestSetVolume: 0,
     bestExerciseVolume: 0,
+    bestE1rmKg: 0,
   };
   for (const set of completedSets) {
+    const e1rm = estimateOneRepMax(set.weightKg, set.reps);
+    if (e1rm > existing.bestE1rmKg) {
+      existing.bestE1rmKg = e1rm;
+      existing.bestE1rmSet = { weightKg: set.weightKg, reps: set.reps };
+    }
     if (
       set.weightKg > existing.maxWeightKg ||
       (set.weightKg === existing.maxWeightKg && set.reps > existing.maxRepsAtMaxWeight)
@@ -159,6 +178,47 @@ export function calculateTrainingWeekStreak(
     cursor = getLocalDateKey(d);
   }
   return streak;
+}
+
+export interface LastPerformance {
+  date: string;
+  /** Completed sets of that session, in logged order. */
+  sets: Pick<SetLog, "weightKg" | "reps">[];
+}
+
+/**
+ * Completed sets of the most recent completed workout containing this
+ * exercise. Expects `workoutLogs` newest-first (listCompleted order).
+ */
+export function findLastPerformance(
+  workoutLogs: WorkoutLog[],
+  exerciseId: string,
+): LastPerformance | undefined {
+  for (const workout of workoutLogs) {
+    if (workout.status !== "completed") continue;
+    const sets = workout.exerciseLogs
+      .filter((e) => e.exerciseId === exerciseId)
+      .flatMap((e) => e.setLogs.filter((s) => s.completed));
+    if (sets.length > 0) return { date: workout.date, sets };
+  }
+  return undefined;
+}
+
+/**
+ * Simple double progression: if EVERY completed set of the last session
+ * reached the target reps, suggest the top weight plus one increment —
+ * otherwise no suggestion (keep working at the current weight).
+ */
+export function suggestNextWeight(
+  last: LastPerformance | undefined,
+  targetReps: number | undefined,
+  incrementKg = 2.5,
+): number | undefined {
+  if (!last || !targetReps || targetReps <= 0) return undefined;
+  const topWeight = Math.max(...last.sets.map((s) => s.weightKg));
+  if (topWeight <= 0) return undefined;
+  if (!last.sets.every((s) => s.reps >= targetReps)) return undefined;
+  return topWeight + incrementKg;
 }
 
 /** Estimated session length used on cards: ~3 min per planned set + rest. */

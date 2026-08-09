@@ -327,6 +327,7 @@ textarea.input {
 }
 
 .list-row__title {
+  display: block;
   font-size: 16px;
   font-weight: 600;
   overflow: hidden;
@@ -335,6 +336,7 @@ textarea.input {
 }
 
 .list-row__subtitle {
+  display: block;
   font-size: 13px;
   color: var(--text-muted);
   margin-top: 1px;
@@ -590,4 +592,37 @@ textarea.input {
 .stepper__unit {
   font-size: 14px;
   color: var(--text-muted);
+}
+
+/* ===== Quick-Log FAB (2031 §10) ===== */
+
+.fab {
+  position: fixed;
+  right: calc(var(--content-padding) + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px);
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+  z-index: 70;
+  transition: transform 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+
+.fab:active {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fab {
+    transition: none;
+  }
+  .fab:active {
+    transform: none;
+  }
 }

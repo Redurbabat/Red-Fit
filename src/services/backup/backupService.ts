@@ -30,6 +30,7 @@ export async function collectBackupData(): Promise<BackupData> {
     mealPlans,
     recipes,
     userProfiles,
+    recoveryLogs,
   ] = await Promise.all([
     db.exercises.toArray(),
     db.workoutPlans.toArray(),
@@ -43,6 +44,7 @@ export async function collectBackupData(): Promise<BackupData> {
     db.mealPlans.toArray(),
     db.recipes.toArray(),
     db.userProfiles.toArray(),
+    db.recoveryLogs.toArray(),
   ]);
   return {
     exercises,
@@ -58,17 +60,23 @@ export async function collectBackupData(): Promise<BackupData> {
     recipes,
     userProfiles,
     settings: [settings satisfies UserSettings],
+    recoveryLogs,
   };
 }
 
 export async function createBackup(): Promise<RedFitBackup> {
-  return {
+  const backup: RedFitBackup = {
     format: BACKUP_FORMAT,
     schemaVersion: BACKUP_SCHEMA_VERSION,
     appVersion: APP_VERSION,
     exportedAt: nowIso(),
     data: await collectBackupData(),
   };
+  // Remembered for Speicher & Diagnose — failure to stamp never blocks the export.
+  await settingsRepository
+    .updateMetadata({ lastBackupAt: backup.exportedAt })
+    .catch(() => undefined);
+  return backup;
 }
 
 export function backupFileName(): string {
@@ -166,6 +174,7 @@ export interface BackupPreview {
   shoppingLists: number;
   mealPlans: number;
   recipes: number;
+  recoveryLogs: number;
 }
 
 export function buildPreview(backup: RedFitBackup): BackupPreview {
@@ -182,6 +191,7 @@ export function buildPreview(backup: RedFitBackup): BackupPreview {
     shoppingLists: d.shoppingLists.length,
     mealPlans: d.mealPlans.length,
     recipes: d.recipes.length,
+    recoveryLogs: d.recoveryLogs?.length ?? 0,
   };
 }
 
@@ -316,6 +326,7 @@ export async function importBackup(
       db.mealPlans,
       db.recipes,
       db.userProfiles,
+      db.recoveryLogs,
       db.settings,
     ],
     async () => {
@@ -345,6 +356,8 @@ export async function importBackup(
       await mergeTable(db.mealPlans, d.mealPlans);
       await mergeTable(db.recipes, d.recipes);
       await mergeTable(db.userProfiles, d.userProfiles);
+      // Optional in v1 backups — merge only when present.
+      if (d.recoveryLogs) await mergeTable(db.recoveryLogs, d.recoveryLogs);
 
       // Settings are a singleton row (no id in the backup) — restore via the
       // repository path instead of mergeTable.

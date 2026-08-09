@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "../components/layout/BottomNav";
+import { QuickLogButton } from "../components/layout/QuickLogButton";
 import { useToast } from "../components/feedback/ToastProvider";
 import { onUpdateAvailable } from "../services/pwa/updatePrompt";
 
@@ -34,7 +35,12 @@ export function AppShell() {
       >
         <Outlet />
       </main>
-      {fullscreen ? null : <BottomNav />}
+      {fullscreen ? null : (
+        <>
+          <QuickLogButton />
+          <BottomNav />
+        </>
+      )}
     </div>
   );
 }

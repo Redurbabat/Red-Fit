@@ -2,6 +2,8 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { Droplets, Dumbbell, Play, Scale, ScanLine, Target, Utensils } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ReadinessSection } from "../../components/body/ReadinessSection";
+import { CoachInsightsCard } from "../../components/coach/CoachInsightsCard";
 import { BottomSheet } from "../../components/feedback/Modal";
 import { EmptyState, LoadingState } from "../../components/feedback/states";
 import { useToast } from "../../components/feedback/ToastProvider";
@@ -178,6 +180,9 @@ export default function TodayPage() {
         </Card>
       ) : null}
 
+      <SectionHeader title="Readiness" />
+      <ReadinessSection compact />
+
       <SectionHeader title="Training" />
       {activePlan === null || activeWorkout === null ? (
         <LoadingState rows={1} />
@@ -329,6 +334,8 @@ export default function TodayPage() {
           hint={workoutsThisWeek === 1 ? "Training absolviert" : "Trainings absolviert"}
         />
       </div>
+
+      <CoachInsightsCard />
 
       <SectionHeader title="Schnellaktionen" />
       <div className="quick-actions">
