@@ -6,7 +6,9 @@ import type {
   FoodItem,
   MealLog,
   MealPlan,
+  MediaAsset,
   NutritionGoal,
+  ProgressPhoto,
   Recipe,
   RecoveryLog,
   ShoppingList,
@@ -18,7 +20,7 @@ import type {
 } from "../../models";
 
 export const DB_NAME = "red-fit";
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 /** Singleton row wrappers — settings/metadata live under fixed ids. */
 export interface SettingsRow extends UserSettings {
@@ -44,6 +46,8 @@ class RedFitDatabase extends Dexie {
   recipes!: EntityTable<Recipe, "id">;
   userProfiles!: EntityTable<UserProfile, "id">;
   recoveryLogs!: EntityTable<RecoveryLog, "id">;
+  mediaAssets!: EntityTable<MediaAsset, "id">;
+  progressPhotos!: EntityTable<ProgressPhoto, "id">;
   settings!: EntityTable<SettingsRow, "id">;
   metadata!: EntityTable<MetadataRow, "id">;
 
@@ -68,8 +72,14 @@ class RedFitDatabase extends Dexie {
       metadata: "id",
     });
     // v2 (RED Fit 2031, Phase A): recovery check-ins — purely additive.
-    this.version(DB_VERSION).stores({
+    this.version(2).stores({
       recoveryLogs: "id, date",
+    });
+    // v3 (2031 Phase C): media layer + progress photos — purely additive.
+    // Blobs live only in mediaAssets; photo metadata is a separate record.
+    this.version(DB_VERSION).stores({
+      mediaAssets: "id",
+      progressPhotos: "id, date, pose",
     });
   }
 }

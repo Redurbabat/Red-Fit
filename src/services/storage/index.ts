@@ -12,4 +12,6 @@ export { recipeRepository } from "./recipeRepository";
 export { goalRepository } from "./goalRepository";
 export { profileRepository } from "./profileRepository";
 export { recoveryRepository } from "./recoveryRepository";
+export { mediaRepository } from "./mediaRepository";
+export { progressPhotoRepository } from "./progressPhotoRepository";
 export { settingsRepository } from "./settingsRepository";

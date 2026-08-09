@@ -16,6 +16,11 @@
 |---|---|---|---|
 | 1 | 14 Basis-Stores | – | – |
 | 2 (Phase A) | + `recoveryLogs` (`id, date`) | keiner (neuer leerer Store) | keins |
+| 3 (Phase C) | + `mediaAssets` (`id`, Blobs) + `progressPhotos` (`id, date, pose`) | keiner (neue leere Stores) | keins |
+
+Fortschrittsfotos sind `sensitiveMedia`: nur lokal, bewusst NICHT im
+JSON-Backup (medienfähiges Containerformat folgt); Löschen eines Fotos
+entfernt den Blob in derselben Transaktion.
 
 ## Routen-Migration (Phase A)
 

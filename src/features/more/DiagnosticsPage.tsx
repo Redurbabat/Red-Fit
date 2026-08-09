@@ -3,13 +3,14 @@ import { LoadingState } from "../../components/feedback/states";
 import { PageHeader, SectionHeader } from "../../components/layout/PageHeader";
 import { Card } from "../../components/ui/Card";
 import { APP_VERSION } from "../../services/appVersion";
-import { db, DB_VERSION } from "../../services/storage";
+import { db, DB_VERSION, mediaRepository } from "../../services/storage";
 import { settingsRepository } from "../../services/storage/settingsRepository";
 import { formatDateShortGerman } from "../../utils/dates";
 
 interface Diagnostics {
   usageBytes?: number;
   quotaBytes?: number;
+  photoBytes: number;
   counts: { label: string; count: number }[];
   lastBackupAt?: string;
   serviceWorkerActive: boolean;
@@ -40,12 +41,14 @@ async function collectDiagnostics(): Promise<Diagnostics> {
     { label: "Essenspläne", table: db.mealPlans },
     { label: "Rezepte", table: db.recipes },
     { label: "Recovery-Check-ins", table: db.recoveryLogs },
+    { label: "Fortschrittsfotos", table: db.progressPhotos },
   ];
   const counts = await Promise.all(
     stores.map(async (s) => ({ label: s.label, count: await s.table.count() })),
   );
 
   const metadata = await settingsRepository.getMetadata();
+  const photoBytes = await mediaRepository.totalBytes().catch(() => 0);
   const serviceWorkerActive =
     typeof navigator !== "undefined" &&
     "serviceWorker" in navigator &&
@@ -54,6 +57,7 @@ async function collectDiagnostics(): Promise<Diagnostics> {
   return {
     usageBytes: estimate?.usage,
     quotaBytes: estimate?.quota,
+    photoBytes,
     counts,
     lastBackupAt: metadata.lastBackupAt,
     serviceWorkerActive,
@@ -126,6 +130,10 @@ export default function DiagnosticsPage() {
         <div style={rowStyle}>
           <span>Verfügbar (Browser-Kontingent)</span>
           <strong>{formatBytes(diag.quotaBytes)}</strong>
+        </div>
+        <div style={rowStyle}>
+          <span>davon Fortschrittsfotos</span>
+          <strong>{formatBytes(diag.photoBytes)}</strong>
         </div>
       </Card>
 

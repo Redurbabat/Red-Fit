@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { ChartLine, ChevronRight, Ruler, Scale } from "lucide-react";
+import { Camera, ChartLine, ChevronRight, Ruler, Scale } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReadinessSection } from "../../components/body/ReadinessSection";
 import { PageHeader, SectionHeader } from "../../components/layout/PageHeader";
@@ -107,6 +107,22 @@ export default function BodyHomePage() {
             <span className="list-row__title">Messwerte & Verlauf</span>
             <span className="list-row__subtitle">
               Gewicht und Maße erfassen, Diagramme ansehen
+            </span>
+          </span>
+          <span className="list-row__trailing">
+            <ChevronRight size={18} aria-hidden="true" />
+          </span>
+        </button>
+        <button
+          type="button"
+          className="list-row"
+          onClick={() => navigate("/body/photos")}
+        >
+          <Camera size={20} color="var(--accent)" aria-hidden="true" />
+          <span className="list-row__body">
+            <span className="list-row__title">Fortschrittsfotos</span>
+            <span className="list-row__subtitle">
+              Front, Seite, Rücken — nur lokal, mit Vorher/Nachher-Vergleich
             </span>
           </span>
           <span className="list-row__trailing">
