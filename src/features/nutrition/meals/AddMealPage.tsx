@@ -284,7 +284,7 @@ export default function AddMealPage() {
             </Field>
             {/* Quick amounts: portion multiples when known, gram presets otherwise. */}
             <div className="chip-row" aria-label="Schnellmengen">
-              {(selectedFood.servingSizeG && selectedFood.servingSizeG > 0
+              {(weightBasis === "raw" && selectedFood.servingSizeG && selectedFood.servingSizeG > 0
                 ? [
                     { label: "½ Portion", grams: selectedFood.servingSizeG / 2 },
                     { label: "1 Portion", grams: selectedFood.servingSizeG },
