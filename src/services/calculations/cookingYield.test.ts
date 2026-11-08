@@ -65,6 +65,7 @@ describe("raw/cooked food weights (Dietry-inspired)", () => {
     for (const factor of [0, -1, NaN, Infinity, 11]) {
       expect(() => rawEquivalentGrams(100, factor)).toThrow(RangeError);
     }
+    expect(() => rawEquivalentGrams(1e308, 0.1)).toThrow(RangeError);
   });
 
   it("keeps old raw entries backward-compatible and displays cooked weight when present", () => {
