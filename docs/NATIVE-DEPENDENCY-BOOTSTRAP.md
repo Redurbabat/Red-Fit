@@ -17,10 +17,11 @@ verändert weder `main` noch native Signing-Dateien oder die IndexedDB-Daten.
 | --- | --- | --- |
 | `@capacitor/core` | `8.6.0` | dependencies |
 | `@capacitor/ios` | `8.6.0` | dependencies |
+| `@capacitor/android` | `8.6.0` | dependencies |
 | `@capacitor/cli` | `8.6.0` | devDependencies |
 | `@tauri-apps/cli` | `2.12.4` | devDependencies |
 
-Die drei Capacitor-Pakete erhalten **dieselbe** Version. Es werden
+Die vier Capacitor-Pakete (Core, iOS, Android und CLI) erhalten **dieselbe** Version. Es werden
 reproduzierbare exakte Versionen statt `latest` oder `^8` eingetragen.
 
 Offizielle Referenzen:
@@ -76,6 +77,27 @@ npx cap open ios
 `ios/` ist noch nicht generiert. Die tatsächlichen Xcode-Projekte,
 Entitlements, Bundle-ID, Signing und Tests auf Simulator/echtem iPhone müssen
 nach der Generierung geprüft werden.
+
+### Android – zusätzliche Schritte mit Android Studio
+
+Voraussetzungen: Node.js 22+, Android Studio, Android SDK mit unterstützter
+Build-Tools-/JDK-Konfiguration, Android-Emulator oder echtes Testgerät.
+
+```bash
+npm run native:bootstrap
+npm run native:check
+npm ci
+npm run typecheck && npm run lint && npm run test && npm run build
+npx cap add android
+npx cap sync android
+npx cap open android
+```
+
+`android/` ist ein generiertes natives Projekt und liegt derzeit nicht als
+verifizierter Android-Build vor. Gradle-Sync, Package-ID, Berechtigungen,
+Signing, APK/AAB, Offline-Wiederanlauf, IndexedDB-Persistenz und Updates auf
+Emulator/Realgerät prüfen. Keine Health-Connect-/Benachrichtigungsfunktion
+ohne implementierte Bridge und Nutzerberechtigung behaupten.
 
 ### Windows – zusätzliche Schritte auf Windows
 
