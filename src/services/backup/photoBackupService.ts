@@ -207,7 +207,10 @@ export async function importPhotoBackup(backup: PhotoBackup): Promise<PhotoBacku
       }
       let assetId = asset.id;
       if (await db.mediaAssets.get(assetId as never)) assetId = newId();
-      const blob = new Blob([bytes], { type: asset.mimeType });
+      // A fresh ArrayBuffer avoids TS 5.9's SharedArrayBuffer/BlobPart mismatch.
+      const buffer = new ArrayBuffer(bytes.byteLength);
+      new Uint8Array(buffer).set(bytes);
+      const blob = new Blob([buffer], { type: asset.mimeType });
       await db.mediaAssets.add({ ...asset, id: assetId, blob });
       await db.progressPhotos.add({ ...photo, assetId });
       added++;
