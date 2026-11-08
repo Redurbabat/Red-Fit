@@ -33,7 +33,8 @@
     "ios:icons": "node tools/prepare-ios-icons.mjs",
     "test:ios-icons": "node --test tools/ios-icons.selftest.mjs",
     "test:offline": "node tools/offline-regressions.mjs",
-    "test:workout-route": "node --experimental-strip-types --test tools/workout-route-scope.selftest.mjs"
+    "test:workout-route": "node --experimental-strip-types --test tools/workout-route-scope.selftest.mjs",
+    "test:workout-notes": "node --experimental-strip-types --test tools/workout-note-coalescing.selftest.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
