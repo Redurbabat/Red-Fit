@@ -31,6 +31,9 @@ Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
   Bei **zwei gleichzeitig aktiven Tabs** verhindert jetzt eine transaktional
   geprüfte Workout-Revision, dass ein veralteter Satzstand stillschweigend
   überschrieben wird. Im Konfliktfall erscheint eine Warnung mit Neuladen.
+  Auch die **Notizen der Trainings-Zusammenfassung** werden jetzt mit
+  Revisionsvergleich gespeichert; bei einem Konflikt wird das Fenster
+  gesperrt und der aktuell gespeicherte Stand angeboten.
   [Schreibreihenfolge und Teststatus](docs/WORKOUT-SAVE-INTEGRITY.md).
 - **Dietry**: Kalorienbedarf-/Makro-Rechner, Kennzeichnung geschätzter
   Essensmengen und **optionale Roh-/Gekocht-Umrechnung** für Reis, Nudeln
