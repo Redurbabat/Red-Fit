@@ -91,6 +91,16 @@ export const mealFoodEntrySchema = z.object({
   protein: nonNegativeNumber,
   carbs: nonNegativeNumber,
   fat: nonNegativeNumber,
+}).superRefine((entry, ctx) => {
+  const cooked = entry.weighedAs === "cooked";
+  const hasWeighedAmount = entry.weighedAmountG !== undefined;
+  const hasFactor = entry.cookingYieldFactor !== undefined;
+  // Partial metadata could otherwise make history and later edits ambiguous.
+  if (cooked && (!hasWeighedAmount || !hasFactor || entry.weighedAmountG! <= 0)) {
+    ctx.addIssue({ code: "custom", message: "Gekochte Menge und Umrechnungsfaktor fehlen." });
+  } else if (!cooked && (hasWeighedAmount || hasFactor)) {
+    ctx.addIssue({ code: "custom", message: "Umrechnungsdaten ohne gekochtes Gewicht." });
+  }
 });
 export type MealFoodEntry = z.infer<typeof mealFoodEntrySchema>;
 
