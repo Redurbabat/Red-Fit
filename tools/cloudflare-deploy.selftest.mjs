@@ -16,6 +16,8 @@ const wrangler = JSON.parse(readFileSync(resolve(root, "wrangler.jsonc"), "utf8"
 test("Cloudflare deploy script builds first and then runs Wrangler", () => {
   const deploy = manifest.scripts?.["deploy:cloudflare"];
   assert.equal(deploy, "npm run build && npx wrangler deploy");
+  assert.equal(manifest.scripts?.["deploy:workers"],
+    "npm run build && npx wrangler deploy --config wrangler.jsonc");
   assert.equal(manifest.scripts?.build, "tsc && vite build");
 });
 
