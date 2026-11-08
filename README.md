@@ -26,6 +26,9 @@ Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
   automatischer Wechsel im aktiven Workout und Gruppenpause nach einer Runde.
 - **Workout-Datenintegrität**: aktive Satzänderungen werden jetzt geordnet
   gespeichert; „Training abschließen“ wartet auf ältere Writes.
+  Zwei Fenster können auch nicht mehr gleichzeitig ein zweites aktives
+  Training anlegen: Der Start prüft und erstellt/resumiert in einer
+  einzelnen IndexedDB-Transaktion.
   Ein bereits abgeschlossenes oder verworfenes Workout kann auch aus einem
   zweiten Browser-Tab nicht per altem Aktiv-Snapshot wieder aktiviert werden.
   Bei **zwei gleichzeitig aktiven Tabs** verhindert jetzt eine transaktional
