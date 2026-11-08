@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from "react";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, createHashRouter, Navigate } from "react-router-dom";
 import { LoadingState } from "../components/feedback/states";
+import { getPlatform, shouldUseHashRouter } from "../core/platform/platform";
 import { AppShell } from "./AppShell";
 import { StartRedirect } from "./StartRedirect";
 
@@ -39,7 +40,7 @@ function page(node: ReactNode): ReactNode {
   return <Suspense fallback={<LoadingState rows={4} />}>{node}</Suspense>;
 }
 
-export const router = createBrowserRouter([
+const routes = [
   {
     element: <AppShell />,
     children: [
@@ -87,4 +88,10 @@ export const router = createBrowserRouter([
       { path: "*", element: <Navigate to="/today" replace /> },
     ],
   },
-]);
+];
+
+// Web uses History API URLs, but packaged iOS/Windows apps must not depend on
+// the static WebView host serving /training/... on a hard reload.
+export const router = shouldUseHashRouter(getPlatform())
+  ? createHashRouter(routes)
+  : createBrowserRouter(routes);
