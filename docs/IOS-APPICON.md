@@ -105,9 +105,22 @@ Blobs** des Feature-Branches überein:
 - `tools/prepare-ios-icons.mjs`: `f3d19b199d92cb3b1c2868ec1cfcc3702d86543f`
 - `tools/ios-icons.selftest.mjs`: `2d1188991f2d834e3eb59eb06d765ee71fb1a18a`
 
-**Noch nicht geprüft:** Das echte `public/icons/icon-512.png` konnte
-hier nicht als Binärdatei aus GitHub abgerufen werden; Tests erzeugen
-synthetische, vollständig kontrollierbare 512-px-PNGs. Ein echtes
+**Zusätzliche Regressionsprüfung:** Die unveränderten sechs Windows-
+Icon-Tests wurden mit dem aktualisierten gemeinsamen PNG-Codec erneut
+ausgeführt: **6/6 bestanden**, zusammen mit den zehn neuen iOS-Tests
+also **16/16 bestanden**.
+
+**Brand-Asset aus GitHub tatsächlich geprüft:** Das reale
+`public/icons/icon-512.png` (Git-Blob
+`975e2ddeacb42247e1bbf1c9481fe67fc0252dd5`) wurde aus dem
+Repository als Base64-Daten abgerufen. PNG-Signatur, Header,
+**512×512 px, 8-Bit RGB ohne Alpha**, alle drei Chunk-CRC32 und
+vollständiges IEND wurden geprüft: **gültig**, 9.519 Bytes.
+Die vollständige Pixel-Konvertierung wurde mit synthetischen
+512-px-PNGs getestet; ein echter iOS-Katalog wurde in dieser
+Linux-Umgebung nicht erzeugt.
+
+**Noch nicht geprüft:** Ein echtes
 `ios/App/App.xcworkspace`, Xcode-Asset-Kompilierung, Simulator-Build,
 Signierung und App-Store-Validierung konnten in der Linux-Umgebung
 nicht durchgeführt werden. Die nativen Capacitor-Abhängigkeiten sind
