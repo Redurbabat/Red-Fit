@@ -131,7 +131,7 @@ export default function BackupPage() {
       return;
     }
     try {
-      const parsed = parsePhotoBackupJson(await file.text());
+      const parsed = await parsePhotoBackupJson(await file.text());
       setPhotoImportState(parsed.ok
         ? { status: "preview", backup: parsed.backup }
         : { status: "error", message: parsed.error });
