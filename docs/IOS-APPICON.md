@@ -89,7 +89,7 @@ Apple-Dokumentation:
 npm run test:ios-icons
 ```
 
-**Tatsächlich am 8. November 2026 ausgeführt: 10/10 Node-Tests
+**Tatsächlich am 8. November 2026 ausgeführt: 11/11 Node-Tests
 bestanden.** Überprüft werden die RGB-Transkodierung ohne Alphakanal,
 1024-px-Abmessungen, Farb-/Transparenzbehandlung, falsche Bilddimensionen,
 Xcode-`Contents.json`, vollständige Dateigenerierung in einem
@@ -103,12 +103,12 @@ Blobs** des Feature-Branches überein:
 - `tools/nativeIconCodec.mjs`: `0409a7afe922a24436b9462215b2ce31a36bedd3`
 - `tools/iosIconAssets.mjs`: `ebe38f70098b481822fdfe3c58f6c8c1eda216ba`
 - `tools/prepare-ios-icons.mjs`: `f3d19b199d92cb3b1c2868ec1cfcc3702d86543f`
-- `tools/ios-icons.selftest.mjs`: `2d1188991f2d834e3eb59eb06d765ee71fb1a18a`
+- `tools/ios-icons.selftest.mjs`: `6d81ae1d07b99633f4644bddf7a6486d36fb8b42`
 
-**Zusätzliche Regressionsprüfung:** Die unveränderten sechs Windows-
+**Zusätzliche Regressionsprüfung:** Die `RGB`-Quellbild entsprechend dem echten RED-Fit-Icon sowie die unveränderten sechs Windows-
 Icon-Tests wurden mit dem aktualisierten gemeinsamen PNG-Codec erneut
-ausgeführt: **6/6 bestanden**, zusammen mit den zehn neuen iOS-Tests
-also **16/16 bestanden**.
+ausgeführt: **6/6 bestanden**, zusammen mit den elf neuen iOS-Tests
+also **17/17 bestanden**.
 
 **Brand-Asset aus GitHub tatsächlich geprüft:** Das reale
 `public/icons/icon-512.png` (Git-Blob
