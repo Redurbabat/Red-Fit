@@ -7,6 +7,14 @@
 - 83 Einträge ohne ausreichend angegebene Übungsautoren werden nicht automatisch konvertiert
 - Deutsche Übersetzungen bevorzugt, sonst englischer Name
 - Keine Bilder, Animationen, Beschreibung mit HTML oder fremde APIs im RED-Fit-Bundle
+- **120 Übungen ohne explizite primäre Muskelangabe** erhalten `taxonomyNeedsReview: true`.
+  Davon haben 16 nur die unbestimmte Quellkategorie „Arme“. Sie werden
+  bewusst nicht mehr automatisch dem Bizeps zugeordnet.
+- 14 Übungen verwenden in der Quelle die Gymnastikmatte (Equipment-ID 4).
+  Diese wird korrekt als `other` statt als `none` klassifiziert.
+- Der Hinweis „Muskelzuordnung prüfen“ erscheint in der Bibliothek und im
+  Übungsdetail. Durch manuelles Bearbeiten und Speichern wird die Zuordnung als
+  geprüft markiert.
 - Pro Übung: Quellenkennung `wger:<id>`, Urheber und Lizenz im lokalen Datensatz
 
 Die Datensätze verwenden verschiedene Creative-Commons-Lizenzen (CC-BY-SA 3,
