@@ -12,10 +12,11 @@ Gerät (IndexedDB), offline-fähig, ohne Konto und ohne Backend.
 
 RED Fit bleibt eine lauffähige PWA. Auf dem Branch zur Mehrplattform-Integration
 sind ein **iPhone-Capacitor-Gerüst** und ein **Windows-Tauri-Gerüst** angelegt;
-Native-Builds und Installer sind noch nicht verifiziert. Die erste neue
-fachliche Integration ist die optionale Energie-/Makro-Schätzung in den
-Einstellungen; ein Lizenz-/Herkunfts-geprüfter wger-Übungsadapter liefert
-Vorschauen, importiert aber ohne Freigabe keine fremden Übungsdaten.
+Native-Builds und Installer sind noch nicht verifiziert. Die optionale
+Energie-/Makro-Schätzung ist integriert. **789 wger-Übungen** inklusive
+individueller Autor-/Lizenzangabe sind jetzt als lokaler, offlinefähiger
+Katalog enthalten. Der Import ist ausschließlich nach Vorschau und
+ausdrücklicher Bestätigung möglich; andere Übungen bleiben erhalten.
 Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
 [Plattform-Build-Anleitung](docs/PLATFORM-BUILDS.md).
 
