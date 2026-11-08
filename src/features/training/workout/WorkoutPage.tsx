@@ -27,6 +27,7 @@ import { useRestTimer } from "../../../hooks/useRestTimer";
 import { PlateCalculatorSheet } from "../../../components/workout/PlateCalculatorSheet";
 import { armTimerSignal, playTimerSignal } from "../../../services/audio/timerSignal";
 import { createSerializedWorkoutWriter } from "../../../services/workout/serializedWorkoutWriter";
+import { WorkoutRevisionConflictError } from "../../../services/workout/workoutRevision";
 import type {
   Exercise,
   ExerciseLog,
@@ -110,6 +111,7 @@ export default function WorkoutPage() {
   // Use ONE ordered writer for autosave, pagehide and terminal states.
   const orderedSave = useRef(createSerializedWorkoutWriter<WorkoutLog>(saveWorkout));
   const terminalSaveInFlight = useRef(false);
+  const conflictNotified = useRef(false);
 
   const restRemaining = useRestTimer(log?.restEndsAt);
 
@@ -156,6 +158,17 @@ export default function WorkoutPage() {
     }
   }, []);
 
+  const reportSaveError = useCallback((error: unknown) => {
+    if (error instanceof WorkoutRevisionConflictError) {
+      if (!conflictNotified.current) {
+        conflictNotified.current = true;
+        showToast("Training wurde in einem anderen Fenster geändert. Bitte neu laden.");
+      }
+      return;
+    }
+    showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
+  }, [showToast]);
+
   /** Every mutation flows through here: set state + autosave (§128). */
   const apply = useCallback(
     (next: WorkoutLog, mode: "now" | "debounce") => {
@@ -164,19 +177,15 @@ export default function WorkoutPage() {
       setLogState(next);
       cancelPendingSave();
       if (mode === "now") {
-        void orderedSave.current(next).catch(() =>
-          showToast("Speichern fehlgeschlagen. Bitte versuche es erneut."),
-        );
+        void orderedSave.current(next).catch(reportSaveError);
       } else {
         pendingSave.current = setTimeout(() => {
           pendingSave.current = null;
-          void orderedSave.current(next).catch(() =>
-            showToast("Speichern fehlgeschlagen. Bitte versuche es erneut."),
-          );
+          void orderedSave.current(next).catch(reportSaveError);
         }, SAVE_DEBOUNCE_MS);
       }
     },
-    [cancelPendingSave, showToast],
+    [cancelPendingSave, reportSaveError],
   );
 
   // Initial load — one-time read into local state (this screen owns the log).
@@ -191,6 +200,20 @@ export default function WorkoutPage() {
       .then((found) => {
         if (cancelled) return;
         logRef.current = found ?? null;
+        conflictNotified.current = false;
+        // A separate queue per loaded workout carries its own expected
+        // revision. Every successful queued write advances that revision.
+        // A second tab's edit makes this version stale and is rejected.
+        let savedRevision = found?.saveRevision ?? 0;
+        orderedSave.current = createSerializedWorkoutWriter<WorkoutLog>(
+          async (snapshot) => {
+            const saved = await saveWorkout({
+              ...snapshot,
+              saveRevision: savedRevision,
+            });
+            savedRevision = saved.saveRevision ?? 0;
+          },
+        );
         setLogState(found ?? null);
       })
       .catch(() => {
@@ -462,9 +485,9 @@ export default function WorkoutPage() {
       // Drain all older active writes BEFORE the final status update.
       await orderedSave.current(finished);
       logRef.current = finished;
-    } catch {
+    } catch (error) {
       terminalSaveInFlight.current = false;
-      showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
+      reportSaveError(error);
       return;
     }
     navigate(`/training/workout/${finished.id}/summary`, { replace: true });
@@ -479,9 +502,9 @@ export default function WorkoutPage() {
     try {
       await orderedSave.current(discarded);
       logRef.current = discarded;
-    } catch {
+    } catch (error) {
       terminalSaveInFlight.current = false;
-      showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
+      reportSaveError(error);
       return;
     }
     navigate("/training", { replace: true });
