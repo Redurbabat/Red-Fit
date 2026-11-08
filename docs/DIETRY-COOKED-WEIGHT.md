@@ -108,7 +108,7 @@ native-App-Builds.
 Die ursprüngliche Idee und die Referenztabelle stammen aus
 **Dietry** (`dietry-main.zip`, `lib/services/cooking_yield.dart`,
 `docs/cooked_weight_plan.md`), einem Projekt unter **MIT-Lizenz**,
-Copyright © 2026 tcriess. Der TypeScript-Code wurde für RED FIt
+Copyright © 2026 tcriess. Der TypeScript-Code wurde für RED Fit
 neu implementiert, ohne Flutter-/PostgREST-Abhängigkeiten. Der originale
 Lizenzhinweis wird unter `docs/licenses/dietry-MIT.txt` aufbewahrt.
 
