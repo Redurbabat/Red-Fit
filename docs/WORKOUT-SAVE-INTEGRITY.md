@@ -182,6 +182,70 @@ Sie sind noch **nicht** in einer echten IndexedDB-Umgebung ausgeführt.
 Der isolierte Stub-Test beweist das Verhalten unter serialisierbarer
 Transaktionssemantik, nicht die vollständige Integration mit Dexie.
 
+### Sicherer Wechsel zwischen Workout-Routen (2026-11-08)
+
+Beim weiteren Review wurde ein Navigationsrennen gefunden: React Router
+kann beim Wechsel zwischen zwei URLs
+`/training/workout/:workoutId` **dieselbe Seitenkomponente**
+weiterverwenden. Eine 400-ms-debouncte Satzänderung oder Notiz
+konnte daher noch auf den vorherigen Workout-Log zeigen, während die
+Seite bereits den Writer und Revisionszähler des nächsten geladenen
+Trainings verwendete. Ein verzögert fertiggestellter Schreibvorgang
+konnte zudem den Status einer neu geöffneten Seite beeinflussen oder
+nach dem Wechsel unerwartet zur Trainingsübersicht navigieren.
+
+**Korrektur in `WorkoutPage.tsx`:**
+
+- Der aktive Pfad-Parameter und die geladene Workout-ID müssen beim
+  Rendern sowie bei jeder lokalen Mutation übereinstimmen; bis die
+  neue ID geladen ist, erscheint eine Ladeansicht.
+- Der nach dem Laden erzeugte Writer ist fest an genau diese ID
+  gebunden. `assertWorkoutWriteScope()` verhindert, dass ein altes
+  Snapshot durch den neu installierten Revisions-Writer gespeichert
+  wird.
+- Beim Routenwechsel wird ein ausstehender Debounce **mit dem noch
+  gebundenen Writer des vorherigen Workouts** übertragen. Dieser Writer
+  darf sein eigenes Workout fertig speichern, aber nicht das neue
+  ändern.
+- Fehlgeschlagene alte Speichervorgänge werden ihrer ursprünglichen
+  Workout-ID zugeordnet, statt einen Konfliktzustand im neuen
+  Workout auszulösen. Spät abgeschlossene Finish-/Discard-Aktionen
+  dürfen nach Routenwechsel keine Navigation mehr erzwingen.
+
+**Korrektur in `WorkoutSummaryPage.tsx`:**
+
+- Der Notiz-Writer trägt nun die Workout-ID und wird vor jeder
+  Speicherung gegen die aktuelle Route geprüft.
+- Alte asynchrone Writer dürfen nach einem Wechsel den
+  `lastSavedNotes`-Wert oder den Konfliktzustand des neuen Trainings
+  nicht verändern. Ein tatsächlicher Fehler der alten Notiz wird
+  separat gemeldet.
+- **„Fertig“ navigiert erst nach erfolgreichem Notiz-Save** – und
+  nur dann, wenn die Workout-Route nicht inzwischen gewechselt hat.
+
+Das reine Guard-Modul liegt in
+`src/services/workout/workoutRouteScope.ts`. Es wurde mit
+`tsc --noEmit --strict --target ES2022` typgeprüft. Die zehn neuen
+Node-Regressionstests stehen in
+`tools/workout-route-scope.selftest.mjs` und prüfen unter anderem
+fremde IDs, fehlende IDs, zwei getrennte Writer, eine alte
+Notiz-Callback-Reihenfolge, verspätete Navigation und Fehler.
+
+**Tatsächlich ausgeführt:** kompletter lokaler Offline-Sammellauf
+mit **20/20 Testsuiten und 154/154 bestandenen Tests**, Node.js
+22.16.0, kein Fehler/Skip. Die beiden neuen Test-/Quellmodule
+entsprechen bytegenau den GitHub-Blobs
+`d13bddb768c523401c8334bec2601bad11e1cf44` und
+`6d6fe743ebc8ec0e721eba55b240cf47055c7b69`.
+Die aktuelle Verdrahtung beider TSX-Seiten wurde zusätzlich im
+GitHub-Quelltext über **16 gezielte Codepfad-Prüfungen** kontrolliert.
+
+**Weiter offen:** Ein tatsächlicher React-Router-/Browser-E2E-Test
+bei schnellem Wechsel zwischen zwei Trainings einschließlich
+iOS-Backgrounding; dafür fehlen derzeit React-/Vitest-/Browser-
+Abhängigkeiten. Die Node-Simulation belegt die Schutzregel,
+nicht die vollständige WebView-Lebenszyklusintegration.
+
 ## Prüfung und Status
 
 Ohne npm-Installation lokal mit Node 22.16+:
