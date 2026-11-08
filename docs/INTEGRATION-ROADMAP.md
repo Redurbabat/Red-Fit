@@ -129,11 +129,16 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   navigiert erst nach erfolgreichem Notiz-Save. 10/10 neue
   Node-Tests und isolierter strenger TypeScript-Check bestanden;
   reale React-Router-/WebView-Tests noch ausstehend
-- [x] Separater, npm-unabhängiger CI-Job für die aktuell 20
+- [x] Trainingsnotizen: Debounce/Blur/Pagehide teilen bei identischem
+  Text dieselbe ausstehende Save-Promise; A→B→A bei noch wartendem
+  Write wird korrekt in Reihenfolge gespeichert. 12/12 neue Node-
+  Regressionstests und strenger TypeScript-Check bestanden;
+  fünf echte Vitest-Fälle ergänzt, noch nicht ausgeführt
+- [x] Separater, npm-unabhängiger CI-Job für die aktuell 21
   `tools/*.selftest.mjs`-Suiten erstellt (automatische Erkennung,
   Fehlerweitergabe, Node 22). Starter 5/5 geprüft;
-  danach **20/20 lokal rekonstruierte Suiten mit 154/154 Tests**
-  erfolgreich; Git-Blob-Abgleich der neuen Guard-Dateien bestanden.
+  danach **21/21 lokal rekonstruierte Suiten mit 166/166 Tests**
+  erfolgreich; Git-Blob-Abgleich der neuen Note-Writer-Dateien bestanden.
   GitHub-Runner, vollständige App-Suite und native Builds noch offen
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [x] Branded Windows/Tauri-Icons aus vorhandenem PWA-Icon automatisch
