@@ -19,6 +19,11 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Native icon generator regression tests (Node-only)
+        run: |
+          npm run test:native-icons
+          npm run test:ios-icons
+
       - name: Typecheck
         run: npm run typecheck
 
