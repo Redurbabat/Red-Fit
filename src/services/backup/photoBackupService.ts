@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { decodePhotoBase64, encodePhotoBase64, MAX_SINGLE_PHOTO_BYTES } from "./photoBackupCodec";
+export { decodePhotoBase64, encodePhotoBase64 } from "./photoBackupCodec";
 import { mediaAssetMetaSchema, progressPhotoSchema, type MediaAsset, type ProgressPhoto } from "../../models/media";
 import { getLocalDateKey, nowIso } from "../../utils/dates";
 import { newId } from "../../utils/ids";
@@ -13,7 +15,6 @@ export const PHOTO_BACKUP_FORMAT = "red-fit-photo-backup" as const;
 export const PHOTO_BACKUP_VERSION = 1;
 export const MAX_PHOTO_BACKUP_RAW_BYTES = 25 * 1024 * 1024;
 export const MAX_PHOTO_BACKUP_FILE_BYTES = 36 * 1024 * 1024;
-const MAX_SINGLE_PHOTO_BYTES = 10 * 1024 * 1024;
 const MAX_PHOTOS = 250;
 
 const allowedPhotoMimeTypes = new Set([
@@ -36,39 +37,6 @@ export const photoBackupSchema = z.object({
 
 export type PhotoBackup = z.infer<typeof photoBackupSchema>;
 export type PhotoBackupImportResult = { added: number; skipped: number };
-
-/** Encode in 12 KiB chunks (multiple of 3) to preserve base64 boundaries. */
-export function encodePhotoBase64(bytes: Uint8Array): string {
-  const chunks: string[] = [];
-  for (let start = 0; start < bytes.length; start += 12_288) {
-    const view = bytes.subarray(start, start + 12_288);
-    let binary = "";
-    for (let i = 0; i < view.length; i++) {
-      binary += String.fromCharCode(view[i]);
-    }
-    chunks.push(btoa(binary));
-  }
-  return chunks.join("");
-}
-
-export function decodePhotoBase64(encoded: string, expectedBytes: number): Uint8Array {
-  if (encoded.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(encoded)) {
-    throw new Error("Invalid photo base64 encoding");
-  }
-  const padding = encoded.endsWith("==") ? 2 : encoded.endsWith("=") ? 1 : 0;
-  const decodedLength = (encoded.length / 4) * 3 - padding;
-  if (decodedLength !== expectedBytes || decodedLength <= 0 ||
-      decodedLength > MAX_SINGLE_PHOTO_BYTES) {
-    throw new Error("Photo size does not match its metadata");
-  }
-  const bytes = new Uint8Array(decodedLength);
-  let position = 0;
-  for (let i = 0; i < encoded.length; i += 16_384) {
-    const chunk = atob(encoded.slice(i, i + 16_384));
-    for (let j = 0; j < chunk.length; j++) bytes[position++] = chunk.charCodeAt(j);
-  }
-  return bytes;
-}
 
 function validateAsset(asset: Omit<MediaAsset, "blob">, photo: ProgressPhoto) {
   if (photo.assetId !== asset.id || asset.kind !== "photo" ||
