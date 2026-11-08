@@ -247,10 +247,14 @@ export default function WorkoutSummaryPage() {
               <Trophy size={26} color="var(--accent-2)" style={{ flexShrink: 0 }} aria-hidden="true" />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 700 }}>
-                  {record.exerciseName}: {formatKg(record.maxWeightKg)}
+                  {record.exerciseName}: {record.maxWeightKg > 0
+                    ? formatKg(record.maxWeightKg)
+                    : `${record.maxRepsAtMaxWeight} Wdh. (Eigengewicht)`}
                 </div>
                 <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                  Neuer Bestwert · {record.maxRepsAtMaxWeight} Wdh.
+                  {record.maxWeightKg > 0
+                    ? `Neuer Gewichts- oder Wiederholungsbestwert · ${record.maxRepsAtMaxWeight} Wdh.`
+                    : "Neuer Wiederholungsbestwert"}
                 </div>
               </div>
             </Card>
