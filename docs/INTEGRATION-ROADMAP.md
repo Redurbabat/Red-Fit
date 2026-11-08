@@ -62,6 +62,10 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [ ] Vollständige Foto-Sammlungen >25 MiB als geteiltes/verschlüsseltes
   Archiv übertragen (derzeit begrenzter optionaler JSON-Transfer)
 - [ ] Weitere Funktionen der drei Quellen vollständig integriert
+- [x] Native Navigation für Capacitor/Tauri auf reload-sichere Hash-Routen
+  umgestellt; Web/PWA-History-Routen bleiben unverändert
+- [x] PWA-Service-Worker in nativen Shells deaktiviert, Tauri/Vite
+  IPv4-Dev-Host abgeglichen; 7/7 isolierte Node-Tests erfolgreich
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [ ] Tauri-/Windows-Build auf Windows geprüft
 - [ ] Offline-, Backup- und Geräte-Regressionen abgeschlossen
