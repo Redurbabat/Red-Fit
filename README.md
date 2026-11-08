@@ -8,6 +8,17 @@ Bewegungsfiguren, Ernährungstracking (Nährwerte pro 100 g), Wasser, Körperwer
 Fortschritt, Wochen-Essensplan, Einkaufsliste und Backup — alles lokal auf dem
 Gerät (IndexedDB), offline-fähig, ohne Konto und ohne Backend.
 
+## Plattformen
+
+RED Fit bleibt eine lauffähige PWA. Auf dem Branch zur Mehrplattform-Integration
+sind ein **iPhone-Capacitor-Gerüst** und ein **Windows-Tauri-Gerüst** angelegt;
+Native-Builds und Installer sind noch nicht verifiziert. Die erste neue
+fachliche Integration ist die optionale Energie-/Makro-Schätzung in den
+Einstellungen; ein Lizenz-/Herkunfts-geprüfter wger-Übungsadapter liefert
+Vorschauen, importiert aber ohne Freigabe keine fremden Übungsdaten.
+Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
+[Plattform-Build-Anleitung](docs/PLATFORM-BUILDS.md).
+
 ## Voraussetzungen
 
 - Node.js ≥ 20
