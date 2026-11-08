@@ -33,6 +33,10 @@ export function createCoalescedNoteWriter(
         // A failure of the latest queued value permits a future retry.
         // Do not change the token if a newer distinct write is queued.
         lastQueuedText = committedText;
+        // No write remains pending at the current value. Otherwise a
+        // subsequent "Fertig" with that committed value would rethrow the
+        // previous failure despite nothing needing to be saved.
+        lastResult = Promise.resolve();
       }
       throw error;
     });
