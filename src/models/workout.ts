@@ -104,6 +104,11 @@ export const workoutLogSchema = baseEntitySchema.extend({
   endedAt: isoDateTimeSchema.optional(),
   durationSeconds: z.number().int().min(0).optional(),
   status: z.enum(WORKOUT_STATUSES),
+  /**
+   * Optimistic concurrency token for independent browser/native WebViews.
+   * Older saved workouts and backups have no token and start at revision 0.
+   */
+  saveRevision: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
   exerciseLogs: z.array(exerciseLogSchema),
   notes: z.string().optional(),
   restEndsAt: isoDateTimeSchema.optional(),
