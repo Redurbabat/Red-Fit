@@ -8,7 +8,7 @@ import {
 const source = readFileSync("public/data/wger-verified-789.json", "utf8");
 
 function mockBundledResponse(text = source, ok = true) {
-  const fetchMock = vi.fn(async () => ({
+  const fetchMock = vi.fn(async (_url: RequestInfo | URL) => ({
     ok,
     status: ok ? 200 : 404,
     text: async () => text,
