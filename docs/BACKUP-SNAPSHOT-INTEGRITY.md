@@ -55,6 +55,12 @@ automatischen Verwerfen zusätzlicher aktiver Trainings steigt
 `saveRevision` monoton. Bestehende Backups bleiben kompatibel.
 Details: [Backup-Workout-Revisionen](BACKUP-WORKOUT-REVISIONS.md).
 
+Bei der anschließenden Backup-Merge-Prüfung wurde auch der Verlust
+unterschiedlicher Mahlzeiten-Einträge mit identischer `MealFoodEntry.id`
+behoben. Der Import behält solche Einträge unter einer stabilen Recovery-ID
+und vermeidet wiederholte Notizduplikate.
+Siehe [Mahlzeiten-Kollisionsschutz](BACKUP-MEAL-COLLISION-SAFETY.md).
+
 ## Tests
 
 ```bash
