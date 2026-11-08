@@ -4,7 +4,7 @@ updated: 2026-11-08
 ---
 # Rechte, Lizenzen, Privatheit
 
-**Nutzeranweisung:** RED Fit ist privat und soll privat bleiben; der Nutzer bezeichnet openGym als seine zweite App. Das ist eine Projektzuordnung, **kein** Nachweis der ausschließlichen Rechte an sämtlichem Drittmaterial der ZIP.
+**Nutzeranweisung:** RED Fit ist privat und soll privat bleiben. Der Nutzer bezeichnet die betreffenden Repositories als seine eigenen und hat am 2026-11-08 die Verwendung von Code aus seinem eigenen Repository für RED Fit ausdrücklich gestattet. **Diese Freigabe gilt für Code, an dem er die erforderlichen Rechte hat**, nicht automatisch für externen Upstream-Code, eingebundene Drittanbieterbibliotheken oder separat lizenzierte Bild-/Animationsdateien. Die ursprüngliche openGym-Archivkopie nennt Duarte Santos im NOTICE und Gym visual für Medien; das bleibt bei jeder konkreten Dateiübernahme zu beachten.
 
 | Quelle | in Archiv geprüfte Angaben | Regel |
 |---|---|---|
