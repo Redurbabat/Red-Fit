@@ -45,9 +45,13 @@ test("web Capacitor shim does not force native routing", () => {
   assert.equal(shouldUseHashRouter(platform), false);
 });
 
-test("Android native shell follows the same reload-safe policy", () => {
-  assert.equal(shouldUseHashRouter("android"), true);
-  assert.equal(shouldRegisterPwaServiceWorker("android", false), false);
+test("Android Capacitor runtime uses reload-safe navigation without web SW", () => {
+  const platform = detectPlatform({
+    Capacitor: { getPlatform: () => "android", isNativePlatform: () => true },
+  });
+  assert.equal(platform, "android");
+  assert.equal(shouldUseHashRouter(platform), true);
+  assert.equal(shouldRegisterPwaServiceWorker(platform, false), false);
 });
 
 test("server-side entry without window reports web", () => {
