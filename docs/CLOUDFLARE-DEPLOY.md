@@ -15,6 +15,32 @@ Cloudflare Pages behandelt React-SPA-Routen automatisch als Client-Routen, wenn 
 
 **Achtung:** GitHub-Repository privat bedeutet **nicht**, dass `*.pages.dev` privat ist. Für Zugangsschutz vor echten Benutzerdaten Cloudflare Access konfigurieren oder den Deploy nicht veröffentlichen.
 
+## Fehlerbehebung: `assets.directory ./dist` existiert nicht
+
+Beim Cloudflare-Workers-Build vom **2026-11-08, 13:39 UTC** meldete Wrangler:
+
+```text
+[ERROR] The directory specified by the "assets.directory" field ... does not exist:
+/opt/buildhome/repo/dist
+```
+
+Der Installationsschritt (`npm clean-install`, 512 Pakete) war erfolgreich, **aber Cloudflare hat vor `npx wrangler deploy` kein `npm run build` ausgeführt.** `dist/` wird absichtlich nicht in Git versioniert und entsteht erst durch `tsc && vite build`. Die `glob`-Deprecation-Warnung ist nicht der Auslöser.
+
+**Im Cloudflare-Dashboard des bestehenden Workers** unter **Settings → Build** eintragen:
+
+| Feld | Wert |
+| --- | --- |
+| Production branch | `main` |
+| Root directory | `/` (Repository-Wurzel) |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+
+Danach **Deploy erneut auslösen** (neuen `main`-Commit bauen oder neu bereitstellen). Im Log müssen aufeinander folgen: `npm ci` / `npm clean-install`, **`tsc && vite build` mit erzeugtem `dist/`**, `wrangler deploy`. Ein tatsächlich funktionierendes Deployment und eine öffentliche URL sind noch zu bestätigen.
+
+**Alternative mit nur einem Deploy-Befehl:** Als Deploy command **`npm run deploy:workers`** verwenden und das separate Build-command-Feld *leer lassen*. Das Repo-Script führt `npm run build && npx wrangler deploy --config wrangler.jsonc` aus und stoppt bei Build-Fehler. Nicht beides kombinieren, sonst wird doppelt gebaut.
+
+Wichtig: Laut Cloudflare [Workers Builds-Konfiguration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/) werden `build`-Einstellungen im Wrangler-Konfigurationsfile von **Workers Builds derzeit ignoriert**. Darum muss das Cloudflare-Build-Feld bzw. der Deploy-Befehl im Dashboard gesetzt sein; ein `build.command` in `wrangler.jsonc` allein behebt diesen Fehler dort nicht.
+
 ## Alternative: Cloudflare Workers Static Assets
 
 Das Repository besitzt `wrangler.jsonc` mit `assets.directory = ./dist` und `not_found_handling = single-page-application`. Es wird **kein Worker-API-Script** und keine externe Datenbank benötigt. Für diese Alternative einen Worker namens `red-fit` bereitstellen; einen anderen Namen im Wrangler-File einstellen, falls der Name belegt ist.
