@@ -36,6 +36,21 @@ describe("atomic meal-entry repository operations", () => {
     expect(new Set(logs[0].entries.map((e) => e.id)).size).toBe(12);
   });
 
+  it("preserves simultaneous recipe and manually logged food entries", async () => {
+    const recipeEntry: MealFoodEntry = {
+      ...entry("recipe"), foodId: "recipe-42", foodName: "Pasta (Rezept)",
+      amountG: 275, kcal: 420,
+    };
+    await Promise.all([
+      mealRepository.appendEntry(date, type, recipeEntry),
+      mealRepository.appendEntry(date, type, entry("manual-rice", 365)),
+    ]);
+    const logs = await mealRepository.listByDate(date);
+    expect(logs).toHaveLength(1);
+    expect(logs[0].entries.map((e) => e.id).sort()).toEqual(["manual-rice", "recipe"]);
+    expect(logs[0].entries.find((e) => e.id === "recipe")?.kcal).toBe(420);
+  });
+
   it("merges legacy duplicate meal containers without dropping notes, entries or IDs", async () => {
     await db.mealLogs.bulkAdd([
       log("a", [entry("old-a")], "First note"),
