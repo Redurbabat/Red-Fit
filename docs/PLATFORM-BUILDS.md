@@ -59,6 +59,9 @@ vorsorglich freigegeben.
 9. Keine Green-Build- oder Installationsbehauptungen ohne tatsächlichen Nachweis.
 
 ## Quellen und Rechtliches
-Fremde ZIP-Archive bleiben außerhalb des Projekts; Details und Checksummen in
-`docs/INTEGRATION-ROADMAP.md`. Es wird kein openGym- oder wger-Code und
-insbesondere kein Gym-visual-Asset in RED Fit eingebaut.
+Original-ZIP-Archive sind als getrennte Quellensnapshots vorbereitet; Details
+und Checksummen in `docs/INTEGRATION-ROADMAP.md`. Einzelne openGym-Konzepte
+wurden in neue RED-Fit-Module umgesetzt. wger-Datensätze werden nur auf
+ausdrückliche Importaktion mit Quellen-/Lizenznachweis gespeichert.
+Insbesondere werden keine eingeschränkt lizenzierten Gym-visual-Medien
+in die App eingebaut.
