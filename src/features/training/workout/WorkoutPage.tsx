@@ -105,6 +105,7 @@ export default function WorkoutPage() {
   const [search, setSearch] = useState("");
   const [finishOpen, setFinishOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [saveConflict, setSaveConflict] = useState(false);
 
   const logRef = useRef<WorkoutLog | null>(null);
   const pendingSave = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -159,9 +160,12 @@ export default function WorkoutPage() {
   }, []);
 
   const reportSaveError = useCallback((error: unknown) => {
-    if (error instanceof WorkoutRevisionConflictError) {
+    const conflict = error instanceof WorkoutRevisionConflictError ||
+      (error instanceof Error && /already finalized|no longer exists/.test(error.message));
+    if (conflict) {
       if (!conflictNotified.current) {
         conflictNotified.current = true;
+        setSaveConflict(true);
         showToast("Training wurde in einem anderen Fenster geändert. Bitte neu laden.");
       }
       return;
@@ -172,7 +176,7 @@ export default function WorkoutPage() {
   /** Every mutation flows through here: set state + autosave (§128). */
   const apply = useCallback(
     (next: WorkoutLog, mode: "now" | "debounce") => {
-      if (terminalSaveInFlight.current) return;
+      if (terminalSaveInFlight.current || conflictNotified.current) return;
       logRef.current = next;
       setLogState(next);
       cancelPendingSave();
@@ -201,6 +205,7 @@ export default function WorkoutPage() {
         if (cancelled) return;
         logRef.current = found ?? null;
         conflictNotified.current = false;
+        setSaveConflict(false);
         // A separate queue per loaded workout carries its own expected
         // revision. Every successful queued write advances that revision.
         // A second tab's edit makes this version stale and is rejected.
@@ -476,7 +481,7 @@ export default function WorkoutPage() {
   };
 
   const handleFinish = async () => {
-    if (terminalSaveInFlight.current) return;
+    if (terminalSaveInFlight.current || conflictNotified.current) return;
     terminalSaveInFlight.current = true;
     setFinishOpen(false);
     cancelPendingSave();
@@ -494,7 +499,7 @@ export default function WorkoutPage() {
   };
 
   const handleDiscard = async () => {
-    if (terminalSaveInFlight.current) return;
+    if (terminalSaveInFlight.current || conflictNotified.current) return;
     terminalSaveInFlight.current = true;
     setDiscardOpen(false);
     cancelPendingSave();
@@ -529,6 +534,29 @@ export default function WorkoutPage() {
   return (
     <div style={{ paddingBottom: 96 }}>
       <style>{REST_TIMER_CSS}</style>
+      {saveConflict ? (
+        <div
+          role="alert"
+          style={{
+            padding: 16,
+            marginBottom: 16,
+            border: "1px solid var(--warning)",
+            borderRadius: "var(--radius-md)",
+            background: "var(--surface)",
+          }}
+        >
+          <p style={{ fontWeight: 700, marginBottom: 8 }}>
+            Dieses Training wurde in einem anderen Fenster verändert.
+          </p>
+          <p style={{ fontSize: 14, marginBottom: 12 }}>
+            Neue Eingaben in diesem Fenster werden nicht gespeichert.
+            Beim Neuladen wird der aktuell gespeicherte Trainingsstand angezeigt.
+          </p>
+          <Button variant="secondary" onClick={() => window.location.reload()}>
+            Gespeicherten Stand neu laden
+          </Button>
+        </div>
+      ) : null}
 
       {/* Own compact top bar — back keeps the workout active (resume later). */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0 14px" }}>
