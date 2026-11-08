@@ -75,3 +75,11 @@ Nächster konkreter Schritt:
 - Next: PR nach `main`, danach Cloudflare-Build prüfen und auf iPhone/Android Accessibility, Safe Areas, Scrollrichtung und Quick-Log-Überlagerung abnehmen.
 
 - **Nachtrag:** UI-Änderung wurde über [PR #8](https://github.com/Redurbabat/Red-Fit/pull/8) per Squash nach `main` gemergt (Merge-Commit `42a70bd8e6ee528b42a3e539f06e5cc4eec5c5a8`). GitHub-Dateien auf `main` nach Merge erneut geprüft: Dock, routenbasierter Reset und [[10-DOCK-RED-MORPH]] vorhanden. Tests/Native-Builds bleiben wie oben beschrieben offen.
+
+
+## 2026-11-08 — Cloudflare-Offline-Regressionsprüfung an Dokumentation angepasst
+- **Ist-Stand vorher:** `main` enthielt den bereits gemergten RED-Morph-Dock (PR #8) und den Cloudflare-Fix; `tools/cloudflare-deploy.selftest.mjs` verlangte aber zwei inzwischen veraltete Textpassagen in der Cloudflare-Anleitung. Bei Ausführung wäre der Dokumentations-Assertion-Teil deshalb fehlgeschlagen.
+- **Fix auf `main`:** `tools/cloudflare-deploy.selftest.mjs` erwartet nun den tatsächlich dokumentierten `npm run deploy:workers`-Befehl und prüft die Warnung zu von Workers Builds ignorierten `build.command`-Einstellungen. Keine Änderung an Cloudflare-Produktivkonfiguration, Fachlogik, Dependencies, Schema oder Nutzerdaten.
+- **Code-Commit:** `286e7a4aa2b7f459d53019dde3455665d0de86ad`.
+- **Tatsächlicher Nachweis:** Die Inhalte von `main` (`package.json`, `wrangler.jsonc`, `docs/CLOUDFLARE-DEPLOY.md`, `tools/cloudflare-deploy.selftest.mjs`) über GitHub abgerufen und **12/12 direkte Konfigurations-/Textchecks** gegen genau diese Inhalte erfolgreich ausgeführt. Kein npm-/Node-Testlauf, kein vollständiger Vite- oder Cloudflare-Build in dieser Sitzung; ein erfolgreicher Deployment-Status ist weiter unbelegt.
+- **Weiter:** `npm run test:offline`, `npm run typecheck && npm run lint && npm run test && npm run build` auf einem Checkout mit Abhängigkeiten ausführen; Cloudflare Workers von neuestem `main` deployen und echte URL/Offline-Verhalten testen. Den Browser-/Cloudflare-Erfolg erst nach Lognachweis abhaken.
