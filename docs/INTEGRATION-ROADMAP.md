@@ -56,6 +56,10 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   bei Konflikt klare UI-Warnung statt Überschreiben. 8/8 weitere
   Node-Tests und isolierter TypeScript-Check bestanden;
   9 Workout-Persistence-Vitest-Tests vorbereitet, noch nicht ausgeführt
+- [x] Workout-Zusammenfassung: Notiz-Speicherung ebenfalls auf eine
+  transaktionale Revisionsprüfung umgestellt (keine ungeschützten
+  Repository-Updates mehr); 8/8 Prüfungen mit serialisiertem DB-Stub
+  erfolgreich, fünf zusätzliche Dexie-Regressionsfälle eingereicht
 - [x] openGym-Supersatz-Planung/Rotation/Pausen und Unit-Tests als Code gepusht
 - [x] Dietry-Schätzunsicherheit mit Eintragskennzeichnung und Tagesanzeige gepusht
 - [x] Mahlzeiten-Logging in UI und Rezepten auf atomare Dexie-Transaktionen
