@@ -66,6 +66,11 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   umgestellt; Web/PWA-History-Routen bleiben unverändert
 - [x] PWA-Service-Worker in nativen Shells deaktiviert, Tauri/Vite
   IPv4-Dev-Host abgeglichen; 7/7 isolierte Node-Tests erfolgreich
+- [x] Gepinnter plattformübergreifender Bootstrap für Capacitor 8.6.0
+  und Tauri CLI 2.12.4 mit Lockfile-Validierung und Rollback;
+  14/14 unabhängige Node-Tests bestanden (echte npm-Installation offen)
+- [ ] `native:bootstrap` mit Registry-Zugriff ausführen und aktualisiertes
+  `package.json` + `package-lock.json` zusammen committen
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [x] Branded Windows/Tauri-Icons aus vorhandenem PWA-Icon automatisch
   vor Dev/Build generieren; 6/6 isolierte PNG-/ICO-Tests bestanden
