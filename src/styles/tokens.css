@@ -42,7 +42,7 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
   /* Bottom nav height incl. safe area is handled in layout; base height here. */
-  --bottom-nav-height: 64px;
+  --bottom-nav-height: 76px;
 
   color-scheme: dark;
 }
