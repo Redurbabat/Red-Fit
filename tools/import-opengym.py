@@ -25,8 +25,6 @@ def main():
     digest = hashlib.sha256(archive.read_bytes()).hexdigest()
     if digest != EXPECTED:
         p.error("Archive SHA-256 does not match the audited openGym snapshot")
-    if args.apply and DEST.exists() and any(DEST.iterdir()):
-        p.error("Target is not empty; refusing destructive overwrite")
     copied, skipped, total = 0, 0, 0
     seen = set()
     with ZipFile(archive) as z:
@@ -49,9 +47,13 @@ def main():
             total += len(data)
             if args.apply:
                 dest = DEST.joinpath(*PurePosixPath(rel).parts)
+                if dest.exists():
+                    if not dest.is_file() or dest.read_bytes() != data:
+                        p.error("Existing source differs; refusing overwrite: " + str(dest))
+                    continue  # Already imported byte-for-byte, safe to resume.
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 dest.write_bytes(data)
-                if entry.external_attr >> 16 & 0o111:
+                if (entry.external_attr >> 16) & 0o111:
                     dest.chmod(dest.stat().st_mode | 0o111)
     print(json.dumps({
         "mode": "applied" if args.apply else "dry-run",
