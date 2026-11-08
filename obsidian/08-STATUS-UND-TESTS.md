@@ -47,3 +47,12 @@ Nächster konkreter Schritt:
 - **WICHTIG:** Cloudflare Workers Builds ignoriert aktuell benutzerdefinierte `build.command`-Einstellungen in Wrangler-Konfigurationsdateien. GitHub kann die bereits gespeicherten Cloudflare-Dashboard-Build-Einstellungen nicht automatisch korrigieren.
 - Status: **Code/Dokumentation direkt auf main aktualisiert**. Weder neuer Cloudflare-Build noch Live-Bereitstellung wurde im Chat verifiziert. Die `glob`-Warnung im Nutzerprotokoll war nicht fatal.
 - **Nächster Schritt:** Im Cloudflare-Worker-Projekt `Settings → Build` setzen, neuen Deploy starten, `dist`-Build und Produktions-URL prüfen; danach Deep Links, Workout-Datenerhalt, Offline-PWA und Update testen.
+
+
+## 2026-11-08 — Cloudflare-Deployment: zusätzliche Absicherung
+- Der ursprüngliche Cloudflare-Log zeigte einen erfolgreich durchgelaufenen Dependency-Install, aber **kein** `npm run build` vor `npx wrangler deploy`; dadurch fehlte `dist/`.
+- Als direkter `main`-Fix existiert nun zusätzlich `npm run deploy:cloudflare` = `npm run build && npx wrangler deploy`. Vorhandenes `deploy:workers` baut ebenfalls zuerst.
+- `tools/cloudflare-deploy.selftest.mjs` hinzugefügt und an die tatsächlich vorhandenen Worker-Deploy-Skripte und `docs/CLOUDFLARE-DEPLOY.md` angepasst.
+- Der aktuelle GitHub-`main`-Inhalt von `package.json`, `wrangler.jsonc`, Cloudflare-Dokumentation und Test wurde direkt geprüft: **11/11 deklarative Konfigurations-/Dokumentationsabgleiche erfüllt**. Dies ist **kein** ausgeführter Node-Selftest, kein Vite-Build und kein bestätigter Remote-Deploy.
+- Cloudflare-Dashboard muss weiterhin `Build command = npm run build`, `Deploy command = npx wrangler deploy` verwenden; alternativ bei leerem Build-Feld `Deploy command = npm run deploy:workers`. Ein GitHub-Push ändert diese Remote-Einstellung nicht.
+- Bei unverifiziertem Cloudflare-Zugang ist das erneute Auslösen und die Validierung einer Live-URL **ausstehend**. Website-Deployment ist zudem nicht automatisch privat, obwohl GitHub privat ist.
