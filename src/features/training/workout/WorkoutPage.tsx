@@ -162,7 +162,13 @@ export default function WorkoutPage() {
     }
   }, []);
 
-  const reportSaveError = useCallback((error: unknown) => {
+  const reportSaveError = useCallback((error: unknown, originWorkoutId?: string) => {
+    if (originWorkoutId &&
+        !isCurrentWorkoutRoute(routeWorkoutId.current, originWorkoutId)) {
+      // A previous route's outstanding write must not lock the new screen.
+      showToast("Das vorherige Training konnte nicht gespeichert werden.");
+      return;
+    }
     const conflict = error instanceof WorkoutRevisionConflictError ||
       (error instanceof Error && /already finalized|no longer exists/.test(error.message));
     if (conflict) {
@@ -186,11 +192,11 @@ export default function WorkoutPage() {
       setLogState(next);
       cancelPendingSave();
       if (mode === "now") {
-        void orderedSave.current(next).catch(reportSaveError);
+        void orderedSave.current(next).catch((error) => reportSaveError(error, next.id));
       } else {
         pendingSave.current = setTimeout(() => {
           pendingSave.current = null;
-          void orderedSave.current(next).catch(reportSaveError);
+          void orderedSave.current(next).catch((error) => reportSaveError(error, next.id));
         }, SAVE_DEBOUNCE_MS);
       }
     },
@@ -244,7 +250,7 @@ export default function WorkoutPage() {
         const previous = logRef.current;
         const previousWriter = orderedSave.current;
         if (previous?.id === workoutId) {
-          void previousWriter(previous).catch(reportSaveError);
+          void previousWriter(previous).catch((error) => reportSaveError(error, previous.id));
         }
       }
     };
@@ -513,7 +519,7 @@ export default function WorkoutPage() {
       logRef.current = finished;
     } catch (error) {
       terminalSaveInFlight.current = false;
-      reportSaveError(error);
+      reportSaveError(error, finished.id);
       return;
     }
     if (routeWorkoutId.current === finished.id) {
@@ -534,7 +540,7 @@ export default function WorkoutPage() {
       logRef.current = discarded;
     } catch (error) {
       terminalSaveInFlight.current = false;
-      reportSaveError(error);
+      reportSaveError(error, discarded.id);
       return;
     }
     if (routeWorkoutId.current === discarded.id) {
