@@ -36,6 +36,13 @@ RED Fit gehört vollständig dem Projektinhaber:
 
 ## Stack (Basis fixiert — kein Framework-Wechsel)
 
+Ab Integrationsphase 2026-11-08 sind dünne native Shells für iPhone (Capacitor)
+und Windows (Tauri 2) erlaubt. React/TypeScript bleibt der einzige fachliche
+Core; keine zweite Implementierung von Workouts/Ernährung. Siehe
+`docs/PLATFORM-BUILDS.md` und `docs/INTEGRATION-ROADMAP.md`.
+Die Native-Scaffolds gelten ohne echte iOS-/Windows-Builds nicht als getestet.
+
+
 React · TypeScript strict · Vite · React Router · **Dexie**/IndexedDB · Zod ·
 Lucide React · CSS mit Variablen · vite-plugin-pwa · Vitest ·
 **Three.js/@react-three/fiber** (3D-Coach, nur im Lazy-Chunk — nie im Initial-Bundle) ·
