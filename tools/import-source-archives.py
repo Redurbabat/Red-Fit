@@ -59,7 +59,7 @@ def import_archive(path: Path, output: Path) -> dict:
             if (
                 posix.is_absolute()
                 or ".." in posix.parts
-                or "\\\\" in item.filename
+                or chr(92) in item.filename
                 or not posix.parts
                 or posix.parts[0] != root
             ):
