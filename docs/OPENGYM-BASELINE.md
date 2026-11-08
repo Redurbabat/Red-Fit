@@ -13,7 +13,7 @@ Stand: 2026-11-08. **Nutzerentscheid:** Der Eigentümer hat ausdrücklich erklä
 
 ## Tatsächlich im privaten GitHub-Repository
 
-Der Ordner `vendor/opengym-upstream/` enthält inzwischen **104** Originaldateien direkt auf `main`: die zuerst importierten **34** Basisdateien und **70** zusätzliche, vollständig zusammengehörige Dateien des Progressionskerns (`frontend/src/lib/`, einschließlich seiner sechs Modi, Tests, Historie und generiertem Übungskatalog). Die 70 neuen Dateien wurden einzeln anhand der SHA-1-Git-Blob-Prüfsummen mit dem Original verglichen (**70/70 identisch**); die ursprünglichen 34 Dateien waren bereits zuvor bytegleich bestätigt. **8.765 der 8.869 zulässigen Originaldateien liegen weiterhin noch nicht vollständig im GitHub-Repository.**
+Der Ordner `vendor/opengym-upstream/` enthält inzwischen **120** Originaldateien direkt auf `main`: die zuerst importierten **34** Basisdateien, **70** zusätzliche, vollständig zusammengehörige Dateien des Progressionskerns sowie **16** weitere originale Coach-API-Module (`frontend/src/lib/`, einschließlich seiner sechs Modi, Tests, Historie und generiertem Übungskatalog). Die 70 neuen Dateien wurden einzeln anhand der SHA-1-Git-Blob-Prüfsummen mit dem Original verglichen (**70/70 identisch**); die ursprünglichen 34 Dateien waren bereits zuvor bytegleich bestätigt. **8.749 der 8.869 zulässigen Originaldateien liegen weiterhin noch nicht vollständig im GitHub-Repository.**
 
 ### Den vollständigen Quellstand ohne Medien nachziehen
 
@@ -52,3 +52,11 @@ Die zuerst übernommenen 34 Dateien umfassen unter anderem `frontend/package-loc
 - **Unveränderlichkeit:** `tools/opengym-progression-source.lock.json` enthält die Git-Blob-SHA-1-Prüfsumme **jeder** der 70 Dateien. Die tatsächlichen **70 GitHub-`main`-Blob-SHAs wurden gegen diesen Lock verglichen: 70/70 identisch**. Die große `exercises-data.js` wurde nach dem 1-MiB-Limit des Standard-Connectors erfolgreich per Git-Blob-API übertragen und danach ebenfalls per SHA bestätigt. Ein kurzes Zwischenartefakt mit leerer Datei wurde sofort gelöscht; auf dem aktuellen `main` ist die vollständige Originaldatei vorhanden.
 - **Ausführbarer Test:** `tools/opengym-progression.selftest.mjs` ist im npm-unabhängigen Offline-Test-Gate enthalten. Er lädt den **originalen** Progressionskern und verifiziert die sechs Modi, Regelwahl, unvollständige Sätze, Epley, Gewichtsgrid, Deload, Triple-Start, `off`, Planänderung, komplette 70-Datei-Importkette und die Git-Blob-Prüfsummen. **10/10 Tests auf Node.js 22.16.0 bestanden** in einer isolierten, aus dem Original-ZIP rekonstruierten Verzeichnisstruktur; Selftest- und Lockfile-Quellbytes entsprechen den auf GitHub gespeicherten Blobs.
 - **Abgrenzung:** Kein vollständiger React-/Vitest-/Vite-Build, kein Node-API-Server, keine Auth-/Sync-Prüfung, keine Freigabe oder Umstellung des RED-Fit-Produktiveinstiegs. Die originalen `progression*.test.js`-Vitest-Suiten sind gespeichert, aber **nicht** als ausgeführt markiert. Die verbleibenden 8.765 Originaldateien und Datenmigration bleiben offen.
+
+
+## Import-Fortschritt: Coach-API-Module (2026-11-08)
+
+- Commit `f82fa1f1ccbc9215a7f8f58542fcb7d706301899` auf `main`: 16 unveränderte Originalmodule unter `vendor/opengym-upstream/api/coach/` übernommen (Adapter für Anthropic, Gemini, OpenAI und kompatible Endpunkte sowie Coach-Core-Helfer).
+- Git-Blob-Hashes der 16 Module im Zielbaum mit den Blob-Hashes des fixierten openGym-Commits `8fb98b16861a2728652302a7e6e30c50548493a0` abgeglichen: **16/16 identisch**.
+- Weiterhin **kein** Nachweis, dass diese Teilmodule eigenständig lauffähig sind oder dass die vollständige API bzw. der Frontend-Build funktioniert. RED-Fit-Produktivcode unverändert.
+- Nächster Schritt: restlichen Quellstand mit `tools/import-opengym.py` aus dem SHA-256-geprüften Original-ZIP importieren und anschliessend Frontend/API/Tests validieren. RED Morph dient als separate Designreferenz.
