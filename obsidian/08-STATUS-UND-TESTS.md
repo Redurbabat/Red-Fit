@@ -56,3 +56,11 @@ Nächster konkreter Schritt:
 - Der aktuelle GitHub-`main`-Inhalt von `package.json`, `wrangler.jsonc`, Cloudflare-Dokumentation und Test wurde direkt geprüft: **11/11 deklarative Konfigurations-/Dokumentationsabgleiche erfüllt**. Dies ist **kein** ausgeführter Node-Selftest, kein Vite-Build und kein bestätigter Remote-Deploy.
 - Cloudflare-Dashboard muss weiterhin `Build command = npm run build`, `Deploy command = npx wrangler deploy` verwenden; alternativ bei leerem Build-Feld `Deploy command = npm run deploy:workers`. Ein GitHub-Push ändert diese Remote-Einstellung nicht.
 - Bei unverifiziertem Cloudflare-Zugang ist das erneute Auslösen und die Validierung einer Live-URL **ausstehend**. Website-Deployment ist zudem nicht automatisch privat, obwohl GitHub privat ist.
+
+
+## 2026-11-08 — Workers Build erreicht TypeScript, Backup-Test TS2352
+- Cloudflare Workers Build vom 2026-11-08, **13:59–14:00 UTC** (vom Nutzer bereitgestellter Build-Log): `npm clean-install` installierte 512 Pakete; **`npm run build` wurde korrekt gestartet**, danach scheiterte TypeScript an `src/services/backup/backupSnapshot.test.ts(48,21)`, Fehler **TS2352** (Typ `string | Table<...>` zu `unknown[]`).
+- Änderung direkt auf `main`: `src/services/backup/backupSnapshot.test.ts` prüft den von `vi.spyOn(db, "transaction")` erfassten Scope jetzt zur Laufzeit mit `Array.isArray`, statt ihn blind als Array umzudeuten. Die Backuplogik selbst, Datenbankmigrationen und Nutzerdaten blieben unverändert.
+- Commit: `991c4c1def6960020a9c96276daa3187f50b92d4`.
+- Prüfung: Die GitHub-Datei und ihr tatsächlicher Backup-Transaktionsaufruf (`collectBackupData` über ein Tabellen-Array) wurden abgeglichen. **Kein vollständiger TypeScript-/Vite-Build und kein neuer Cloudflare-Deploy in dieser Sitzung verifiziert.**
+- Nächster Schritt: Cloudflare Worker erneut von `main` bauen; `tsc && vite build`, Asset-Upload und Deployergebnis prüfen. Bei weiteren TS-Fehlern genaue Logs prüfen und gezielt beheben. Eine Worker-URL ist ohne erfolgreiche Deployment-Antwort nicht verifiziert.
