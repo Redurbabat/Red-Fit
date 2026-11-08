@@ -45,6 +45,7 @@ describe("raw/cooked food weights (Dietry-inspired)", () => {
       "Milchreis", "Pasta Sauce", "Reissalat", "Reiswaffeln",
       "Curry mit Reis", "Preiselbeeren", "Reis aus der Dose",
       "Instant Nudeln", "Fertiggericht mit Reis", "Hummus",
+      "Chicken Nuggets", "Beef Burger", "Fischstäbchen",
     ]) {
       expect(getCookingYield({ name })).toBeNull();
     }
