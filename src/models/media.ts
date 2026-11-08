@@ -4,8 +4,9 @@ import { baseEntitySchema, localDateKeySchema, nonNegativeNumber } from "./commo
 /**
  * Media layer (2031 §46): binary payloads are stored as Blobs in their own
  * store, metadata lives in separate records. Progress photos are classified
- * `sensitiveMedia` (§107) — local only, never in analytics/AI/cloud, and not
- * part of the JSON backup (a media-capable container format is Phase C+).
+ * `sensitiveMedia` (§107) — local only and never in analytics/AI/cloud.
+ * They remain excluded from the standard JSON backup and may be exported
+ * ONLY through the separate, explicit, unencrypted photo-transfer flow.
  */
 
 export const PRIVACY_CLASSES = ["normal", "health", "sensitiveMedia"] as const;
