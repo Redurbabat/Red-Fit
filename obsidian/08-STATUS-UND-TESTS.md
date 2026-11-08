@@ -181,3 +181,12 @@ Nächster konkreter Schritt:
 - **Vollständiges Quellpaket für RED-Fit-Ordnerstruktur** im Chat erzeugt: `RED-Fit-openGym-vendor-import.zip`, enthält 8.869 Originaldateien nur unter `vendor/opengym-upstream/`, SHA-256 `7089f61e5939eb08968486dda7af1ffe10b0bda3bd0c6db2c6b48a77d80e071c`. ZIP-Integritätsprüfung erfolgreich. Dieses Chat-Artefakt wurde **noch nicht als vollständiger Git-Commit** nach GitHub übertragen.
 - **Tatsächlich ausgeführt:** Node.js `v22.16.0` `node --check` auf **169 originalen JavaScript-Modulen aus `api/`** (169/169 ohne Syntaxfehler); separate Vite-Konfiguration syntaktisch geprüft. **Nicht** ausgeführt: npm-Abhängigkeiten, Tests des gestarteten Node-Servers, Auth/Synchronisierung, Frontend-Produktionsbuild, Datenübernahme, iOS-/Android-/Windows-Build.
 - **Architekturregeln aktualisiert:** `README.md`, `AGENTS.md`, `CLAUDE.md`, `ARCHITEKTUR.md` und `docs/CLOUDFLARE-DEPLOY.md` kennzeichnen den Eigentümerwunsch und dass der alte Cloudflare-Worker **noch nicht** openGym mit API bereitstellt.
+
+
+## 2026-11-08 — openGym-Originalprogression: 70 Dateien, 10/10 Node-Tests
+
+- Eigentümerauftrag: Originale openGym-Quellbasis unverändert in `vendor/opengym-upstream/` übernehmen, bestehenden RED-Fit-Einstieg bis zur vollständigen Prüfung beibehalten.
+- Neu auf `main`: 70 Original-Progressions-/Abhängigkeitsdateien (2.118.063 Bytes) inkl. sechs Modi, Tests, Trainingshistorie und generiertem Übungskatalog. Zuvor 34, nun **104/8.869** insgesamt; **8.765** fehlen weiterhin. GitHub-Commitvergleich: `9260331..97812b8` zeigt 70 neue Vendor-Dateien.
+- `tools/opengym-progression-source.lock.json` hält für jede der 70 Dateien den originalen Git-Blob-Hash fest. Alle **70/70 realen GitHub-Blob-SHAs** gegen dieses Lock erfolgreich geprüft; unveränderlicher Original-Commit `8fb98b1`. **68/68** JS-Dateien mit `node --check` bestanden.
+- `node --test tools/opengym-progression.selftest.mjs`: **10/10 bestanden** (Node 22.16.0, isoliertes Verzeichnis aus bytegleichen ZIP-Dateien), einschließlich sechs Modi, Gewichts-/Deload-Logik, Triple-Start, unvollständigen Sätzen, Importabhängigkeiten und 70 Original-Hashes. Log: `/mnt/data/redfit-opengym-progression-smoke/node-tests-final.log`. Test-Blob `be382958` und Lock-Blob `aa7c615d` mit GitHub abgeglichen.
+- Keine produktive Umschaltung, kein vollständiger npm-/Vitest-/Vite-/API-/Cloudflare-/Native-Build und keine Datenmigration behauptet. Details: `docs/OPENGYM-BASELINE.md`. Als Nächstes fehlen der vollständige Quellenimport und reale Build-/Datenschutz-/Migrationsprüfungen.
