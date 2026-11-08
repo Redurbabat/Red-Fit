@@ -288,6 +288,11 @@ export default function ExerciseDetailPage() {
         {exercise.sourceRef ? (
           <Card>
             <strong style={{ fontSize: 14 }}>Quelle und Lizenz</strong>
+            {exercise.taxonomyNeedsReview ? (
+              <p role="status" style={{ fontSize: 13, color: "var(--warning)", marginTop: 6 }}>
+                Muskelgruppe nur aus der Quellkategorie geschätzt – bitte prüfen.
+              </p>
+            ) : null}
             <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>
               Quelle: {exercise.sourceRef}
             </p>
