@@ -57,13 +57,18 @@ npm run typecheck
 ```
 
 **Tatsächlich ausgeführt (2026-11-08):** Die elf im GitHub-Branch
-committeten Standalone-Testfälle wurden mit dem echten Produktions-
-Funktionskörper in V8 ausgeführt; **11/11 bestanden**. Dabei wurden
-ausschließlich die TypeScript-Typannotationen für den isolierten Aufruf
-abgestreift. GitHub-Quellblob:
-`2452d9e667ea07ad00ce0a1a38d3bf448247b2b2`.
-GitHub-Testblob:
-`034d1f452371fce36c6f477c3c8fa402a9190e85`.
+committeten Standalone-Testfälle wurden mit **Node.js 22.16.0**
+(`node --experimental-strip-types --test`) direkt ausgeführt:
+**11/11 bestanden, 0 Fehler**. Der reale TypeScript-Modulcode wurde mit
+einer minimalen lokalen Modelltyp-Definition isoliert mit
+`tsc --strict --noEmit --target es2022` geprüft: **bestanden**.
+Lokale Source- und Testdatei stimmen **bytegenau** mit GitHub überein
+(`git hash-object`):
+- `mealImportMerge.ts`: `2452d9e667ea07ad00ce0a1a38d3bf448247b2b2`
+- `backup-meal-merge.selftest.mjs`: `034d1f452371fce36c6f477c3c8fa402a9190e85`
+
+Die zuvor durchgeführten elf V8-Quelltextprüfungen waren ebenfalls
+erfolgreich; der direkte Node-Test ist der maßgebliche neue Nachweis.
 
 Die Tests prüfen insbesondere ID-Kollisionen mit unterschiedlichen
 Makronährwerten, echte Duplikate, wiederholte Importe, mehrere
