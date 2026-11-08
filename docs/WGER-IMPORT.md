@@ -38,17 +38,32 @@ python tools/convert-wger-fixtures.py \
 Diese Befehle übernehmen ausdrücklich NICHT die gesondert lizenzierten
 Gym-visual-Animationsdateien von openGym.
 
-## In der App
+## Jetzt direkt in der App verfügbar
 
-1. RED Fit öffnen → **Training → Übungen**.
-2. **wger-JSON importieren** wählen.
-3. `wger-red-fit-import.json` auswählen.
-4. Vorschau mit Urhebern und Lizenzen kontrollieren.
-5. **Übungen importieren** bestätigen.
+Der exakt aus den geprüften wger-Fixtures erzeugte Katalog ist jetzt unter
+`public/data/wger-verified-789.json` enthalten (SHA-256
+`5e9b9736afce37d62aaf15a1f3de8cf54ce0b725f5a404ba446192fd03966599`).
+Er wird in der PWA offline precached und in Capacitor/Tauri als lokale
+statische Datei paketiert; kein wger-API-Aufruf ist erforderlich.
+
+1. RED Fit öffnen → **Training → Übungen → wger-Katalog**.
+2. **Mitgelieferten Katalog ansehen (789)** wählen; dies öffnet nur die
+   Vorschau und verändert keine Datenbank.
+3. Urheber- und Lizenzangaben und die Hinweise zu unbestimmten Muskelgruppen
+   prüfen.
+4. Erst mit **Übungen importieren** die lokale Übernahme bestätigen.
+
+Alternativ kann im selben Dialog weiterhin eine eigene attribuierte
+`wger-red-fit-import.json` ausgewählt werden.
 
 Der Vorgang ist eine Dexie-Transaktion: vorhandene Übungen bleiben erhalten,
 bereits importierte Quellenkennungen werden übersprungen. Die Namens- und
 Attributionsdaten bleiben auch nach der lokalen Speicherung verfügbar.
+
+**Wichtig:** Creative-Commons-Bedingungen gelten pro Übung. Aufbewahrung
+und Weitergabe der Datensätze müssen die individuelle Autorenangabe, Lizenz
+und Kennzeichnung der Konvertierung erhalten. Siehe
+[Attribution und Lizenzen](WGER-CATALOG-ATTRIBUTION.md).
 
 ## JSON-Vertrag
 
