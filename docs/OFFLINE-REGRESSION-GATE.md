@@ -109,6 +109,48 @@ frühere GitHub-Jobs erhielten keinen Runner
 (siehe [CI-RECOVERY.md](CI-RECOVERY.md)). Ein lokaler grüner
 Offline-Lauf macht den Pull Request daher **noch nicht merge-fähig**.
 
+### Erweiterter Lauf nach Workout-Routen-Korrektur am 8. November 2026
+
+Die zuvor bereits bestandenen 19 Suiten wurden um
+`tools/workout-route-scope.selftest.mjs` ergänzt. Die neue Suite
+prüft zehn Fälle, darunter ID-Verwechslungen zwischen zwei Trainings,
+ausstehende Schreibaufträge, alte Notiz-Callbacks, verspätete Navigation
+und die Behandlung später Fehler aus einer verlassenen Route.
+
+**Aktueller vollständiger lokaler Sammellauf:**
+
+```text
+$ node tools/offline-regressions.mjs
+RED Fit: running 20 offline regression suites (Node v22.16.0).
+# tests 154
+# pass 154
+# fail 0
+# skipped 0
+Offline checks passed. App and native release checks still required.
+```
+
+Die neue Guard-Datei und ihre Testdatei wurden bytegenau mit den
+GitHub-Git-Blobs abgeglichen:
+
+- `src/services/workout/workoutRouteScope.ts`:
+  `d13bddb768c523401c8334bec2601bad11e1cf44`;
+- `tools/workout-route-scope.selftest.mjs`:
+  `6d6fe743ebc8ec0e721eba55b240cf47055c7b69`.
+
+**Zusätzlich ausgeführt:** isolierter strenger TypeScript-Check
+für das neue Guard-Modul sowie **16 Codepfad-Prüfungen** gegen die
+tatsächlich auf GitHub gespeicherten React-Seiten
+`WorkoutPage.tsx` und `WorkoutSummaryPage.tsx`.
+Der konkrete Race-Fix ist in
+[WORKOUT-SAVE-INTEGRITY.md](WORKOUT-SAVE-INTEGRITY.md) dokumentiert.
+
+Auch dieser vergrößerte Offline-Testlauf erfolgte in der rekonstruierten
+lokalen Testumgebung ohne `npm ci`, nicht in einem zugewiesenen
+GitHub-Actions-Runner. Die früheren 19/19- und 144/144-Zahlen oben
+bleiben als historischer Zwischenstand stehen. Aktueller Stand ist
+**20/20 und 154/154**. Es liegt weiterhin **kein echter React-Router-
+Browser-/Dexie-/Capacitor-/Tauri-Build-Nachweis** vor.
+
 ## Freigabekriterien
 
 Der neue Offline-Job muss in CI vollständig grün sein **und** der
