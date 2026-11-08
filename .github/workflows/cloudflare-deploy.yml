@@ -1,0 +1,54 @@
+name: Deploy RED Fit to Cloudflare
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deploy the SAME RED Fit Vite build to one hosting target'
+        required: true
+        type: choice
+        options:
+          - pages
+          - workers
+        default: pages
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-${{ inputs.target }}-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Verify TypeScript, lint and tests
+        run: npm run typecheck && npm run lint && npm run test
+      - name: Build RED Fit
+        run: npm run build
+      - name: Deploy Cloudflare Pages (manual choice)
+        if: inputs.target == 'pages'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=red-fit --branch=main
+      - name: Deploy Cloudflare Workers Static Assets (manual choice)
+        if: inputs.target == 'workers'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config wrangler.jsonc
