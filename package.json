@@ -8,6 +8,7 @@
     "dev": "vite",
     "dev:host": "vite --host",
     "build": "tsc && vite build",
+    "deploy:cloudflare": "npm run build && npx wrangler deploy",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
