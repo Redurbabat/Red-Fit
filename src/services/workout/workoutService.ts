@@ -135,6 +135,38 @@ export async function saveWorkout(log: WorkoutLog): Promise<WorkoutLog> {
   });
 }
 
+/**
+ * Persist summary notes without replacing the complete workout snapshot.
+ * This used to bypass saveRevision via workoutLogRepository.update(), allowing
+ * a stale full-workout write to overwrite a more recent note. Only terminal
+ * workouts have a summary; the revision comparison is atomic with the patch.
+ */
+export async function saveWorkoutNotes(
+  logId: string,
+  expectedRevision: number | undefined,
+  notes: string,
+): Promise<WorkoutLog> {
+  return db.transaction("rw", db.workoutLogs, async () => {
+    const stored = await db.workoutLogs.get(logId as never);
+    if (!stored) throw new Error("Workout no longer exists");
+    if (stored.status !== "completed" && stored.status !== "cancelled") {
+      throw new Error("Workout summary notes require a finalized workout");
+    }
+    const saveRevision = nextWorkoutRevision(
+      expectedRevision,
+      stored.saveRevision,
+    );
+    const updated: WorkoutLog = {
+      ...stored,
+      notes: notes.trim() || undefined,
+      saveRevision,
+      updatedAt: nowIso(),
+    };
+    await db.workoutLogs.put(updated);
+    return updated;
+  });
+}
+
 /** Mark a set completed and arm the rest timer as an absolute deadline (§49/50). */
 export function completeSet(
   log: WorkoutLog,
