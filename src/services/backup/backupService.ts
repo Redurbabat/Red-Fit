@@ -11,12 +11,22 @@ import { getLocalDateKey, nowIso } from "../../utils/dates";
 import { db, SETTINGS_ID } from "../storage/database";
 import { settingsRepository } from "../storage/settingsRepository";
 import { APP_VERSION } from "../appVersion";
+import { assertRestorableBackupSize, MAX_STANDARD_BACKUP_BYTES } from "./backupExportPolicy";
 
 /** Import files above this size are rejected outright (§107). */
-export const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
+export const MAX_IMPORT_BYTES = MAX_STANDARD_BACKUP_BYTES;
 
 export async function collectBackupData(): Promise<BackupData> {
-  const settings = await settingsRepository.getSettings();
+  // All tables and the settings singleton must be read within ONE IDB
+  // read-only transaction. Otherwise concurrent edits across tabs can produce
+  // a torn snapshot (e.g. a new meal entry without its food item).
+  return db.transaction("r", [
+    db.exercises, db.workoutPlans, db.workoutLogs, db.foodItems,
+    db.mealLogs, db.nutritionGoals, db.waterLogs, db.bodyMeasurements,
+    db.shoppingLists, db.mealPlans, db.recipes, db.userProfiles,
+    db.recoveryLogs, db.settings,
+  ], async () => {
+    const settings = await settingsRepository.getSettings();
   const [
     exercises,
     workoutPlans,
@@ -61,7 +71,8 @@ export async function collectBackupData(): Promise<BackupData> {
     userProfiles,
     settings: [settings satisfies UserSettings],
     recoveryLogs,
-  };
+    };
+  });
 }
 
 export async function createBackup(): Promise<RedFitBackup> {
@@ -72,10 +83,11 @@ export async function createBackup(): Promise<RedFitBackup> {
     exportedAt: nowIso(),
     data: await collectBackupData(),
   };
-  // Remembered for Speicher & Diagnose — failure to stamp never blocks the export.
-  await settingsRepository
-    .updateMetadata({ lastBackupAt: backup.exportedAt })
-    .catch(() => undefined);
+  // A locally malformed record must not produce a file that the importer
+  // would later reject. Validate without stripping unknown local properties.
+  if (!backupSchema.safeParse(backup).success) {
+    throw new Error("Current local data cannot be restored from a valid backup");
+  }
   return backup;
 }
 
@@ -89,14 +101,25 @@ export async function exportBackupFile(): Promise<void> {
   const blob = new Blob([JSON.stringify(backup, null, 2)], {
     type: "application/json",
   });
+  // Browser Blob.size measures actual UTF-8 bytes, including Unicode names.
+  // Never offer a file the normal RED Fit importer would refuse to restore.
+  assertRestorableBackupSize(blob.size);
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = backupFileName();
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
+  try {
+    anchor.href = url;
+    anchor.download = backupFileName();
+    document.body.appendChild(anchor);
+    anchor.click();
+  } finally {
+    anchor.remove();
+    // Revoking immediately can abort downloads in embedded/native WebViews.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+  // Only mark the backup as created after validation and download initiation.
+  // Metadata failure is non-critical, unlike data or size validation.
+  await settingsRepository.updateMetadata({ lastBackupAt: backup.exportedAt })
+    .catch(() => undefined);
 }
 
 /**
