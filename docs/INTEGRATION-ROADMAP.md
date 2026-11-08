@@ -52,7 +52,7 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [x] Dietry-inspirierte optionale Roh-/Gekocht-Umrechnung beim Mahlzeiten-Logging:
   10 konservative Lebensmittelfaktoren, Warnstufen, gespeichertes Kochgewicht,
   nachträgliche Bearbeitung ohne Doppelumrechnung, rückwärtskompatibler Zod-Snapshot
-- [x] 8/8 isolierte Berechnungsfälle auf dem aktuellen Quelltext ausgeführt;
+- [x] 9/9 isolierte Berechnungsfälle auf dem aktuellen Quelltext ausgeführt;
   Vitest-/Modelltests committed, vollständiger npm-Build mangels Runner offen
 - [x] wger-JSON-Import mit Provenance, atomarem Repository, Parser- und Repo-Tests gepusht
 - [x] wger-Konverter für 789 attribuierte Übungseinträge, 83 nicht attribuierte verworfen
