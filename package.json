@@ -31,7 +31,8 @@
     "test:backup-workout-revision": "node --experimental-strip-types --test tools/backup-workout-revision.selftest.mjs",
     "test:backup-meal-collisions": "node --experimental-strip-types --test tools/backup-meal-merge.selftest.mjs",
     "ios:icons": "node tools/prepare-ios-icons.mjs",
-    "test:ios-icons": "node --test tools/ios-icons.selftest.mjs"
+    "test:ios-icons": "node --test tools/ios-icons.selftest.mjs",
+    "test:offline": "node tools/offline-regressions.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
