@@ -87,6 +87,11 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   16 unspezifische „Arme“-Übungen nicht mehr dem Bizeps zugeordnet;
   Gymnastikmatte (14 Datensätze) korrekt als Equipment klassifiziert
 - [x] Breite Desktop-Navigation (Windows-freundliche UI) gepusht
+- [x] Standard-Backup liest nun alle 13 Datentabellen plus Settings in
+  einer konsistenten Dexie-`r`-Transaktion; Export mit Schema- und
+  tatsächlicher UTF-8-Dateigrößenprüfung (25 MiB Importlimit).
+  6/6 echte Node-Size-Tests und 7/7 Source-Level-Snapshot-Stubs bestanden;
+  fünf weitere Dexie-Regressionstests eingecheckt, noch nicht ausgeführt
 - [x] Separater, nutzerinitiierter iPhone/Windows-Foto-Transfer: Daten,
   Privacy-Warnung, Vorschaudialog, transaktionaler Import und Regressionstests
 - [x] SHA-256-Pflichtprüfsummen im Foto-Backup v2 gegen gleich lange
