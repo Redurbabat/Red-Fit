@@ -99,6 +99,13 @@ zurück. [Native Bootstrap-Anleitung](docs/NATIVE-DEPENDENCY-BOOTSTRAP.md).
 In der aktuellen Ausführungsumgebung ist die npm-Registry nicht erreichbar;
 ein echter iOS-/Windows-Build ist damit **noch nicht nachgewiesen**.
 
+Nach `npx cap add ios` erzeugt `npm run ios:icons` das standardisierte
+**1024px-App-Icon für Xcode** aus dem vorhandenen RED-Fit-Branding.
+Individuelle Xcode-Icons werden nicht still überschrieben.
+`npm run test:ios-icons` prüft die Generator-Pipeline auch ohne Xcode
+(**10/10 isolierte Node-Tests bestanden**).
+[iPhone-App-Icon-Anleitung](docs/IOS-APPICON.md).
+
 ## Prüfen ohne GitHub-Actions-Runner
 
 Der GitHub-Actions-Runner wird derzeit nicht zugewiesen; dasselbe Problem
