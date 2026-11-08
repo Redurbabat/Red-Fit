@@ -164,6 +164,10 @@ mit einer höheren Revisionsnummer gespeichert. Damit kann ein noch
 geöffnetes Trainingsfenster die wiederhergestellten Sätze nicht
 unbemerkt überschreiben.
 [Backup-Revisionen](docs/BACKUP-WORKOUT-REVISIONS.md).
+Auch beim Zusammenführen von Mahlzeiten werden jetzt **unterschiedliche
+Nährwert-Einträge mit zufällig gleicher ID nicht mehr verworfen**.
+Wiederholte Importe bleiben ohne zusätzliche Eintrags- und Notizduplikate.
+[Mahlzeiten-Kollisionsschutz](docs/BACKUP-MEAL-COLLISION-SAFETY.md).
 **Fortschrittsfotos
 sind ausdrücklich nicht enthalten**, da sie als private Medien gelten.
 
