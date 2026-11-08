@@ -159,6 +159,11 @@ verwendet einen **konsistenten Dexie-Lesesnapshot**, validiert die Datei mit
 dem aktuellen Zod-Schema und verweigert Dateien über der identischen
 25-MiB-Importgrenze. Der Import bietet Vorschau und Merge-Strategie.
 [Backup-Snapshot und Grenzen](docs/BACKUP-SNAPSHOT-INTEGRITY.md).
+Beim Import unter **„Backup bevorzugen“** wird eine ersetzte Workout-ID
+mit einer höheren Revisionsnummer gespeichert. Damit kann ein noch
+geöffnetes Trainingsfenster die wiederhergestellten Sätze nicht
+unbemerkt überschreiben.
+[Backup-Revisionen](docs/BACKUP-WORKOUT-REVISIONS.md).
 **Fortschrittsfotos
 sind ausdrücklich nicht enthalten**, da sie als private Medien gelten.
 
