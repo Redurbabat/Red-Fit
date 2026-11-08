@@ -67,6 +67,8 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [x] PWA-Service-Worker in nativen Shells deaktiviert, Tauri/Vite
   IPv4-Dev-Host abgeglichen; 7/7 isolierte Node-Tests erfolgreich
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
+- [x] Branded Windows/Tauri-Icons aus vorhandenem PWA-Icon automatisch
+  vor Dev/Build generieren; 6/6 isolierte PNG-/ICO-Tests bestanden
 - [ ] Tauri-/Windows-Build auf Windows geprüft
 - [ ] Offline-, Backup- und Geräte-Regressionen abgeschlossen
 
