@@ -16,17 +16,39 @@ import stat
 import zipfile
 from pathlib import Path, PurePosixPath
 
-EXPECTED = {"openGym-main.zip": "openGym-main",
-            "wger-master.zip": "wger-master",
-            "dietry-main.zip": "dietry-main"}
+EXPECTED = {
+    "openGym-main.zip": (
+        "openGym-main",
+        "7e05a9d05b7401f5b3f1b5a08d1ca63d6f0d55870eccdc2ae3a4c4c79c94ab09",
+    ),
+    "wger-master.zip": (
+        "wger-master",
+        "774806d37af477646fc2205c8e687337281c32e279a02ee3b654ebdd1b6717ac",
+    ),
+    "dietry-main.zip": (
+        "dietry-main",
+        "047b1c3ce2de972f5e24ed91be8fd340a54ac63e01cf8d986989da32fcba516b",
+    ),
+}
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as reader:
+        while block := reader.read(1024 * 1024):
+            digest.update(block)
+    return digest.hexdigest()
 
 def import_archive(path: Path, output: Path) -> dict:
-    root = EXPECTED.get(path.name)
-    if not root:
+    expected = EXPECTED.get(path.name)
+    if expected is None:
         raise ValueError(f"Unsupported archive: {path.name}")
+    root, expected_sha = expected
+    digest = sha256_file(path)
+    if digest != expected_sha:
+        raise ValueError(f"SHA-256 mismatch for {path.name}; source archive differs from the reviewed version")
     result = {
         "archive": path.name,
-        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "sha256": digest,
         "files": 0, "excluded": 0,
     }
     with zipfile.ZipFile(path) as archive:
@@ -34,7 +56,13 @@ def import_archive(path: Path, output: Path) -> dict:
             if item.is_dir():
                 continue
             posix = PurePosixPath(item.filename)
-            if posix.is_absolute() or ".." in posix.parts or posix.parts[0] != root:
+            if (
+                posix.is_absolute()
+                or ".." in posix.parts
+                or "\\\\" in item.filename
+                or not posix.parts
+                or posix.parts[0] != root
+            ):
                 raise ValueError(f"Unsafe ZIP path: {item.filename}")
             if stat.S_ISLNK(item.external_attr >> 16):
                 raise ValueError(f"ZIP symlinks are unsupported: {item.filename}")
@@ -42,9 +70,19 @@ def import_archive(path: Path, output: Path) -> dict:
             if root == "openGym-main" and str(relative).startswith("catalogue/media/"):
                 result["excluded"] += 1
                 continue
-            if relative.name == ".env" or relative.name.endswith((".pem", ".key", ".p12", ".pfx")):
+            # Do not stage accidentally packaged credentials or local Git data.
+            if (
+                ".git" in relative.parts
+                or (
+                    relative.name.startswith(".env")
+                    and relative.name not in (".env.example", ".env.sample", ".env.template")
+                )
+                or relative.name.lower().endswith((".pem", ".key", ".p12", ".pfx", ".sqlite", ".sqlite3"))
+            ):
                 result["excluded"] += 1
                 continue
+            if item.file_size > 250 * 1024 * 1024:
+                raise ValueError(f"Unexpectedly large ZIP entry: {item.filename}")
             target = output / root / str(relative)
             target.parent.mkdir(parents=True, exist_ok=True)
             with archive.open(item) as reader, target.open("wb") as writer:
