@@ -48,8 +48,12 @@ dem Export nicht gegen das aktuelle Backup-Schema geprüft.
    60 Sekunden Verzögerung freigegeben. Sofortiges Freigeben kann
    in Browsern/WebViews den Download noch vor dem Start unterbrechen.
 
-Die Datei-Struktur (`BACKUP_SCHEMA_VERSION = 1`) und der Importvorgang
-wurden nicht verändert. Bestehende Backups bleiben kompatibel.
+Die Datei-Struktur (`BACKUP_SCHEMA_VERSION = 1`) bleibt unverändert.
+Der Import wurde **in einem nachfolgenden Schritt** für die
+Workout-Revisionskontrolle ergänzt: Bei ersetzten Workout-IDs und beim
+automatischen Verwerfen zusätzlicher aktiver Trainings steigt
+`saveRevision` monoton. Bestehende Backups bleiben kompatibel.
+Details: [Backup-Workout-Revisionen](BACKUP-WORKOUT-REVISIONS.md).
 
 ## Tests
 
