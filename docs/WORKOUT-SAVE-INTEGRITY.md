@@ -246,6 +246,65 @@ iOS-Backgrounding; dafür fehlen derzeit React-/Vitest-/Browser-
 Abhängigkeiten. Die Node-Simulation belegt die Schutzregel,
 nicht die vollständige WebView-Lebenszyklusintegration.
 
+### Debounce, Blur und „Fertig“: identische Notizen nur einmal speichern (2026-11-08)
+
+Ein weiterer Test des bisherigen `createSerializedWorkoutWriter` zeigte
+einen reproduzierbaren Fehler: Drei fast gleichzeitige Auslöser
+(**400-ms-Debounce, Blur und `pagehide`**) konnten **denselben Notiztext
+mehrfach** nacheinander schreiben. Die Notiz war während des ersten
+Schreibvorgangs noch nicht als gespeichert markiert, deshalb löste der
+nächste Auslöser erneut einen vollständigen Dexie-Write aus. Dies
+erhöhte `saveRevision` mehrfach ohne inhaltliche Änderung und
+vergrößerte das Konfliktrisiko mit anderen Fenstern.
+
+Eine zweite, gefährlichere Variante entstand beim schnellen
+Zurückändern: War „A“ bereits gespeichert, „B“ noch in der
+Schreibwarteschlange und wurde wieder „A“ eingegeben, übersprang der
+bisherige Vergleich mit dem **zuletzt gespeicherten** Text „A“.
+Dadurch konnte „B“ **nach der letzten Eingabe** gespeichert bleiben.
+
+**Behebung:**
+
+- `src/services/workout/coalescedNoteWriter.ts` speichert alle
+  unterschiedlichen Texte **in Eingabereihenfolge**. Wiederholte
+  Aufträge mit dem zuletzt eingereihten Text verwenden **dasselbe
+  Promise**, sodass kein zweiter Write oder vorzeitiges „Fertig“
+  ausgelöst wird.
+- Auch wenn der finale Text dem zuletzt gespeicherten entspricht,
+  wird er **hinter bereits eingereihte unterschiedliche Texte**
+  gestellt. Die letzte Nutzereingabe bleibt damit das Endergebnis.
+- Fehlgeschlagene Saves lehnen alle wartenden Aufrufer ab, blockieren
+  aber keine späteren Änderungen. Der zuletzt fehlgeschlagene Text
+  kann erneut versucht werden; ein Rückwechsel auf den weiterhin
+  gespeicherten ursprünglichen Text gilt korrekt als erfolgreich.
+- `WorkoutSummaryPage.tsx` nutzt den deduplizierenden Writer,
+  behält aber die zuvor implementierte Workout-ID-Bindung sowie die
+  atomare `saveWorkoutNotes`-Transaktion mit Revisionsvergleich bei.
+  Keine Veränderung der allgemeinen Workout-Satz-Warteschlange.
+
+**Tatsächlich ausgeführte Tests:** Vor dem Fix wurden beim
+isolierten alten Writer **2 Datenbank-Aufrufe für denselben Text**
+reproduziert. Danach bestanden **12/12 direkte Node-Tests** in
+`tools/workout-note-coalescing.selftest.mjs` und der vollständige
+`node tools/offline-regressions.mjs`-Lauf mit **21/21 Suiten und
+166/166 Einzeltests** (Node 22.16.0, keine Fehler oder Skips).
+`tsc --noEmit --strict --target ES2022` für das neue Modul bestanden.
+Die lokal getesteten Dateien stimmen bytegenau mit den
+GitHub-Git-Blobs überein:
+`coalescedNoteWriter.ts` =
+`605fd5ab9fb338aec1472288bef6b1d704368f03`;
+`workout-note-coalescing.selftest.mjs` =
+`625de4e38f031abba6686e399e83999980819690`.
+
+Fünf zusätzliche, **noch nicht ausgeführte** Vitest-Fälle stehen in
+`src/services/workout/coalescedNoteWriter.test.ts`. Ein realer
+React-/Dexie-/iOS-Backgrounding-Test bleibt vor einem Release nötig.
+
+```bash
+npm run test:workout-notes
+npm run test:offline
+```
+
 ## Prüfung und Status
 
 Ohne npm-Installation lokal mit Node 22.16+:
