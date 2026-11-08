@@ -10,11 +10,11 @@ Eine gemeinsame React/TypeScript-Fachlogik für eine iPhone-App (Capacitor), ein
 | wger-master.zip | `774806d37af477646fc2205c8e687337281c32e279a02ee3b654ebdd1b6717ac` | 9,1 MB / 1 564 ZIP-Einträge | Übungstaxonomie, API-/Datenmodell-Referenz |
 | dietry-main.zip | `047b1c3ce2de972f5e24ed91be8fd340a54ac63e01cf8d986989da32fcba516b` | 3,8 MB / 473 ZIP-Einträge | Energiebedarf, Mahlzeiten, Aktivitäten |
 
-Die Archive selbst sind **nicht im Repository**: das openGym-Archiv überschreitet die GitHub-Einzeldateigrenze, und Teile der Fremdmedien sind ausdrücklich nicht frei zur Wiederverwendung. Die Prüfsummen identifizieren die geprüften lokalen Originale. **Kein vollständiges Fork-Merging.**
+Die Originalarchive sind **noch nicht im GitHub-Repository**: openGym überschreitet GitHubs gewöhnliche Einzeldateigrenze und enthält gesondert lizenzierte Medien. Prüfsummen identifizieren die geprüften lokalen Originale. Quellcode soll, wo lizenzrechtlich möglich, als getrennter Quellenbaum übernommen werden; die produktive Integration erfolgt modulweise.
 
 ## Lizenz- und Sicherheitsgrenzen
 - openGym: AGPL-3.0-or-later; `catalogue/media/`-Assets sind gesondert lizenziert und ausdrücklich **nicht** für unabhängige Apps freigegeben. Nicht kopieren, hotlinken oder für KI-Verarbeitung nutzen.
-- wger: AGPL-3.0-or-later. Fremden Quellcode nicht ohne gesonderte Lizenzentscheidung integrieren.
+- wger: AGPL-3.0-or-later. Direkte Portierungen nur mit den AGPL-/Attributionspflichten; Nutzung im privaten Repository ersetzt nicht die Lizenzprüfung bei Veröffentlichung.
 - Dietry: MIT; Lizenzhinweise bei jeder tatsächlichen Codeübernahme erhalten.
 - RED Fit: In `CLAUDE.md` ist die direkte Fremdcodeübernahme untersagt. Daher zunächst eigene Adapter und fachliche Berechnungen; die Originalprojekte dienen als Quellenanalyse.
 - Zugangsdaten, Token, Datenbank-Dumps und Nutzerinformationen niemals übernehmen.
@@ -45,7 +45,9 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 ## Status
 - [x] Quellenarchive identifiziert und Risiken überprüft
 - [x] Vorhandene RED-Fit-Architektur gesichtet
-- [ ] Portierte Features einzeln implementiert und getestet
+- [x] openGym-Aufwärmsatz-Rampenberechnung (Quellkonzept) + Workout-Vorschau und Unit-Tests als Code gepusht, CI noch offen
+- [x] Dietry-inspirierte Energiebedarfsberechnung (Code + Unit-Tests gepusht, CI noch offen)
+- [ ] Weitere Funktionen der drei Quellen vollständig integriert
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [ ] Tauri-/Windows-Build auf Windows geprüft
 - [ ] Offline-, Backup- und Geräte-Regressionen abgeschlossen
