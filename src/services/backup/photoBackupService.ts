@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { decodePhotoBase64, encodePhotoBase64, MAX_SINGLE_PHOTO_BYTES } from "./photoBackupCodec";
+import { decodePhotoBase64, encodePhotoBase64, MAX_SINGLE_PHOTO_BYTES, sha256PhotoBytes } from "./photoBackupCodec";
 export { decodePhotoBase64, encodePhotoBase64 } from "./photoBackupCodec";
 import { mediaAssetMetaSchema, progressPhotoSchema, type MediaAsset, type ProgressPhoto } from "../../models/media";
 import { getLocalDateKey, nowIso } from "../../utils/dates";
@@ -12,7 +12,7 @@ import { db } from "../storage/database";
  * The resulting file is NOT encrypted; the UI must explicitly warn the user.
  */
 export const PHOTO_BACKUP_FORMAT = "red-fit-photo-backup" as const;
-export const PHOTO_BACKUP_VERSION = 1;
+export const PHOTO_BACKUP_VERSION = 2;
 export const MAX_PHOTO_BACKUP_RAW_BYTES = 25 * 1024 * 1024;
 export const MAX_PHOTO_BACKUP_FILE_BYTES = 36 * 1024 * 1024;
 const MAX_PHOTOS = 250;
@@ -26,6 +26,7 @@ const photoFileSchema = z.object({
   photo: progressPhotoSchema,
   asset: mediaAssetMetaSchema,
   dataBase64: z.string().min(1).max(Math.ceil(MAX_SINGLE_PHOTO_BYTES / 3) * 4),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
 }).strict();
 
 export const photoBackupSchema = z.object({
@@ -76,7 +77,8 @@ export async function collectPhotoBackup(): Promise<PhotoBackup> {
     }
     const { blob: _blob, ...metadata } = asset;
     void _blob;
-    photos.push({ photo, asset: metadata, dataBase64: encodePhotoBase64(bytes) });
+    photos.push({ photo, asset: metadata, dataBase64: encodePhotoBase64(bytes),
+      sha256: await sha256PhotoBytes(bytes) });
   }
   return {
     format: PHOTO_BACKUP_FORMAT,
@@ -112,7 +114,7 @@ export type PhotoBackupReadResult =
   | { ok: true; backup: PhotoBackup }
   | { ok: false; error: string };
 
-export function parsePhotoBackupJson(text: string): PhotoBackupReadResult {
+export async function parsePhotoBackupJson(text: string): Promise<PhotoBackupReadResult> {
   // The supplied JSON is never merged into the normal backup.
   if (new TextEncoder().encode(text).byteLength > MAX_PHOTO_BACKUP_FILE_BYTES) {
     return { ok: false, error: "Die Foto-Datei ist zu groß." };
@@ -132,7 +134,7 @@ export function parsePhotoBackupJson(text: string): PhotoBackupReadResult {
   const assetIds = new Set<string>();
   let total = 0;
   try {
-    for (const { photo, asset, dataBase64 } of result.data.photos) {
+    for (const { photo, asset, dataBase64, sha256 } of result.data.photos) {
       validateAsset(asset, photo);
       if (photoIds.has(photo.id) || assetIds.has(asset.id)) {
         throw new Error("Duplicate photo or asset ID");
@@ -141,8 +143,11 @@ export function parsePhotoBackupJson(text: string): PhotoBackupReadResult {
       assetIds.add(asset.id);
       total += asset.byteSize;
       if (total > MAX_PHOTO_BACKUP_RAW_BYTES) throw new Error("Photo archive is too large");
-      // Check integrity before presenting a preview.
-      decodePhotoBase64(dataBase64, asset.byteSize);
+      // Verify the content, not merely its size, before preview/import.
+      const bytes = decodePhotoBase64(dataBase64, asset.byteSize);
+      if (await sha256PhotoBytes(bytes) !== sha256) {
+        throw new Error("Photo checksum mismatch");
+      }
     }
   } catch {
     return { ok: false, error: "Ein Foto ist beschädigt oder ungültig." };
@@ -156,7 +161,7 @@ export function parsePhotoBackupJson(text: string): PhotoBackupReadResult {
  * All decode work happens before the Dexie transaction to avoid auto-commit.
  */
 export async function importPhotoBackup(backup: PhotoBackup): Promise<PhotoBackupImportResult> {
-  const parsed = parsePhotoBackupJson(JSON.stringify(backup));
+  const parsed = await parsePhotoBackupJson(JSON.stringify(backup));
   if (!parsed.ok) throw new Error(parsed.error);
 
   const decoded = parsed.backup.photos.map(({ photo, asset, dataBase64 }) => ({
