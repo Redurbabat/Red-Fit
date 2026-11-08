@@ -6,6 +6,7 @@
 export const NATIVE_PACKAGES = [
   { name: "@capacitor/core", version: "8.6.0", section: "dependencies" },
   { name: "@capacitor/ios", version: "8.6.0", section: "dependencies" },
+  { name: "@capacitor/android", version: "8.6.0", section: "dependencies" },
   { name: "@capacitor/cli", version: "8.6.0", section: "devDependencies" },
   { name: "@tauri-apps/cli", version: "2.12.4", section: "devDependencies" },
 ];
