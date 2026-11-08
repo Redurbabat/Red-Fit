@@ -25,7 +25,9 @@
     "test:workout-save-queue": "node --experimental-strip-types --test tools/workout-save-queue.selftest.mjs",
     "test:workout-status": "node --experimental-strip-types --test tools/workout-status-guard.selftest.mjs",
     "test:workout-revision": "node --experimental-strip-types --test tools/workout-revision.selftest.mjs",
-    "test:workout-start": "node --test tools/workout-start.selftest.mjs"
+    "test:workout-start": "node --test tools/workout-start.selftest.mjs",
+    "test:backup-size": "node --experimental-strip-types --test tools/backup-export-policy.selftest.mjs",
+    "test:backup-snapshot": "node --test tools/backup-snapshot.selftest.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
