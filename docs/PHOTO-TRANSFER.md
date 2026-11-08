@@ -34,15 +34,15 @@ werden. Ohne bewusste Nutzeraktion werden keine Fotos exportiert.
 
 `src/services/backup/photoBackupService.ts`:
 
-- Eigenständiges Format `red-fit-photo-backup`, Version `1`.
+- Eigenständiges Format `red-fit-photo-backup`, Version `2`. Das vorherige, noch nicht veröffentlichte Entwurfsformat Version 1 enthielt keine Prüfsummen und wird von diesem Importer abgelehnt. Frühere Testdateien müssen auf dem Quellgerät neu exportiert werden.
 - Pro Element: vollständige `ProgressPhoto`-Metadaten,
   `MediaAsset`-Metadaten und Bildbytes als Base64.
 - Zulässige Bild-MIME-Typen: JPEG, PNG, WebP, HEIC, HEIF, AVIF, GIF.
   `image/svg+xml` ist nicht zulässig.
 - Je Foto höchstens **10 MiB**, je Export höchstens **25 MiB** Rohdaten,
   Dateigröße höchstens **36 MiB**, maximal **250 Fotos**.
-- Parser prüft Schema, Referenzen, eindeutige IDs, MIME-Typ,
-  `sensitiveMedia`, Datenlänge und gültiges Base64 vor dem Import.
+- Der Export enthält pro Foto eine SHA-256-Prüfsumme über die exakten Bildbytes. Der Import prüft sie **vor der Vorschau** und **vor dem Speichern**. Auch gleich lange beschädigte Bilder werden zurückgewiesen. SHA-256 ist keine Signatur oder Verschlüsselung und schützt nicht gegen absichtliche Änderungen der Datei samt Prüfsumme.
+- Parser prüft Schema, Referenzen, eindeutige IDs, MIME-Typ, `sensitiveMedia`, Datenlänge, gültiges Base64 und SHA-256 vor dem Import.
 - **Kein stiller Datenverlust beim Export:** Ein Foto ohne gespeicherten
   Blob oder mit abweichender Dateigröße führt zum Abbruch.
 - **Transaktionaler Import**: Bestehende Foto-IDs bleiben unangetastet;
@@ -70,8 +70,7 @@ Idempotenz, ID-Kollisionen, beschädigte Dateien und fehlende Blobs.
 node --experimental-strip-types --test tools/photo-codec.selftest.mjs
 ```
 
-Ergebnis: **3/3 bestanden**. Der Test deckt Dateilängen, Chunk-Grenzen
-sowie beschädigtes Base64 ab. Zusätzlich wurde der exakte Codec-Quelltext
+Ergebnis nach SHA-256-Erweiterung: **5/5 bestanden**. Der Test deckt Dateilängen, Chunk-Grenzen, beschädigtes Base64, eine gleich lange Byteänderung und den SHA-256-NIST-Testvektor ab. Zusätzlich wurde der exakte Codec-Quelltext
 alleinstehend mit `tsc --noEmit --strict` überprüft (bestanden).
 Der getestete lokale Codec-Code wurde per Länge und FNV-Prüfsumme mit dem
 GitHub-Quelltext abgeglichen. Dieser Isolationsnachweis ist **kein**
