@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "../components/layout/BottomNav";
+import { DesktopNav } from "../components/layout/DesktopNav";
 import { QuickLogButton } from "../components/layout/QuickLogButton";
 import { useToast } from "../components/feedback/ToastProvider";
 import { onUpdateAvailable } from "../services/pwa/updatePrompt";
@@ -29,7 +30,8 @@ export function AppShell() {
   }, [showToast]);
 
   return (
-    <div className="app-shell">
+    <div className={fullscreen ? "app-shell app-shell--fullscreen" : "app-shell"}>
+      {fullscreen ? null : <DesktopNav />}
       <main
         className={`app-shell__content${fullscreen ? " app-shell__content--full" : ""}`}
       >
