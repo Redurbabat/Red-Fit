@@ -49,6 +49,11 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [x] Dietry-inspirierte Energiebedarfsberechnung (Code + Unit-Tests gepusht, CI noch offen)
 - [x] openGym-Supersatz-Planung/Rotation/Pausen und Unit-Tests als Code gepusht
 - [x] Dietry-Schätzunsicherheit mit Eintragskennzeichnung und Tagesanzeige gepusht
+- [x] Dietry-inspirierte optionale Roh-/Gekocht-Umrechnung beim Mahlzeiten-Logging:
+  10 konservative Lebensmittelfaktoren, Warnstufen, gespeichertes Kochgewicht,
+  nachträgliche Bearbeitung ohne Doppelumrechnung, rückwärtskompatibler Zod-Snapshot
+- [x] 8/8 isolierte Berechnungsfälle auf dem aktuellen Quelltext ausgeführt;
+  Vitest-/Modelltests committed, vollständiger npm-Build mangels Runner offen
 - [x] wger-JSON-Import mit Provenance, atomarem Repository, Parser- und Repo-Tests gepusht
 - [x] wger-Konverter für 789 attribuierte Übungseinträge, 83 nicht attribuierte verworfen
 - [x] Exakten wger-Quellkatalog mit 789 Datensätzen als `public/data/` im
