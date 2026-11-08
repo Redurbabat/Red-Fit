@@ -45,6 +45,9 @@ review. **Do not** copy the excluded Gym visual assets.
 - Dietry-inspired energy needs calculator: Settings UI and tests committed
 - wger exercise taxonomy: Zod import parser, ExerciseList UI, atomic attributed import and tests committed
 - wger fixture converter: `tools/convert-wger-fixtures.py`; 789 records with licence URLs, 83 uncredited skipped
+- Verified wger catalogue now bundled at `public/data/wger-verified-789.json`;
+  SHA-256 `5e9b9736afce37d62aaf15a1f3de8cf54ce0b725f5a404ba446192fd03966599`.
+  PWA precaches it for offline opt-in import; existing exercises are never auto-changed
 - wger taxonomy check: 120/789 have no primary muscle assignment;
   16 ambiguous Arms-class records no longer claim "biceps";
   14 mat-equipped exercises no longer claim "no equipment"
