@@ -5,6 +5,7 @@ import { mediaAssetMetaSchema, progressPhotoSchema, type MediaAsset, type Progre
 import { getLocalDateKey, nowIso } from "../../utils/dates";
 import { newId } from "../../utils/ids";
 import { db } from "../storage/database";
+import { availablePhotoAssetId, shouldSkipExistingPhoto } from "./photoImportPolicy";
 
 /**
  * Optional user-initiated local photo transfer. NOT included in the standard
@@ -174,12 +175,26 @@ export async function importPhotoBackup(backup: PhotoBackup): Promise<PhotoBacku
     let added = 0;
     let skipped = 0;
     for (const { photo, asset, bytes } of decoded) {
-      if (await db.progressPhotos.get(photo.id as never)) {
+      const existingPhoto = await db.progressPhotos.get(photo.id as never);
+      const existingAsset = existingPhoto
+        ? await db.mediaAssets.get(existingPhoto.assetId as never)
+        : undefined;
+      const localMediaHealthy = existingAsset !== undefined &&
+        existingAsset.privacyClass === "sensitiveMedia" &&
+        existingAsset.blob instanceof Blob &&
+        existingAsset.blob.size === existingAsset.byteSize;
+      if (shouldSkipExistingPhoto(existingPhoto !== undefined, localMediaHealthy)) {
         skipped++;
         continue;
       }
-      let assetId = asset.id;
-      if (await db.mediaAssets.get(assetId as never)) assetId = newId();
+
+      // Recheck generated IDs too, so a collision cannot accidentally
+      // overwrite unrelated local media or abort a valid transfer.
+      const assetId = await availablePhotoAssetId(
+        asset.id,
+        async (id) => (await db.mediaAssets.get(id as never)) !== undefined,
+        newId,
+      );
       // A fresh ArrayBuffer avoids TS 5.9's SharedArrayBuffer/BlobPart mismatch.
       const buffer = new ArrayBuffer(bytes.byteLength);
       new Uint8Array(buffer).set(bytes);
