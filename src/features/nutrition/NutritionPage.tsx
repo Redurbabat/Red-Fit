@@ -28,6 +28,7 @@ import {
   type NutrientTotals,
 } from "../../services/calculations/nutrition";
 import { calculateNutritionUncertainty } from "../../services/calculations/nutritionUncertainty";
+import { displayedMealWeight, rawEquivalentGrams } from "../../services/calculations/cookingYield";
 import {
   db,
   foodRepository,
@@ -155,7 +156,7 @@ export default function NutritionPage() {
 
   function openEntryEditor(log: MealLog, entry: MealFoodEntry) {
     setEditing({ logId: log.id, mealType: log.mealType, entry, food: null });
-    setAmountInput(toInputValue(entry.amountG));
+    setAmountInput(toInputValue(displayedMealWeight(entry)));
     setAmountError(undefined);
     // Load the current food so the preview matches what saveEntryAmount will
     // store (per-100g truth); stays null when the food was deleted.
@@ -191,7 +192,16 @@ export default function NutritionPage() {
         showToast("Der Eintrag wurde nicht gefunden.");
         return;
       }
-      const amountG = roundTo(value, 1);
+      const cooked = editing.entry.weighedAs === "cooked" &&
+        editing.entry.cookingYieldFactor !== undefined;
+      const amountG = roundTo(
+        rawEquivalentGrams(value, cooked ? editing.entry.cookingYieldFactor : 1),
+        1,
+      );
+      if (amountG <= 0) {
+        setAmountError("Die umgerechnete Menge ist zu klein.");
+        return;
+      }
       // Recompute from per-100g truth when the food still exists,
       // otherwise scale the snapshot proportionally.
       const food = await foodRepository.get(editing.entry.foodId);
@@ -199,7 +209,14 @@ export default function NutritionPage() {
         ? buildEntryNutrition(food, amountG)
         : scaleSnapshot(editing.entry, amountG);
       const entries = log.entries.map((e) =>
-        e.id === editing.entry.id ? { ...e, amountG, ...nutrition } : e,
+        e.id === editing.entry.id
+          ? {
+              ...e,
+              amountG,
+              ...(cooked ? { weighedAmountG: roundTo(value, 1) } : {}),
+              ...nutrition,
+            }
+          : e,
       );
       await mealRepository.update(log.id, { entries });
       closeEntryEditor();
@@ -447,7 +464,11 @@ export default function NutritionPage() {
               {mealTypeLabels[editing.mealType]} ·{" "}
               {isToday ? "Heute" : formatDateGerman(selectedDate)}
             </p>
-            <Field label="Menge (g)" error={amountError}>
+            <Field
+              label={editing.entry.weighedAs === "cooked"
+                ? "Menge gekocht (g)" : "Menge (g)"}
+              error={amountError}
+            >
               {(id) => (
                 <NumberInput
                   id={id}
@@ -457,6 +478,15 @@ export default function NutritionPage() {
                 />
               )}
             </Field>
+            {editing.entry.weighedAs === "cooked" ? (
+              <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 8 }}>
+                Gekocht gewogen · gespeicherter Umrechnungsfaktor{" "}
+                {editing.entry.cookingYieldFactor?.toLocaleString("de-DE", {
+                  maximumFractionDigits: 2,
+                }) ?? "nicht verfügbar"}.
+                Nährwerte beziehen sich auf das Roh-/Trockenäquivalent.
+              </p>
+            ) : null}
             <EntryPreview entry={editing.entry} food={editing.food} amountInput={amountInput} />
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
               <Button onClick={() => void saveEntryAmount()}>Speichern</Button>
@@ -573,7 +603,9 @@ function MealSection({ type, log, onAdd, onEntryClick }: MealSectionProps) {
                     {entry.foodName}
                   </span>
                   <span className="list-row__subtitle" style={{ display: "block" }}>
-                    {formatGrams(entry.amountG)} · {formatKcal(entry.kcal)}
+                    {entry.weighedAs === "cooked"
+                      ? `${formatGrams(displayedMealWeight(entry))} gekocht (≈ ${formatGrams(entry.amountG)} roh)`
+                      : formatGrams(entry.amountG)} · {formatKcal(entry.kcal)}
                   </span>
                 </span>
                 <span className="list-row__trailing">
@@ -614,7 +646,10 @@ function EntryPreview({
   const value = parseDecimalInput(amountInput);
   if (value == null || value <= 0) return null;
   // Same rounding as saveEntryAmount so preview and stored values match.
-  const amountG = roundTo(value, 1);
+  const factor = entry.weighedAs === "cooked"
+    ? entry.cookingYieldFactor ?? 1 : 1;
+  const amountG = roundTo(rawEquivalentGrams(value, factor), 1);
+  if (amountG <= 0) return null;
   const n = food ? buildEntryNutrition(food, amountG) : scaleSnapshot(entry, amountG);
   return (
     <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 4 }}>
