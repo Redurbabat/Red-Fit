@@ -19,7 +19,7 @@ import { workoutLogRepository } from "../../../services/storage";
 import { saveWorkoutNotes } from "../../../services/workout/workoutService";
 import { WorkoutRevisionConflictError } from "../../../services/workout/workoutRevision";
 import { isCurrentWorkoutRoute } from "../../../services/workout/workoutRouteScope";
-import { createSerializedWorkoutWriter } from "../../../services/workout/serializedWorkoutWriter";
+import { createCoalescedNoteWriter } from "../../../services/workout/coalescedNoteWriter";
 import { formatDateGerman, formatDurationLong } from "../../../utils/dates";
 import { formatKg } from "../../../utils/numbers";
 
@@ -43,7 +43,6 @@ export default function WorkoutSummaryPage() {
   const [notesConflict, setNotesConflict] = useState(false);
   // Refs keep the latest value visible to flush handlers (hidden/pagehide/unmount).
   const notesRef = useRef("");
-  const lastSavedNotes = useRef("");
   const pendingNotesSave = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notesWriter = useRef<{
     workoutId: string;
@@ -69,27 +68,22 @@ export default function WorkoutSummaryPage() {
       .then((found) => {
         if (cancelled) return;
         setLog(found ?? null);
+        const initialNotes = found?.notes ?? "";
         if (found) {
-          // Serial saves use a revision updated ONLY after persistence.
-          // Two independent summary views cannot silently overwrite notes.
+          // Coalesce repeated blur/pagehide/finish requests for the same text.
+          // Keep the expected revision private to THIS workout writer.
           let revision = found.saveRevision ?? 0;
-          const save = createSerializedWorkoutWriter<string>(
+          const save = createCoalescedNoteWriter(
             async (text) => {
               const saved = await saveWorkoutNotes(found.id, revision, text);
               revision = saved.saveRevision ?? 0;
-              // An old writer may finish after navigating to another summary.
-              // Do not modify the new workout's last-saved note reference.
-              if (notesWriter.current?.save === save) {
-                lastSavedNotes.current = text;
-              }
             },
+            initialNotes,
           );
           notesWriter.current = { workoutId: found.id, save };
         }
-        const initialNotes = found?.notes ?? "";
         setNotes(initialNotes);
         notesRef.current = initialNotes;
-        lastSavedNotes.current = initialNotes;
       })
       .catch(() => {
         if (!cancelled) setLog(null);
@@ -124,7 +118,8 @@ export default function WorkoutSummaryPage() {
         return false;
       }
       const trimmed = notesRef.current.trim();
-      if (trimmed === lastSavedNotes.current) return true;
+      // Always ask the writer, even when text equals the last persisted
+      // value: a DIFFERENT, already queued text may still be in flight.
       try {
         await writer.save(trimmed);
         if (showFeedback &&
