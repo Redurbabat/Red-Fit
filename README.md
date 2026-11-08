@@ -103,7 +103,7 @@ Nach `npx cap add ios` erzeugt `npm run ios:icons` das standardisierte
 **1024px-App-Icon für Xcode** aus dem vorhandenen RED-Fit-Branding.
 Individuelle Xcode-Icons werden nicht still überschrieben.
 `npm run test:ios-icons` prüft die Generator-Pipeline auch ohne Xcode
-(**10/10 isolierte Node-Tests bestanden**).
+(**11/11 isolierte iOS-Node-Tests bestanden; zusätzlich 6/6 bestehende Windows-Tests**).
 [iPhone-App-Icon-Anleitung](docs/IOS-APPICON.md).
 
 ## Prüfen ohne GitHub-Actions-Runner
