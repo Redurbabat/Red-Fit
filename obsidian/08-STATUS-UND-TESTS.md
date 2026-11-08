@@ -98,3 +98,17 @@ Nächster konkreter Schritt:
 - **Ergebnis:** `tests 3, pass 3, fail 0` (Node TAP); geprüft wurden Build-vor-Wrangler-Skript, statische Asset-/SPA-Konfiguration und Abgleich der dokumentierten Cloudflare-Einstellungen.
 - **Keine neuen Produktdateien geändert:** Das ist ein Nachweis der vorher committeten Korrektur. **Nicht getestet:** andere `tools/*.selftest.mjs`-Suiten, `npm ci`, TypeScript, ESLint, vollständige Vitest-Suite, Vite-Bundle, echte Cloudflare-Live-URL.
 - **Nächster Schritt:** aktuellen Cloudflare-Build nach neuestem `main` anhand der Remote-Logs prüfen; nur nach tatsächlichem `vite build`-Erfolg die Worker-Asset-Auslieferung und Datenintegrität auf echter URL testen.
+
+
+## 2026-11-08 — Android/iOS/Windows Native-Bootstrap wirklich getestet (16/16)
+
+- **Neuer verifizierter Schritt:** Die drei Produktions-/Testmodule von GitHub-`main` wurden in ein isoliertes lokales Testverzeichnis übertragen und per `git hash-object` bytegenau mit GitHub abgeglichen:
+  - `tools/nativeDependencies.mjs`: `63cc7d8f2d1425bda14d5606445f0f45362672a0`
+  - `tools/bootstrap-native.mjs`: `03bd277316f5e29675340d042ac88ea32fbe7071`
+  - `tools/native-deps.selftest.mjs`: `7e1d73fb4aae348eb1b42a84d49c62cfa650c3b4`
+- **Tatsächlich ausgeführt:** `node --test tools/native-deps.selftest.mjs` unter Node `v22.16.0` im isolierten lokalen Dateibaum. **TAP: 16/16 bestanden, 0 Fehler.** Test umfasst Android-iOS-Core-CLI-Versionen, `@tauri-apps/cli`, Lockfile-V3-Validierung, Fehlkonfigurationen, `--plan`, `--check`, CLI-Fehlercodes sowie einen simulierten fehlgeschlagenen npm-Installationsvorgang mit Rollback beider Manifeste. Testlog liegt lokal in `redfit-native-verify/TEST-RESULTS.log`; kein nativer Paketdownload.
+- **Aktuelle reale Lockfile-Lage direkt auf GitHub-`main` geprüft:** `package.json` Blob `7155d1d203c8c04552f4ec1887099531f92dd293`, `package-lock.json` Blob `4307551d9b3c6654fad472d2c72fe92c57fa56c1`. Alle fünf nativen Pakete fehlen aktuell sowohl als direkte Deklaration als auch als aufgelöste Lockfile-Einträge.
+- **CI-Runner-Nachweis neu geprüft:** PR #8 (Actions Run `42488857176`) und PR #9 (Run `42489024356`) enthalten jeweils zwei fehlgeschlagene Jobs ohne einzige ausgeführte Step-Zeile; Job-Logs per GitHub-Actions-API mit `BlobNotFound` nicht verfügbar. Das spricht für einen vorgelagerten CI-Blocker, dessen genaue Ursache aus den verfügbaren Daten nicht bestimmbar ist.
+- **Repository-Dokumentation aktualisiert:** `docs/NATIVE-DEPENDENCY-BOOTSTRAP.md` und `obsidian/07-BACKLOG.md` geben nun 16/16, den aktuellen `main`-Kontext und die offenen native-Paket-/Lockfile-Schritte an.
+- **Nicht ausgeführt / nicht behauptet:** echtes `native:bootstrap` mit npm-Registry, `npm ci` mit den nativen Paketen, vollständiger Web-Build, Cloudflare-Deployment, Xcode-/Android-Studio-/Windows-Installer-Build.
+- **Nächster konkreter Schritt:** Auf einem Checkout mit npm-Registry-Zugriff `npm run native:bootstrap && npm run native:check && npm ci` ausführen, `package.json` **und** `package-lock.json` zusammen auf `main` committen, dann `typecheck`, `lint`, `test`, `build` und reale native Builds prüfen. Vorher GitHub-Actions-Konto-/Runner-Berechtigung über die GitHub-Oberfläche klären.
