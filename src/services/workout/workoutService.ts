@@ -10,6 +10,8 @@ import { getDayIndex, getLocalDateKey, nowIso } from "../../utils/dates";
 import { newId } from "../../utils/ids";
 import { calculateWorkoutDuration } from "../calculations/workout";
 import { workoutLogRepository } from "../storage/workoutLogRepository";
+import { db } from "../storage/database";
+import { canPersistWorkoutStatus } from "./workoutStatusGuard";
 
 /**
  * The workout lifecycle. Core rule: an active workout is a persisted
@@ -105,11 +107,22 @@ export async function startManualWorkout(name = "Freies Training"): Promise<Work
   return log;
 }
 
-/** Autosave — every mutation of the active workout flows through here (§128). */
+/**
+ * Autosave the latest snapshot atomically. A separate browser tab could still
+ * have a stale active copy of a workout already completed elsewhere. Check the
+ * persisted lifecycle under the same IndexedDB read-write transaction before
+ * overwriting it. Same-status edits (e.g. notes after completion) remain legal.
+ */
 export async function saveWorkout(log: WorkoutLog): Promise<WorkoutLog> {
-  const updated = { ...log, updatedAt: nowIso() };
-  await workoutLogRepository.put(updated);
-  return updated;
+  return db.transaction("rw", db.workoutLogs, async () => {
+    const stored = await db.workoutLogs.get(log.id as never);
+    if (!canPersistWorkoutStatus(stored?.status, log.status)) {
+      throw new Error("Workout is already finalized with another status");
+    }
+    const updated: WorkoutLog = { ...log, updatedAt: nowIso() };
+    await db.workoutLogs.put(updated);
+    return updated;
+  });
 }
 
 /** Mark a set completed and arm the rest timer as an absolute deadline (§49/50). */
