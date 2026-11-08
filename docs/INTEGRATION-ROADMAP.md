@@ -47,6 +47,10 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [x] Vorhandene RED-Fit-Architektur gesichtet
 - [x] openGym-Aufwärmsatz-Rampenberechnung (Quellkonzept) + Workout-Vorschau und Unit-Tests als Code gepusht, CI noch offen
 - [x] Dietry-inspirierte Energiebedarfsberechnung (Code + Unit-Tests gepusht, CI noch offen)
+- [x] Workout-Autosave serialisiert: unmittelbare/debounced/Pagehide-Writes und
+  finaler Abschluss in fester Reihenfolge; terminale Status-Rückschritte
+  zusätzlich innerhalb der Dexie-Transaktion blockiert. 13/13 reine
+  Node-Tests bestanden, native/IndexedDB-Integrationstests offen
 - [x] openGym-Supersatz-Planung/Rotation/Pausen und Unit-Tests als Code gepusht
 - [x] Dietry-Schätzunsicherheit mit Eintragskennzeichnung und Tagesanzeige gepusht
 - [x] Mahlzeiten-Logging in UI und Rezepten auf atomare Dexie-Transaktionen
