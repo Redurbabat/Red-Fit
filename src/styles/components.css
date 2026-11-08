@@ -599,7 +599,7 @@ textarea.input {
 .fab {
   position: fixed;
   right: calc(var(--content-padding) + env(safe-area-inset-right, 0px));
-  bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px);
+  bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 24px);
   width: 56px;
   height: 56px;
   border-radius: 999px;
