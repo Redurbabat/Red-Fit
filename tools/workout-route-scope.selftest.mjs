@@ -87,3 +87,27 @@ test("a successful final note save permits navigation; a failure blocks it", asy
   await finish(Promise.resolve(true));
   assert.equal(navigations, 1);
 });
+
+test("delayed final save cannot navigate away from a different workout route", async () => {
+  let currentRoute = "workout-A";
+  let navigateCount = 0;
+  let resolveSave;
+  const save = new Promise((resolve) => { resolveSave = resolve; });
+  const finishing = save.then((saved) => {
+    if (saved && isCurrentWorkoutRoute(currentRoute, "workout-A")) navigateCount++;
+  });
+  currentRoute = "workout-B";
+  resolveSave(true);
+  await finishing;
+  assert.equal(navigateCount, 0);
+});
+
+test("a stale old-route error may report failure without locking the new route", () => {
+  let newPageConflict = false;
+  const failedWorkoutId = "workout-A";
+  const currentRouteId = "workout-B";
+  if (isCurrentWorkoutRoute(currentRouteId, failedWorkoutId)) {
+    newPageConflict = true;
+  }
+  assert.equal(newPageConflict, false);
+});
