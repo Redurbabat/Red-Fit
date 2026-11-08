@@ -44,7 +44,10 @@ export default function WorkoutSummaryPage() {
   const notesRef = useRef("");
   const lastSavedNotes = useRef("");
   const pendingNotesSave = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const notesWriter = useRef<((notes: string) => Promise<void>) | null>(null);
+  const notesWriter = useRef<{
+    workoutId: string;
+    save: (notes: string) => Promise<void>;
+  } | null>(null);
   const notesConflictRef = useRef(false);
 
   useEffect(() => {
@@ -52,6 +55,7 @@ export default function WorkoutSummaryPage() {
     notesWriter.current = null;
     notesConflictRef.current = false;
     setNotesConflict(false);
+    setLog(undefined);
     if (!workoutId) {
       setLog(null);
       return;
@@ -65,13 +69,18 @@ export default function WorkoutSummaryPage() {
           // Serial saves use a revision updated ONLY after persistence.
           // Two independent summary views cannot silently overwrite notes.
           let revision = found.saveRevision ?? 0;
-          notesWriter.current = createSerializedWorkoutWriter<string>(
+          const save = createSerializedWorkoutWriter<string>(
             async (text) => {
               const saved = await saveWorkoutNotes(found.id, revision, text);
               revision = saved.saveRevision ?? 0;
-              lastSavedNotes.current = text;
+              // An old writer may finish after navigating to another summary.
+              // Do not modify the new workout's last-saved note reference.
+              if (notesWriter.current?.save === save) {
+                lastSavedNotes.current = text;
+              }
             },
           );
+          notesWriter.current = { workoutId: found.id, save };
         }
         const initialNotes = found?.notes ?? "";
         setNotes(initialNotes);
@@ -107,12 +116,15 @@ export default function WorkoutSummaryPage() {
   const persistNotes = useCallback(
     async (showFeedback: boolean) => {
       const writer = notesWriter.current;
-      if (!writer || notesConflictRef.current) return;
+      if (!writer || writer.workoutId !== workoutId || notesConflictRef.current) {
+        return false;
+      }
       const trimmed = notesRef.current.trim();
-      if (trimmed === lastSavedNotes.current) return;
+      if (trimmed === lastSavedNotes.current) return true;
       try {
-        await writer(trimmed);
+        await writer.save(trimmed);
         if (showFeedback) showToast("Notiz gespeichert.");
+        return true;
       } catch (error) {
         const stale = error instanceof WorkoutRevisionConflictError ||
           (error instanceof Error && /no longer exists|require a finalized/.test(error.message));
@@ -125,9 +137,10 @@ export default function WorkoutSummaryPage() {
         } else if (showFeedback) {
           showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
         }
+        return false;
       }
     },
-    [showToast],
+    [showToast, workoutId],
   );
 
   /** Cancel a pending debounced save and persist immediately. */
@@ -137,14 +150,14 @@ export default function WorkoutSummaryPage() {
         clearTimeout(pendingNotesSave.current);
         pendingNotesSave.current = null;
       }
-      void persistNotes(showFeedback);
+      return persistNotes(showFeedback);
     },
     [persistNotes],
   );
 
   /** Autosave while typing (debounced) — the note never lives only in state. */
   const handleNotesChange = (value: string) => {
-    if (notesConflictRef.current) return;
+    if (notesConflictRef.current || notesWriter.current?.workoutId !== workoutId) return;
     setNotes(value);
     notesRef.current = value;
     if (pendingNotesSave.current) clearTimeout(pendingNotesSave.current);
@@ -170,7 +183,7 @@ export default function WorkoutSummaryPage() {
     };
   }, [flushNotes]);
 
-  if (log === undefined) {
+  if (log === undefined || (log !== null && log.id !== workoutId)) {
     return (
       <>
         <PageHeader title="Zusammenfassung" />
@@ -315,7 +328,15 @@ export default function WorkoutSummaryPage() {
         />
       </section>
 
-      <Button style={{ marginTop: 20 }} onClick={() => navigate("/training")}>
+      <Button
+        style={{ marginTop: 20 }}
+        onClick={() => {
+          // Do not navigate away if the final unsaved note failed to persist.
+          void flushNotes(true).then((saved) => {
+            if (saved) navigate("/training");
+          });
+        }}
+      >
         Fertig
       </Button>
     </>
