@@ -19,6 +19,27 @@ export function detectPlatform(host: NativeHost): RedFitPlatform {
   return "web";
 }
 
+/**
+ * Native shells serve the compiled SPA from a fixed WebView document.
+ * Hash routes (#/training/...) survive hard reloads without server-side
+ * rewrite rules. The normal web/PWA build keeps clean History API URLs.
+ */
+export function shouldUseHashRouter(platform: RedFitPlatform): boolean {
+  return platform !== "web";
+}
+
+/**
+ * A native app's update lifecycle belongs to its packaging/runtime.
+ * Registering a web PWA service worker there may cache outdated app assets
+ * after an OS-level app update. Only the browser PWA uses the SW.
+ */
+export function shouldRegisterPwaServiceWorker(
+  platform: RedFitPlatform,
+  isDevelopment: boolean,
+): boolean {
+  return platform === "web" && !isDevelopment;
+}
+
 export function getPlatform(): RedFitPlatform {
   if (typeof window === "undefined") return "web";
   return detectPlatform(window as unknown as NativeHost);
