@@ -120,9 +120,10 @@ export function findExerciseRecords(workoutLogs: WorkoutLog[]): Map<string, Exer
 }
 
 /**
- * Records set by THIS workout compared against all previous completed workouts:
+ * Records set by THIS workout compared against earlier completed workouts:
  * a heavier set or more repetitions at the heaviest recorded weight (also
- * handles bodyweight exercises, where weightKg is 0).
+ * handles bodyweight exercises, where weightKg is 0). Later sessions must not
+ * erase a genuine historical PR when viewing an older workout summary.
  * The workout is first aggregated per exerciseId — the same exercise may appear
  * in several blocks of one workout and must yield at most ONE record entry
  * (WorkoutSummaryPage renders the list keyed by exerciseId).
@@ -134,7 +135,12 @@ export function findNewRecords(
   // Discarded/in-progress sessions must never produce a new personal record.
   if (workout.status !== "completed") return [];
   const previous = findExerciseRecords(
-    previousWorkouts.filter((w) => w.id !== workout.id),
+    previousWorkouts.filter((w) =>
+      w.id !== workout.id && (
+        w.date < workout.date ||
+        (w.date === workout.date && w.startedAt < workout.startedAt)
+      ),
+    ),
   );
   const current = new Map<string, ExerciseRecord>();
   for (const exerciseLog of workout.exerciseLogs) {
