@@ -24,6 +24,11 @@ Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
 
 - **openGym**: Aufwärmsatz-Vorschläge und Supersatz-Gruppen im Planeditor,
   automatischer Wechsel im aktiven Workout und Gruppenpause nach einer Runde.
+- **Workout-Datenintegrität**: aktive Satzänderungen werden jetzt geordnet
+  gespeichert; „Training abschließen“ wartet auf ältere Writes.
+  Ein bereits abgeschlossenes oder verworfenes Workout kann auch aus einem
+  zweiten Browser-Tab nicht per altem Aktiv-Snapshot wieder aktiviert werden.
+  [Schreibreihenfolge und Teststatus](docs/WORKOUT-SAVE-INTEGRITY.md).
 - **Dietry**: Kalorienbedarf-/Makro-Rechner, Kennzeichnung geschätzter
   Essensmengen und **optionale Roh-/Gekocht-Umrechnung** für Reis, Nudeln
   und weitere Zutaten. Das tatsächlich gekochte Gewicht und der Faktor
