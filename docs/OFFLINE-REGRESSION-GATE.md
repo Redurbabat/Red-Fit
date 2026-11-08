@@ -151,6 +151,43 @@ bleiben als historischer Zwischenstand stehen. Aktueller Stand ist
 **20/20 und 154/154**. Es liegt weiterhin **kein echter React-Router-
 Browser-/Dexie-/Capacitor-/Tauri-Build-Nachweis** vor.
 
+### Erweiterter Lauf nach Notiz-Speicher-Korrektur am 8. November 2026
+
+Der vorherige vollständige Lauf mit 20 Suiten und 154 Tests wurde um
+`tools/workout-note-coalescing.selftest.mjs` erweitert. Die zwölf
+neuen Fälle reproduzieren und verhindern Mehrfach-Writes desselben
+Notiztexts, prüfen das Teilen des ausstehenden Speicher-Promises,
+korrekte Reihenfolge bei schnellem **A→B→A**, Warteverhalten von
+„Fertig“, Fehlerweitergabe und erneuten Versuch nach einem fehlgeschlagenen
+Save. Das neue reine TypeScript-Modul ist
+`src/services/workout/coalescedNoteWriter.ts`.
+
+**Tatsächlich ausgeführt in der rekonstruierten lokalen
+GitHub-Testumgebung (Node.js 22.16.0):**
+
+```text
+$ node tools/offline-regressions.mjs
+RED Fit: running 21 offline regression suites (Node v22.16.0).
+# tests 166
+# pass 166
+# fail 0
+# skipped 0
+Offline checks passed. App and native release checks still required.
+```
+
+Ein isolierter `tsc --noEmit --strict --target ES2022`-Check des
+neuen Moduls war erfolgreich. Die lokal ausgeführten Dateien stimmen
+bytegenau mit GitHub überein (Git-Blob-SHA-1
+`605fd5ab9fb338aec1472288bef6b1d704368f03` bzw.
+`625de4e38f031abba6686e399e83999980819690`).
+
+**Aktueller Offline-Teststand: 21/21 Suiten, 166/166 Tests.**
+Der vorherige 20/20-Stand bleibt oben nur als historischer Nachweis
+stehen. Fünf zusätzliche Vitest-Fälle zur Notiz-Warteschlange wurden
+eingecheckt, aber nicht mit Dexie/React ausgeführt.
+Die npm-Registry und GitHub-Runner sind weiterhin Release-Blocker;
+der Offline-Lauf ersetzt keine vollständige App-Verifizierung.
+
 ## Freigabekriterien
 
 Der neue Offline-Job muss in CI vollständig grün sein **und** der
