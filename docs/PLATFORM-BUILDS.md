@@ -55,7 +55,7 @@ gestalteten Xcode-App-Icons ohne explizites `--force`. Er erstellt
 npm run test:ios-icons
 ```
 
-**Tatsächlich ausgeführt:** 10/10 lokale Tests bestanden, und die
+**Tatsächlich ausgeführt:** 11/11 lokale iOS-Tests bestanden, und die
 vier getesteten JS-Dateien stimmen bytegenau mit den GitHub-Blobs
 überein. Getestet wurde mit synthetischen PNGs. Eine reale
 Xcode-Asset-Kompilierung und ein signierter iPhone-Build sind
