@@ -56,7 +56,7 @@ describe("opt-in sensitive photo backup", () => {
       privacyClass: "sensitiveMedia",
       mimeType: "image/jpeg",
     });
-    const parsed = parsePhotoBackupJson(JSON.stringify(archive));
+    const parsed = await parsePhotoBackupJson(JSON.stringify(archive));
     expect(parsed.ok).toBe(true);
   });
 
@@ -103,25 +103,40 @@ describe("opt-in sensitive photo backup", () => {
   it("rejects corrupted, duplicate or incorrectly labelled sensitive images", async () => {
     await examplePhoto();
     const archive = await collectPhotoBackup();
-    expect(parsePhotoBackupJson(JSON.stringify({
+    expect((await parsePhotoBackupJson(JSON.stringify({
       ...archive,
       photos: [...archive.photos, ...archive.photos],
-    })).ok).toBe(false);
-    expect(parsePhotoBackupJson(JSON.stringify({
+    }))).ok).toBe(false);
+    expect((await parsePhotoBackupJson(JSON.stringify({
       ...archive,
       photos: [{
         ...archive.photos[0],
         asset: { ...archive.photos[0].asset, privacyClass: "normal" },
       }],
-    })).ok).toBe(false);
-    expect(parsePhotoBackupJson(JSON.stringify({
+    }))).ok).toBe(false);
+    expect((await parsePhotoBackupJson(JSON.stringify({
       ...archive,
       photos: [{
         ...archive.photos[0],
         dataBase64: "AAAA",
       }],
-    })).ok).toBe(false);
-    expect(parsePhotoBackupJson('{"format":"unknown"}').ok).toBe(false);
+    }))).ok).toBe(false);
+    expect((await parsePhotoBackupJson('{"format":"unknown"}')).ok).toBe(false);
+    // Previously, an accidental byte change of identical length was accepted.
+    const changedBytes = encodePhotoBase64(new TextEncoder().encode("b-private-image"));
+    expect(changedBytes.length).toBe(archive.photos[0].dataBase64.length);
+    expect((await parsePhotoBackupJson(JSON.stringify({
+      ...archive,
+      photos: [{ ...archive.photos[0], dataBase64: changedBytes }],
+    }))).ok).toBe(false);
+
+    // Checksums are mandatory in v2, and v1 archives cannot bypass validation.
+    expect((await parsePhotoBackupJson(JSON.stringify({
+      ...archive, photos: [{ ...archive.photos[0], sha256: undefined }],
+    }))).ok).toBe(false);
+    expect((await parsePhotoBackupJson(JSON.stringify({
+      ...archive, version: 1,
+    }))).ok).toBe(false);
   });
 
   it("refuses to silently export a photo with a missing binary", async () => {
