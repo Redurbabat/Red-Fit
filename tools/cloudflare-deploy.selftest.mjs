@@ -30,6 +30,7 @@ test("Cloudflare setup guide explains both dashboard build settings and deploy s
   const doc = readFileSync(resolve(root, "docs/CLOUDFLARE-DEPLOY.md"), "utf8");
   assert.match(doc, /Build command.*`npm run build`/);
   assert.match(doc, /Deploy command.*`npx wrangler deploy`/);
-  assert.match(doc, /npm run deploy:cloudflare/);
-  assert.match(doc, /Cloudflare Workers Builds.*nicht.*Wrangler.*build.command/i);
+  assert.match(doc, /npm run deploy:workers/);
+  assert.match(doc, /Workers Builds.*ignoriert/i);
+  assert.match(doc, /`build\.command`/);
 });
