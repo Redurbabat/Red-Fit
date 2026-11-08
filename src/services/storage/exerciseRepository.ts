@@ -40,6 +40,7 @@ export const exerciseRepository = {
           sourceRef: preview.sourceKey,
           sourceAuthor: preview.attribution.author,
           sourceLicense: preview.attribution.license,
+          taxonomyNeedsReview: preview.needsMuscleReview,
           isCustom: true,
         });
       }
