@@ -10,5 +10,11 @@ dev-dist/
 .vite/
 coverage/
 
+# Native build artifacts
+src-tauri/target/
+ios/App/Pods/
+ios/DerivedData/
+*.xcuserstate
+
 # OS / editor
 .DS_Store
