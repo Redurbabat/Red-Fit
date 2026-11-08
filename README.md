@@ -55,6 +55,26 @@ npm run lint       # ESLint
 npm run test       # Vitest (Berechnungen, Backup-Validierung)
 ```
 
+## Prüfen ohne GitHub-Actions-Runner
+
+Der GitHub-Actions-Runner wird derzeit nicht zugewiesen; dasselbe Problem
+bestand schon auf `main` im August 2026. Alle fünf App-Prüfschritte lassen
+sich auf Windows oder macOS direkt im lokalen Checkout ausführen:
+
+```bash
+node tools/verify-local.mjs
+```
+
+Das Ergebnis steht in `artifacts/verify-local.json`. Zum Prüfen des
+Ablaufs ohne installierte Abhängigkeiten:
+
+```bash
+node --test tools/verify-local.selftest.mjs
+```
+
+Detaillierte Diagnose und Hinweise: [CI-Wiederherstellung](docs/CI-RECOVERY.md).
+Die Selbsttests des Prüfscripts ersetzen **keinen** erfolgreichen App-Build.
+
 ## Architektur
 
 React 19 · TypeScript (strict) · Vite · React Router 7 · **Dexie/IndexedDB** ·
