@@ -51,6 +51,9 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [x] Dietry-Schätzunsicherheit mit Eintragskennzeichnung und Tagesanzeige gepusht
 - [x] wger-JSON-Import mit Provenance, atomarem Repository, Parser- und Repo-Tests gepusht
 - [x] wger-Konverter für 789 attribuierte Übungseinträge, 83 nicht attribuierte verworfen
+- [x] wger-Datenqualitätsprüfung: 120 ungeklärte Muskelgruppen markiert;
+  16 unspezifische „Arme“-Übungen nicht mehr dem Bizeps zugeordnet;
+  Gymnastikmatte (14 Datensätze) korrekt als Equipment klassifiziert
 - [x] Breite Desktop-Navigation (Windows-freundliche UI) gepusht
 - [ ] Weitere Funktionen der drei Quellen vollständig integriert
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
