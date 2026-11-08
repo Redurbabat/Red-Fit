@@ -77,6 +77,22 @@ mit Abbruch, ungültiger CLI-Parameter). Die npm-Prozesse waren dabei
 ausdrücklich **Mocks**. Dieser Test bestätigt ausschließlich die
 Prüfsteuerung, **nicht** den tatsächlichen RED-Fit-App-Build.
 
+## Zusätzlicher Offline-Test-Job (8. November 2026)
+
+Der Integrations-Branch enthält jetzt in
+`.github/workflows/ci.yml` den unabhängigen Job
+`offline-regressions`. Dieser Job führt mit Node.js 22 alle
+`tools/*.selftest.mjs` **ohne `npm ci`** aus und liefert einen
+eigenständigen Qualitätsstatus. Der reguläre `verify`-Job bleibt
+für `typecheck`, `lint`, Vitest und Build notwendig.
+
+**Lokal verifiziert:** 5/5 Tests des Test-Starters, außerdem
+113/113 Einzeltests in 15 lokal verfügbaren von 19 GitHub-Suiten
+bestanden. **Nicht verifiziert:** Der vollständige 19-Suiten-Lauf
+im echten Checkout; ohne GitHub-Runner startet auch der neue Job
+noch nicht. Details und genauer Umfang:
+[OFFLINE-REGRESSION-GATE.md](OFFLINE-REGRESSION-GATE.md).
+
 ## Freigabekriterium
 
 Der Draft-PR bleibt unmerged, bis mindestens ein vollständiger RED-Fit-Lauf
