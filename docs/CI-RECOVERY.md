@@ -35,8 +35,8 @@ CI-Gates**: Das würde die Sicherheits- und Qualitätsanforderungen umgehen.
 
 ## Lokaler Prüfersatz (Windows, macOS und Linux)
 
-Voraussetzungen: Node.js und npm; ein lokaler Checkout des Branches
-`feat/unified-iphone-windows-integration`.
+Voraussetzungen: Node.js 22+ und npm; ein aktueller lokaler Checkout von `main`
+(oder ein darauf basierender Entwicklungsbranch).
 
 Im Repository-Verzeichnis:
 
@@ -79,7 +79,7 @@ Prüfsteuerung, **nicht** den tatsächlichen RED-Fit-App-Build.
 
 ## Zusätzlicher Offline-Test-Job (8. November 2026)
 
-Der Integrations-Branch enthält jetzt in
+Der aktuelle `main`-Branch enthält in
 `.github/workflows/ci.yml` den unabhängigen Job
 `offline-regressions`. Dieser Job führt mit Node.js 22 alle
 `tools/*.selftest.mjs` **ohne `npm ci`** aus und liefert einen
@@ -103,7 +103,9 @@ startet auch der neue Offline-Job nicht. Details und genauer Umfang:
 
 ## Freigabekriterium
 
-Der Draft-PR bleibt unmerged, bis mindestens ein vollständiger RED-Fit-Lauf
-(`typecheck`, `lint`, `test`, `build`) erfolgreich und nachvollziehbar
-durchgeführt wurde. Anschließend sind reale iOS- und Windows-Builds separat
+Die Integrationsänderungen sind bereits auf `main` gemergt; dies ersetzt keine
+Release-Abnahme. Eine Veröffentlichung als verifiziertes Produkt ist erst nach
+einem vollständigen, nachvollziehbar erfolgreichen RED-Fit-Lauf
+(`npm ci`, `typecheck`, `lint`, `test`, `build`) vertretbar.
+Für iOS, Android und Windows sind danach separate native Builds und Gerätetests
 erforderlich.
