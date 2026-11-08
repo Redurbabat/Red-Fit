@@ -29,7 +29,9 @@
     "test:backup-size": "node --experimental-strip-types --test tools/backup-export-policy.selftest.mjs",
     "test:backup-snapshot": "node --test tools/backup-snapshot.selftest.mjs",
     "test:backup-workout-revision": "node --experimental-strip-types --test tools/backup-workout-revision.selftest.mjs",
-    "test:backup-meal-collisions": "node --experimental-strip-types --test tools/backup-meal-merge.selftest.mjs"
+    "test:backup-meal-collisions": "node --experimental-strip-types --test tools/backup-meal-merge.selftest.mjs",
+    "ios:icons": "node tools/prepare-ios-icons.mjs",
+    "test:ios-icons": "node --test tools/ios-icons.selftest.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
