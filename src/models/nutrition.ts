@@ -79,7 +79,13 @@ export const mealFoodEntrySchema = z.object({
   id: z.string().min(1),
   foodId: z.string().min(1),
   foodName: z.string().min(1),
+  /** Nutrition basis (raw/dry equivalent grams) used for the frozen macros. */
   amountG: nonNegativeNumber,
+  /** Optional cooked-weight input; legacy entries have neither field. */
+  weighedAs: z.literal("cooked").optional(),
+  weighedAmountG: nonNegativeNumber.optional(),
+  /** Original cooked/raw factor snapshotted so later edits stay reproducible. */
+  cookingYieldFactor: z.number().finite().min(0.1).max(10).optional(),
   estimateLevel: z.enum(ESTIMATE_LEVELS).optional(),
   kcal: nonNegativeNumber,
   protein: nonNegativeNumber,
