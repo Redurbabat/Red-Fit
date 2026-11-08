@@ -21,7 +21,8 @@
     "test:native-deps": "node --test tools/native-deps.selftest.mjs",
     "test:wger-catalog": "node --test tools/bundled-wger.selftest.mjs",
     "test:cooking-yield": "node --experimental-strip-types --test tools/cooking-yield.selftest.mjs",
-    "test:meal-integrity": "node --experimental-strip-types --test tools/meal-entry-ops.selftest.mjs"
+    "test:meal-integrity": "node --experimental-strip-types --test tools/meal-entry-ops.selftest.mjs",
+    "test:workout-save-queue": "node --experimental-strip-types --test tools/workout-save-queue.selftest.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
