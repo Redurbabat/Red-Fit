@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { BookOpen, ChevronRight, Dumbbell, Plus, Upload } from "lucide-react";
+import { BookOpen, ChevronRight, Dumbbell, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "../../../components/feedback/Modal";
@@ -256,7 +256,7 @@ export default function ExerciseListPage() {
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <Button variant="secondary" small autoWidth onClick={() => setImportOpen(true)}>
-            <Upload size={16} aria-hidden="true" /> wger-JSON importieren
+            <BookOpen size={16} aria-hidden="true" /> wger-Katalog
           </Button>
         </div>
         <TextInput
@@ -337,7 +337,7 @@ export default function ExerciseListPage() {
 
       <BottomSheet
         open={importOpen}
-        title="Übungen aus wger-JSON"
+        title="wger-Übungen hinzufügen"
         onClose={() => { if (!importBusy) setImportOpen(false); }}
       >
         <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 14 }}>
