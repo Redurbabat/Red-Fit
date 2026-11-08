@@ -40,6 +40,10 @@ import {
 } from "../../../services/calculations/workout";
 import { db, workoutLogRepository, workoutPlanRepository } from "../../../services/storage";
 import {
+  calculateWarmupSets,
+  isCompoundMovement,
+} from "../../../services/calculations/warmup";
+import {
   cancelWorkout,
   completeSet,
   countIncompleteSets,
@@ -324,6 +328,15 @@ export default function WorkoutPage() {
     ? planSession?.exercises.find((e) => e.exerciseId === currentLog.exerciseId)
     : undefined;
   const suggestedKg = suggestNextWeight(lastPerformance, plannedExercise?.repsMax);
+  // Non-persistent warm-up preview: the main work sets remain unchanged.
+  const warmupWorkWeight = currentLog?.setLogs.find((set) => set.weightKg > 0)?.weightKg ?? 0;
+  const warmupPreview = currentExercise && warmupWorkWeight > 0
+    ? calculateWarmupSets({
+        workWeightKg: warmupWorkWeight,
+        compound: isCompoundMovement(currentExercise),
+        barWeightKg: currentExercise.equipment === "barbell" ? 20 : 0,
+      })
+    : [];
 
   const updateSet = (
     setIndex: number,
@@ -594,6 +607,26 @@ export default function WorkoutPage() {
                 <TrendingUp size={16} aria-hidden="true" style={{ flexShrink: 0 }} />
                 Vorschlag: {formatKg(suggestedKg)} — letztes Mal alle Sätze geschafft
               </p>
+            ) : null}
+            {warmupPreview.length > 0 ? (
+              <div
+                style={{
+                  marginTop: 10,
+                  borderRadius: 12,
+                  padding: "10px 12px",
+                  background: "var(--surface-2)",
+                  fontSize: 14,
+                }}
+              >
+                <strong>Aufwärmen (Vorschlag)</strong>
+                <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>
+                  {warmupPreview.map((set) => `${formatKg(set.weightKg)} × ${set.reps}`).join(" · ")}
+                </p>
+                <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-soft)" }}>
+                  Geschätzte Aufwärmsätze; nicht automatisch protokolliert.
+                  Bei Langhantel standardmäßig 20 kg Stange angenommen.
+                </p>
+              </div>
             ) : null}
           </section>
 
