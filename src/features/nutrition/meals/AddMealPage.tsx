@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { Plus, SearchX } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { BottomSheet } from "../../../components/feedback/Modal";
 import { EmptyState, LoadingState } from "../../../components/feedback/states";
@@ -64,6 +64,7 @@ export default function AddMealPage() {
   const [weightBasis, setWeightBasis] = useState<"raw" | "cooked">("raw");
   const [amountError, setAmountError] = useState<string | undefined>(undefined);
   const [saving, setSaving] = useState(false);
+  const saveInFlight = useRef(false);
 
   const foods = useLiveQuery(() => foodRepository.search(query), [query]);
   const recentFoods = useLiveQuery(() => foodRepository.listRecent(6), []);
@@ -105,7 +106,7 @@ export default function AddMealPage() {
   }, [foodIdParam, selectFood]);
 
   async function handleSave() {
-    if (!selectedFood || saving) return;
+    if (!selectedFood || saveInFlight.current) return;
     const value = parseDecimalInput(amountInput);
     if (value == null || value <= 0 || value > 1_000_000) {
       setAmountError("Bitte gib eine realistische Menge über 0 g ein.");
@@ -123,6 +124,7 @@ export default function AddMealPage() {
       setAmountError("Die umgerechnete Menge ist zu klein.");
       return;
     }
+    saveInFlight.current = true;
     setSaving(true);
     try {
       // Snapshot principle: name + computed values are frozen on the entry.
@@ -150,6 +152,7 @@ export default function AddMealPage() {
       // Return to the day the entry was saved for, not blindly to today.
       navigate(`/nutrition?date=${date}`);
     } catch {
+      saveInFlight.current = false;
       setSaving(false);
       setAmountError("Speichern fehlgeschlagen. Bitte versuche es erneut.");
     }
