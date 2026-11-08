@@ -122,7 +122,7 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   nach `npx cap add ios` in eine einzelne 1024-px-RGB-Datei **ohne
   Alphakanal** und Xcode-Asset-`Contents.json` konvertiert; Schutz
   vor unbeabsichtigtem Überschreiben eigener Icons;
-  10/10 Node-Tests bestanden, getestete Skripte bytegleich GitHub
+  11/11 iOS- und 6/6 Windows-Node-Tests bestanden, getestete Skripte bytegleich GitHub
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [x] Branded Windows/Tauri-Icons aus vorhandenem PWA-Icon automatisch
   vor Dev/Build generieren; 6/6 isolierte PNG-/ICO-Tests bestanden
