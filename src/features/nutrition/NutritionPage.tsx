@@ -186,12 +186,6 @@ export default function NutritionPage() {
       return;
     }
     try {
-      const log = await mealRepository.get(editing.logId);
-      if (!log) {
-        closeEntryEditor();
-        showToast("Der Eintrag wurde nicht gefunden.");
-        return;
-      }
       const cooked = editing.entry.weighedAs === "cooked" &&
         editing.entry.cookingYieldFactor !== undefined;
       const weighedAmountG = roundTo(value, 1);
@@ -213,17 +207,11 @@ export default function NutritionPage() {
       const nutrition = food
         ? buildEntryNutrition(food, amountG)
         : scaleSnapshot(editing.entry, amountG);
-      const entries = log.entries.map((e) =>
-        e.id === editing.entry.id
-          ? {
-              ...e,
-              amountG,
-              ...(cooked ? { weighedAmountG } : {}),
-              ...nutrition,
-            }
-          : e,
-      );
-      await mealRepository.update(log.id, { entries });
+      await mealRepository.updateEntryNutrition(editing.logId, editing.entry.id, {
+        amountG,
+        ...(cooked ? { weighedAmountG } : {}),
+        ...nutrition,
+      });
       closeEntryEditor();
       showToast("Menge aktualisiert.");
     } catch {
@@ -234,16 +222,7 @@ export default function NutritionPage() {
   async function deleteEntry() {
     if (!editing) return;
     try {
-      const log = await mealRepository.get(editing.logId);
-      if (log) {
-        const entries = log.entries.filter((e) => e.id !== editing.entry.id);
-        if (entries.length === 0) {
-          // An empty MealLog has no value — remove it entirely.
-          await mealRepository.delete(log.id);
-        } else {
-          await mealRepository.update(log.id, { entries });
-        }
-      }
+      await mealRepository.deleteEntry(editing.logId, editing.entry.id);
       closeEntryEditor();
       showToast("Eintrag gelöscht.");
     } catch {
