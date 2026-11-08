@@ -53,6 +53,9 @@ review. **Do not** copy the excluded Gym visual assets.
   14 mat-equipped exercises no longer claim "no equipment"
 - openGym superset round-robin: plan editor, workout navigation and tests committed
 - Dietry-inspired estimated meal amount uncertainty: logging UI, daily display and tests committed
+- Dietry cooking-yield conversion (explicit cooked grams -> raw nutrition basis):
+  meal-entry/editing UI, snapshotted factor, uncertainty warnings, Zod validation;
+  8 pure-source cases executed; Vitest full application suite still pending
 - Desktop sidebar: visible from 1024px, mobile nav preserved
 - Cross-device handoff: optional separate sensitive-photo JSON export/import, never
   part of the normal backup; user action required, 25 MiB raw-size limit
