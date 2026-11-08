@@ -18,6 +18,7 @@ import {
 import { workoutLogRepository } from "../../../services/storage";
 import { saveWorkoutNotes } from "../../../services/workout/workoutService";
 import { WorkoutRevisionConflictError } from "../../../services/workout/workoutRevision";
+import { isCurrentWorkoutRoute } from "../../../services/workout/workoutRouteScope";
 import { createSerializedWorkoutWriter } from "../../../services/workout/serializedWorkoutWriter";
 import { formatDateGerman, formatDurationLong } from "../../../utils/dates";
 import { formatKg } from "../../../utils/numbers";
@@ -116,7 +117,7 @@ export default function WorkoutSummaryPage() {
   const persistNotes = useCallback(
     async (showFeedback: boolean) => {
       const writer = notesWriter.current;
-      if (!writer || writer.workoutId !== workoutId || notesConflictRef.current) {
+      if (!writer || !isCurrentWorkoutRoute(workoutId, writer.workoutId) || notesConflictRef.current) {
         return false;
       }
       const trimmed = notesRef.current.trim();
@@ -157,7 +158,7 @@ export default function WorkoutSummaryPage() {
 
   /** Autosave while typing (debounced) — the note never lives only in state. */
   const handleNotesChange = (value: string) => {
-    if (notesConflictRef.current || notesWriter.current?.workoutId !== workoutId) return;
+    if (notesConflictRef.current || !isCurrentWorkoutRoute(workoutId, notesWriter.current?.workoutId)) return;
     setNotes(value);
     notesRef.current = value;
     if (pendingNotesSave.current) clearTimeout(pendingNotesSave.current);
@@ -183,7 +184,7 @@ export default function WorkoutSummaryPage() {
     };
   }, [flushNotes]);
 
-  if (log === undefined || (log !== null && log.id !== workoutId)) {
+  if (log === undefined || (log !== null && !isCurrentWorkoutRoute(workoutId, log.id))) {
     return (
       <>
         <PageHeader title="Zusammenfassung" />
