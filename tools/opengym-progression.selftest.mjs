@@ -129,7 +129,8 @@ test("all 70 staged files match the immutable Git blobs of the original ZIP", ()
     const bytes = readFileSync(resolve(lib, name));
     totalBytes += bytes.length;
     const actual = createHash("sha1")
-      .update(`blob ${bytes.length}\\0`)
+      .update(`blob ${bytes.length}`)
+      .update(new Uint8Array([0]))
       .update(bytes)
       .digest("hex");
     assert.equal(actual, sha, `Original source modified: ${name}`);
