@@ -276,33 +276,47 @@ export default function WorkoutSummaryPage() {
               <div style={{ fontWeight: 700, marginBottom: 8 }}>{exerciseLog.name}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {exerciseLog.setLogs.map((set, index) => (
-                  <div
-                    key={set.id}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      fontSize: 14,
-                      color: set.completed ? "var(--text)" : "var(--text-soft)",
-                    }}
-                  >
-                    <span style={{ color: "var(--text-muted)" }}>Satz {index + 1}</span>
-                    <span
+                  <div key={set.id}>
+                    <div
                       style={{
-                        display: "inline-flex",
+                        display: "flex",
+                        justifyContent: "space-between",
                         alignItems: "center",
-                        gap: 8,
-                        fontVariantNumeric: "tabular-nums",
-                        fontWeight: 600,
+                        fontSize: 14,
+                        color: set.completed ? "var(--text)" : "var(--text-soft)",
                       }}
                     >
-                      {formatSet(set)}
-                      {set.completed ? (
-                        <Check size={16} color="var(--success)" aria-label="Abgeschlossen" />
-                      ) : (
-                        <Minus size={16} color="var(--text-soft)" aria-label="Nicht abgeschlossen" />
-                      )}
-                    </span>
+                      <span style={{ color: "var(--text-muted)" }}>Satz {index + 1}</span>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          fontVariantNumeric: "tabular-nums",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {formatSet(set)}
+                        {set.completed ? (
+                          <Check size={16} color="var(--success)" aria-label="Abgeschlossen" />
+                        ) : (
+                          <Minus size={16} color="var(--text-soft)" aria-label="Nicht abgeschlossen" />
+                        )}
+                      </span>
+                    </div>
+                    {set.notes?.trim() ? (
+                      <p
+                        style={{
+                          margin: "4px 0 8px",
+                          fontSize: 13,
+                          color: "var(--text-muted)",
+                          whiteSpace: "pre-wrap",
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        Notiz: {set.notes.trim()}
+                      </p>
+                    ) : null}
                   </div>
                 ))}
               </div>
