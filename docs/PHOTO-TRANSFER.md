@@ -45,6 +45,14 @@ werden. Ohne bewusste Nutzeraktion werden keine Fotos exportiert.
 - Parser prüft Schema, Referenzen, eindeutige IDs, MIME-Typ, `sensitiveMedia`, Datenlänge, gültiges Base64 und SHA-256 vor dem Import.
 - **Kein stiller Datenverlust beim Export:** Ein Foto ohne gespeicherten
   Blob oder mit abweichender Dateigröße führt zum Abbruch.
+- **Datenintegrität vorhandener Einträge**: Bei einer bereits vorhandenen
+  Foto-ID kontrolliert der Import, ob die referenzierte lokale Bilddatei
+  existiert und zu den sensitiven Medienmetadaten passt. Fehlende,
+  falsch klassifizierte oder inkonsistente Bilder führen zum Abbruch,
+  statt stillschweigend als erfolgreich übersprungen zu werden.
+- **Kollisionssichere Medien-ID**: Auch neu generierte IDs werden bis zu
+  achtmal gegen die bestehende Datenbank überprüft; dauerhaft belegte IDs
+  führen zu einem kontrollierten Fehler innerhalb derselben Transaktion.
 - **Transaktionaler Import**: Bestehende Foto-IDs bleiben unangetastet;
   überschneidende Asset-IDs bekommen neue IDs, damit kein fremdes lokales
   Bild überschrieben wird. Alle Bilder werden vor der Datenbanktransaktion
@@ -53,6 +61,25 @@ werden. Ohne bewusste Nutzeraktion werden keine Fotos exportiert.
   lokaler Datei-Workflow.
 
 ## Grenzen und Tests
+
+**Zusätzliche Prüfungen (2026-11-08):**
+
+```bash
+node --experimental-strip-types --test tools/photo-import-policy.selftest.mjs
+```
+
+Die isolierte Foto-Import-Policy wurde lokal mit **6/6 bestandenen
+Node-Tests** und einem eigenständigen TypeScript-Check überprüft.
+Der Test prüft Duplikate, fehlende lokale Bilddateien, ursprüngliche
+und neu generierte ID-Kollisionen sowie den kontrollierten Abbruch.
+
+Die Datenbank-Tests in `photoBackupService.test.ts` wurden um Fälle
+für einen partiellen Import vor einer späteren beschädigten Fotoreferenz
+und für fehlerhafte SHA-256-Prüfsummen ergänzt. **Diese Dexie-Tests
+konnten in der aktuellen Umgebung nicht ausgeführt werden**, da
+`dexie`, `fake-indexeddb` und `vitest` hier nicht installiert sind
+und der npm-Paketdownload an der Netzwerkauflösung scheitert.
+Das ist kein Nachweis eines erfolgreichen IndexedDB-Roundtrips.
 
 Der Transfer ist für kleinere, lokale Foto-Sammlungen vorgesehen.
 Sammlungen über 25 MiB Rohdaten können derzeit **nicht in einer einzigen
