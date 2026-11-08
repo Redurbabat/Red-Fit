@@ -1,5 +1,7 @@
 # CLAUDE.md — RED Fit
 
+> **Eigentümerentscheidung 2026-11-08 (Vorrang):** openGym ist das eigene Quellprojekt des Nutzers und ab sofort die direkte Codebasis für die weitere RED-Fit-Entwicklung. Die ältere Regel „nur BABAT-RED-Code“ ist insoweit überholt. Originaldateien werden unter `vendor/opengym-upstream/` staged; der vollständige, separat lizenzierte Medien ausschließende ZIP-Import ist in `docs/OPENGYM-BASELINE.md` dokumentiert. Die bereits laufende React/TypeScript-RED-Fit-PWA darf erst nach erfolgreichem Build, API-/Auth-/Privacy-Audit und Daten-/Backup-Migration umgestellt werden. Die eigene openGym-Node-API ist kein automatischer Bestandteil des bisherigen statischen Cloudflare-Workers.
+
 ## Auftrag
 
 Du bist der verantwortliche Senior-Engineer für **RED Fit**: eine vollständige, stabile,
