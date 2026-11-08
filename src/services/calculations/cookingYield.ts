@@ -35,7 +35,9 @@ const excluded = [
   "reiswaffel", "cracker", "porridge", "muesli", "musli", "muesli",
   "fertig", "gericht", "menu", "paniert", "breaded", "empanado",
   "dose", "canned", "konserve", "lata", "abgetropft", "tiefkuhl",
-  "frozen meal", "sushi",
+  "frozen meal", "sushi", "burger", "sandwich", "wrap", "pizza",
+  "lasagne", "lasagna", "nugget", "schnitzel", "wurst", "sausage",
+  "fischstabchen", "fish finger", "proteinriegel", "cereal bar",
 ];
 
 const rules: readonly Rule[] = [
