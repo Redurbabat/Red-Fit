@@ -5,7 +5,7 @@ import {
   type BackupData,
   type RedFitBackup,
 } from "../../models/backup";
-import type { MealFoodEntry, MealLog } from "../../models/nutrition";
+import type { MealLog } from "../../models/nutrition";
 import type { UserSettings } from "../../models/settings";
 import { getLocalDateKey, nowIso } from "../../utils/dates";
 import { db, SETTINGS_ID } from "../storage/database";
@@ -13,6 +13,7 @@ import { settingsRepository } from "../storage/settingsRepository";
 import { APP_VERSION } from "../appVersion";
 import { assertRestorableBackupSize, MAX_STANDARD_BACKUP_BYTES } from "./backupExportPolicy";
 import { nextImportedWorkoutRevision } from "./workoutImportRevision";
+import { mergeImportedMealSlot } from "./mealImportMerge";
 
 /** Import files above this size are rejected outright (§107). */
 export const MAX_IMPORT_BYTES = MAX_STANDARD_BACKUP_BYTES;
@@ -264,7 +265,8 @@ async function normalizeActiveWorkouts(preferIds: Set<string>): Promise<void> {
 /**
  * Exactly one meal log per (date, mealType): duplicates are merged into the
  * kept log (entries concatenated, deduplicated by entry id, notes joined) —
- * no user data is lost, only the redundant container rows are removed.
+ * distinct snapshot conflicts retain both entries under stable recovered IDs.
+ * Only exact duplicate entry snapshots and redundant container rows are removed.
  */
 async function mergeDuplicateMealLogs(preferIds: Set<string>): Promise<void> {
   const all = await db.mealLogs.toArray();
@@ -277,30 +279,9 @@ async function mergeDuplicateMealLogs(preferIds: Set<string>): Promise<void> {
   }
   for (const group of bySlot.values()) {
     if (group.length <= 1) continue;
-    group.sort(
-      (a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id),
-    );
-    const keep = group.find((l) => preferIds.has(l.id)) ?? group[0];
-    const entries: MealFoodEntry[] = [];
-    const seenEntryIds = new Set<string>();
-    const notes: string[] = [];
-    for (const log of [keep, ...group.filter((l) => l.id !== keep.id)]) {
-      for (const entry of log.entries) {
-        if (seenEntryIds.has(entry.id)) continue;
-        seenEntryIds.add(entry.id);
-        entries.push(entry);
-      }
-      if (log.notes && !notes.includes(log.notes)) notes.push(log.notes);
-    }
-    await db.mealLogs.put({
-      ...keep,
-      entries,
-      notes: notes.length > 0 ? notes.join("\n") : undefined,
-      updatedAt: nowIso(),
-    });
-    for (const log of group) {
-      if (log.id !== keep.id) await db.mealLogs.delete(log.id);
-    }
+    const { keeper, duplicateIds } = mergeImportedMealSlot(group, preferIds);
+    await db.mealLogs.put({ ...keeper, updatedAt: nowIso() });
+    for (const id of duplicateIds) await db.mealLogs.delete(id);
   }
 }
 
