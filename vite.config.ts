@@ -35,7 +35,8 @@ export default defineConfig({
       },
       workbox: {
         // App shell + static assets are precached; user data lives in IndexedDB.
-        globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}"],
+        // Include the credited, built-in wger JSON catalog in offline precache.
+        globPatterns: ["**/*.{js,css,html,svg,png,webmanifest,json}"],
         navigateFallback: "/index.html",
         // Never let the SW touch API calls (e.g. a later Open Food Facts lookup).
         navigateFallbackDenylist: [/^\/api\//],
