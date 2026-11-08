@@ -181,8 +181,8 @@ export default function NutritionPage() {
   async function saveEntryAmount() {
     if (!editing) return;
     const value = parseDecimalInput(amountInput);
-    if (value == null || value <= 0) {
-      setAmountError("Bitte gib eine Menge über 0 g ein.");
+    if (value == null || value <= 0 || value > 1_000_000) {
+      setAmountError("Bitte gib eine realistische Menge über 0 g ein.");
       return;
     }
     try {
@@ -649,7 +649,7 @@ function EntryPreview({
   amountInput: string;
 }) {
   const value = parseDecimalInput(amountInput);
-  if (value == null || value <= 0) return null;
+  if (value == null || value <= 0 || value > 1_000_000) return null;
   // Same rounding as saveEntryAmount so preview and stored values match.
   const factor = entry.weighedAs === "cooked"
     ? entry.cookingYieldFactor ?? 1 : 1;
