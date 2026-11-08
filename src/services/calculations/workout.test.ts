@@ -120,7 +120,7 @@ describe("records", () => {
     expect(records[0].maxRepsAtMaxWeight).toBe(3);
   });
 
-  it("does not flag a repeat of an old weight", () => {
+  it("detects more reps at the same max weight without requiring a heavier set", () => {
     const old = workout({
       id: "old",
       date: "2026-08-01",
@@ -131,7 +131,43 @@ describe("records", () => {
       date: "2026-08-08",
       exerciseLogs: [{ id: "e", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(80, 10)] }],
     });
+    expect(findNewRecords(fresh, [old])).toMatchObject([
+      { exerciseId: "bench", maxWeightKg: 80, maxRepsAtMaxWeight: 10 },
+    ]);
+  });
+
+  it("does not flag a repeat of an unchanged weight and rep count", () => {
+    const old = workout({
+      id: "old", date: "2026-08-01",
+      exerciseLogs: [{ id: "e", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(80, 10)] }],
+    });
+    const fresh = workout({
+      id: "new", date: "2026-08-08",
+      exerciseLogs: [{ id: "e", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(80, 10)] }],
+    });
     expect(findNewRecords(fresh, [old])).toHaveLength(0);
+  });
+
+  it("recognizes bodyweight repetition PRs and does not show zero-rep sets as records", () => {
+    const old = workout({
+      id: "old", date: "2026-08-01",
+      exerciseLogs: [{ id: "e", exerciseId: "pullup", name: "Klimmzüge", setLogs: [set(0, 8)] }],
+    });
+    const fresh = workout({
+      id: "new", date: "2026-08-08",
+      exerciseLogs: [
+        { id: "e1", exerciseId: "pullup", name: "Klimmzüge", setLogs: [set(0, 10)] },
+        { id: "e2", exerciseId: "pullup", name: "Klimmzüge", setLogs: [set(0, 9)] },
+      ],
+    });
+    expect(findNewRecords(fresh, [old])).toMatchObject([
+      { exerciseId: "pullup", maxWeightKg: 0, maxRepsAtMaxWeight: 10 },
+    ]);
+    const zeroReps = workout({
+      id: "zero",
+      exerciseLogs: [{ id: "e", exerciseId: "pullup", name: "Klimmzüge", setLogs: [set(20, 0)] }],
+    });
+    expect(findNewRecords(zeroReps, [])).toHaveLength(0);
   });
 });
 
