@@ -123,11 +123,17 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   Alphakanal** und Xcode-Asset-`Contents.json` konvertiert; Schutz
   vor unbeabsichtigtem Überschreiben eigener Icons;
   11/11 iOS- und 6/6 Windows-Node-Tests bestanden, getestete Skripte bytegleich GitHub
-- [x] Separater, npm-unabhängiger CI-Job für die aktuell 19
+- [x] Route-Wechsel im aktiven Workout und in Trainingsnotizen
+  abgesichert: überfällige Autosaves behalten ihre ursprüngliche
+  Workout-ID, alte Fehler sperren kein neues Training, „Fertig“
+  navigiert erst nach erfolgreichem Notiz-Save. 10/10 neue
+  Node-Tests und isolierter strenger TypeScript-Check bestanden;
+  reale React-Router-/WebView-Tests noch ausstehend
+- [x] Separater, npm-unabhängiger CI-Job für die aktuell 20
   `tools/*.selftest.mjs`-Suiten erstellt (automatische Erkennung,
   Fehlerweitergabe, Node 22). Starter 5/5 geprüft;
-  danach **19/19 lokal rekonstruierte Suiten mit 144/144 Tests**
-  erfolgreich; Git-Blob-Abgleich aller Testdateien bestanden.
+  danach **20/20 lokal rekonstruierte Suiten mit 154/154 Tests**
+  erfolgreich; Git-Blob-Abgleich der neuen Guard-Dateien bestanden.
   GitHub-Runner, vollständige App-Suite und native Builds noch offen
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [x] Branded Windows/Tauri-Icons aus vorhandenem PWA-Icon automatisch
