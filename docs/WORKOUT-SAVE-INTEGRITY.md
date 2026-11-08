@@ -94,6 +94,48 @@ garantiert nicht, dass ein asynchroner IndexedDB-Flush bis zum
 Prozessende abgeschlossen ist. Deshalb wird kein vollständig
 verlustfreier OS-Kill-Recovery behauptet.
 
+### Trainingsnotizen verwenden jetzt dieselbe Revision (2026-11-08)
+
+Im Audit nach Einführung von `saveRevision` wurde noch ein direkter
+Schreibweg gefunden: `WorkoutSummaryPage` verwendete
+`workoutLogRepository.update(logId, { notes })`. Dieses Feld-Update
+ersetzte zwar nicht den gesamten Satzdatensatz, **erhöhte aber die
+Revisionsnummer nicht**. Ein anderes Fenster konnte anschließend einen
+älteren vollständigen Workout-Stand mit derselben Revision speichern und
+damit die zuletzt bearbeitete Notiz wieder überschreiben.
+
+Die neue Methode `saveWorkoutNotes(logId, expectedRevision, notes)` in
+`workoutService.ts` führt eine gezielte Notizänderung innerhalb der
+Dexie-`rw`-Transaktion aus. Sie lässt ausschließlich bereits
+`completed`-/`cancelled`-Workouts zu, prüft `saveRevision`,
+erhöht sie und bewahrt **sämtliche Satzdaten** des aktuell gespeicherten
+Workout-Logs. Bei Löschung oder veralteter Revision wird abgebrochen.
+
+Die Zusammenfassungsseite verwaltet den erwarteten Revisionsstand in
+einer eigenen serialisierten Notiz-Warteschlange. Bei einem Konflikt wird
+die weitere Bearbeitung gesperrt und ein dauerhaft sichtbarer
+Hinweis mit **„Gespeicherten Stand neu laden“** angezeigt; es gibt kein
+stilles Überschreiben. Blur, Debounce und Pagehide verwenden weiterhin
+Best-Effort-Flushing, ohne Garantie bei einem OS-Kill.
+
+**Gezielte Prüfung (2026-11-08):** Die beiden tatsächlichen
+Produktions-Funktionskörper `saveWorkout()` und
+`saveWorkoutNotes()` aus dem GitHub-Blob
+`9f9c6651ae9104a4436a105b03ae24c5f925e113` wurden isoliert in
+V8 mit einem seriellen In-Memory-Transaktionsstub und der echten
+Revisionslogik ausgeführt. **8/8 Prüfungen bestanden**: Notizen
+bearbeiten/leeren, Revisionen fortsetzen, parallele Notiz-Tab-Schreibvorgänge
+konfliktfrei ablehnen, alte vollständige Workouts abweisen, Satzdaten
+erhalten, nicht finalisierte und gelöschte Workouts ablehnen.
+Dies prüft die **Produktionslogik mit Stub**, nicht Dexie selbst.
+
+Die echten Dexie-Regressionstests in
+`src/services/workout/workoutPersistence.test.ts` sind jetzt um
+fünf zusätzliche Notizfälle auf **14 Tests** erweitert. Sie sind
+noch **nicht ausgeführt** (fehlende npm-Abhängigkeiten/Registry `EAI_AGAIN`).
+Außerdem ist `WorkoutSummaryPage` im vollständigen React-Testlauf
+und mit zwei Browser-Tabs zu prüfen.
+
 ## Prüfung und Status
 
 Ohne npm-Installation lokal mit Node 22.16+:
