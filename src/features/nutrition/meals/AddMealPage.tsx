@@ -142,14 +142,10 @@ export default function AddMealPage() {
         estimateLevel: effectiveEstimateLevel,
         ...nutrition,
       };
-      const existing = await mealRepository.findByDateAndType(date, mealType);
-      if (existing) {
-        await mealRepository.update(existing.id, { entries: [...existing.entries, entry] });
-      } else {
-        await mealRepository.create({ date, mealType, entries: [entry] });
-      }
-      // Touch updatedAt so the food surfaces under "Zuletzt verwendet".
-      await foodRepository.update(selectedFood.id, {});
+      await mealRepository.appendEntry(date, mealType, entry);
+      // The meal is already committed: failure to update "recent foods"
+      // must not claim the meal failed or invite a duplicate retry.
+      void foodRepository.update(selectedFood.id, {}).catch(() => undefined);
       showToast("Mahlzeit hinzugefügt.");
       // Return to the day the entry was saved for, not blindly to today.
       navigate(`/nutrition?date=${date}`);
