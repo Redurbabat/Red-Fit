@@ -55,6 +55,10 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   16 unspezifische „Arme“-Übungen nicht mehr dem Bizeps zugeordnet;
   Gymnastikmatte (14 Datensätze) korrekt als Equipment klassifiziert
 - [x] Breite Desktop-Navigation (Windows-freundliche UI) gepusht
+- [x] Separater, nutzerinitiierter iPhone/Windows-Foto-Transfer: Daten,
+  Privacy-Warnung, Vorschaudialog, transaktionaler Import und Regressionstests
+- [ ] Vollständige Foto-Sammlungen >25 MiB als geteiltes/verschlüsseltes
+  Archiv übertragen (derzeit begrenzter optionaler JSON-Transfer)
 - [ ] Weitere Funktionen der drei Quellen vollständig integriert
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [ ] Tauri-/Windows-Build auf Windows geprüft
