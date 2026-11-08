@@ -26,6 +26,7 @@ import { Stepper } from "../../../components/ui/Stepper";
 import { useRestTimer } from "../../../hooks/useRestTimer";
 import { PlateCalculatorSheet } from "../../../components/workout/PlateCalculatorSheet";
 import { armTimerSignal, playTimerSignal } from "../../../services/audio/timerSignal";
+import { createSerializedWorkoutWriter } from "../../../services/workout/serializedWorkoutWriter";
 import type {
   Exercise,
   ExerciseLog,
@@ -106,6 +107,9 @@ export default function WorkoutPage() {
 
   const logRef = useRef<WorkoutLog | null>(null);
   const pendingSave = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Use ONE ordered writer for autosave, pagehide and terminal states.
+  const orderedSave = useRef(createSerializedWorkoutWriter<WorkoutLog>(saveWorkout));
+  const terminalSaveInFlight = useRef(false);
 
   const restRemaining = useRestTimer(log?.restEndsAt);
 
@@ -155,17 +159,18 @@ export default function WorkoutPage() {
   /** Every mutation flows through here: set state + autosave (§128). */
   const apply = useCallback(
     (next: WorkoutLog, mode: "now" | "debounce") => {
+      if (terminalSaveInFlight.current) return;
       logRef.current = next;
       setLogState(next);
       cancelPendingSave();
       if (mode === "now") {
-        void saveWorkout(next).catch(() =>
+        void orderedSave.current(next).catch(() =>
           showToast("Speichern fehlgeschlagen. Bitte versuche es erneut."),
         );
       } else {
         pendingSave.current = setTimeout(() => {
           pendingSave.current = null;
-          void saveWorkout(next).catch(() =>
+          void orderedSave.current(next).catch(() =>
             showToast("Speichern fehlgeschlagen. Bitte versuche es erneut."),
           );
         }, SAVE_DEBOUNCE_MS);
@@ -247,7 +252,9 @@ export default function WorkoutPage() {
       if (pendingSave.current) {
         clearTimeout(pendingSave.current);
         pendingSave.current = null;
-        if (logRef.current) void saveWorkout(logRef.current);
+        if (logRef.current) {
+          void orderedSave.current(logRef.current).catch(() => undefined);
+        }
       }
     };
   }, []);
@@ -260,7 +267,9 @@ export default function WorkoutPage() {
       if (!pendingSave.current) return;
       clearTimeout(pendingSave.current);
       pendingSave.current = null;
-      if (logRef.current) void saveWorkout(logRef.current);
+      if (logRef.current) {
+          void orderedSave.current(logRef.current).catch(() => undefined);
+        }
     };
     const onVisibilityChange = () => {
       if (document.visibilityState === "hidden") flushPendingSave();
@@ -444,12 +453,17 @@ export default function WorkoutPage() {
   };
 
   const handleFinish = async () => {
+    if (terminalSaveInFlight.current) return;
+    terminalSaveInFlight.current = true;
     setFinishOpen(false);
     cancelPendingSave();
     const finished = finishWorkout(logRef.current ?? log);
     try {
-      await saveWorkout(finished);
+      // Drain all older active writes BEFORE the final status update.
+      await orderedSave.current(finished);
+      logRef.current = finished;
     } catch {
+      terminalSaveInFlight.current = false;
       showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
       return;
     }
@@ -457,11 +471,16 @@ export default function WorkoutPage() {
   };
 
   const handleDiscard = async () => {
+    if (terminalSaveInFlight.current) return;
+    terminalSaveInFlight.current = true;
     setDiscardOpen(false);
     cancelPendingSave();
+    const discarded = cancelWorkout(logRef.current ?? log);
     try {
-      await saveWorkout(cancelWorkout(logRef.current ?? log));
+      await orderedSave.current(discarded);
+      logRef.current = discarded;
     } catch {
+      terminalSaveInFlight.current = false;
       showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
       return;
     }
