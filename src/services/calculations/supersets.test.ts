@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ExerciseLog } from "../../models";
 import {
   contiguousSuperset,
+  invalidSupersetGroup,
   nextSupersetExerciseIndex,
   shouldRestAfterSupersetSet,
   supersetRestSeconds,
@@ -24,6 +25,17 @@ function entry(id: string, group: string | undefined, completed: boolean[]): Exe
 }
 
 describe("superset rounds", () => {
+  it("validates adjacent groups and rejects split or single entries", () => {
+    expect(invalidSupersetGroup([
+      { supersetGroup: "A" }, { supersetGroup: "A" },
+      {}, { supersetGroup: "B" }, { supersetGroup: "B" },
+    ])).toBeUndefined();
+    expect(invalidSupersetGroup([{ supersetGroup: "A" }])).toBe("A");
+    expect(invalidSupersetGroup([
+      { supersetGroup: "A" }, {}, { supersetGroup: "A" },
+    ])).toBe("A");
+  });
+
   it("only groups contiguous matching entries", () => {
     const logs = [entry("a", "A", [false]), entry("b", "A", [false]),
       entry("c", undefined, [false]), entry("d", "A", [false])];
