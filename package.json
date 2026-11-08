@@ -28,7 +28,8 @@
     "test:workout-start": "node --test tools/workout-start.selftest.mjs",
     "test:backup-size": "node --experimental-strip-types --test tools/backup-export-policy.selftest.mjs",
     "test:backup-snapshot": "node --test tools/backup-snapshot.selftest.mjs",
-    "test:backup-workout-revision": "node --experimental-strip-types --test tools/backup-workout-revision.selftest.mjs"
+    "test:backup-workout-revision": "node --experimental-strip-types --test tools/backup-workout-revision.selftest.mjs",
+    "test:backup-meal-collisions": "node --experimental-strip-types --test tools/backup-meal-merge.selftest.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
