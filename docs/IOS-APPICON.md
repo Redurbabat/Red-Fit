@@ -105,10 +105,11 @@ Blobs** des Feature-Branches überein:
 - `tools/prepare-ios-icons.mjs`: `f3d19b199d92cb3b1c2868ec1cfcc3702d86543f`
 - `tools/ios-icons.selftest.mjs`: `6d81ae1d07b99633f4644bddf7a6486d36fb8b42`
 
-**Zusätzliche Regressionsprüfung:** Die `RGB`-Quellbild entsprechend dem echten RED-Fit-Icon sowie die unveränderten sechs Windows-
-Icon-Tests wurden mit dem aktualisierten gemeinsamen PNG-Codec erneut
-ausgeführt: **6/6 bestanden**, zusammen mit den elf neuen iOS-Tests
-also **17/17 bestanden**.
+**Zusätzliche Regressionsprüfung:** Ein neues iOS-Testbeispiel verwendet
+auch **8-Bit-RGB-Eingabedaten ohne Alpha** und entspricht damit dem PNG-Typ
+des echten RED-Fit-Brandings. Die sechs bestehenden Windows-Icon-Tests
+wurden mit dem aktualisierten gemeinsamen PNG-Codec erneut ausgeführt:
+**6/6 bestanden**, zusammen mit den elf iOS-Tests **17/17 bestanden**.
 
 **Brand-Asset aus GitHub tatsächlich geprüft:** Das reale
 `public/icons/icon-512.png` (Git-Blob
