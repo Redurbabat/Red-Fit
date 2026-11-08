@@ -8,6 +8,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -113,4 +114,25 @@ test("the complete original module/test import closure is present in vendor", ()
   };
   for (const name of sourceRoots) visit(resolve(lib, name));
   assert.equal(seen.size, 70);
+});
+
+test("all 70 staged files match the immutable Git blobs of the original ZIP", () => {
+  const lock = JSON.parse(readFileSync(
+    resolve(root, "tools/opengym-progression-source.lock.json"), "utf8",
+  ));
+  assert.equal(lock.schemaVersion, 1);
+  assert.equal(lock.commit, "8fb98b16861a2728652302a7e6e30c50548493a0");
+  const entries = Object.entries(lock.files);
+  assert.equal(entries.length, 70);
+  let totalBytes = 0;
+  for (const [name, sha] of entries) {
+    const bytes = readFileSync(resolve(lib, name));
+    totalBytes += bytes.length;
+    const actual = createHash("sha1")
+      .update(`blob ${bytes.length}\\0`)
+      .update(bytes)
+      .digest("hex");
+    assert.equal(actual, sha, `Original source modified: ${name}`);
+  }
+  assert.equal(totalBytes, lock.totalBytes);
 });
