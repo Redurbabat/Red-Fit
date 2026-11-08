@@ -71,7 +71,7 @@ export async function collectBackupData(): Promise<BackupData> {
       userProfiles,
       settings: [settings satisfies UserSettings],
       recoveryLogs,
-        };
+    };
   });
 }
 
