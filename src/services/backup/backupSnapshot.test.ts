@@ -45,7 +45,14 @@ describe("consistent and restorable standard backup export", () => {
       await collectBackupData();
       const calls = spy.mock.calls.filter((args) => args[0] === "r");
       expect(calls.length).toBeGreaterThanOrEqual(1);
-      const scope = calls[0][1] as unknown[];
+      // Dexie's transaction overload types this argument as a table/string,
+      // although this call supplies an array of tables. Check the actual
+      // value at runtime instead of forcing an unsafe array assertion.
+      const scope: unknown = calls[0][1];
+      expect(Array.isArray(scope)).toBe(true);
+      if (!Array.isArray(scope)) {
+        throw new Error("Backup transaction must use an array of tables");
+      }
       expect(scope).toContain(db.foodItems);
       expect(scope).toContain(db.mealLogs);
       expect(scope).toContain(db.workoutLogs);
