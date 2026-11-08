@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { WorkoutLog } from "../../models/workout";
 import { db } from "../storage/database";
-import { saveWorkout } from "./workoutService";
+import { saveWorkout, saveWorkoutNotes } from "./workoutService";
 import { WorkoutRevisionConflictError } from "./workoutRevision";
 
 function activeWorkout(): WorkoutLog {
@@ -112,6 +112,78 @@ describe("persistent workout lifecycle integrity", () => {
     await db.workoutLogs.delete(stale.id);
     await expect(saveWorkout(stale)).rejects.toThrow(/no longer exists/);
     expect(await db.workoutLogs.get(stale.id)).toBeUndefined();
+  });
+
+  it("saves summary notes without overwriting sets and advances the revision", async () => {
+    const base: WorkoutLog = {
+      ...activeWorkout(),
+      status: "completed",
+      endedAt: "2026-11-08T13:00:00.000Z",
+      exerciseLogs: [{
+        id: "exercise-1", exerciseId: "squat", name: "Kniebeugen",
+        setLogs: [{ id: "set-1", setIndex: 0, weightKg: 80, reps: 8, completed: true }],
+      }],
+    };
+    await db.workoutLogs.put(base);
+    const result = await saveWorkoutNotes(base.id, 0, "  Gut gelaufen  ");
+    expect(result.saveRevision).toBe(1);
+    expect(result.notes).toBe("Gut gelaufen");
+    expect(result.exerciseLogs).toEqual(base.exerciseLogs);
+    const persisted = await db.workoutLogs.get(base.id);
+    expect(persisted?.notes).toBe("Gut gelaufen");
+    expect(persisted?.exerciseLogs).toEqual(base.exerciseLogs);
+  });
+
+  it("rejects stale full snapshots after a summary-note edit", async () => {
+    const completed: WorkoutLog = {
+      ...activeWorkout(), status: "completed",
+      endedAt: "2026-11-08T13:00:00.000Z",
+    };
+    await db.workoutLogs.put(completed);
+    const oldSnapshot = (await db.workoutLogs.get(completed.id))!;
+    await saveWorkoutNotes(completed.id, 0, "Private note");
+    await expect(saveWorkout({ ...oldSnapshot, name: "Old view" }))
+      .rejects.toBeInstanceOf(WorkoutRevisionConflictError);
+    expect((await db.workoutLogs.get(completed.id))?.notes).toBe("Private note");
+  });
+
+  it("rejects one of two parallel summary-note writes from different tabs", async () => {
+    const completed: WorkoutLog = {
+      ...activeWorkout(), status: "completed",
+      endedAt: "2026-11-08T13:00:00.000Z",
+    };
+    await db.workoutLogs.put(completed);
+    const result = await Promise.allSettled([
+      saveWorkoutNotes(completed.id, 0, "Tab A"),
+      saveWorkoutNotes(completed.id, 0, "Tab B"),
+    ]);
+    expect(result.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(result.filter((r) => r.status === "rejected")).toHaveLength(1);
+    expect((await db.workoutLogs.get(completed.id))?.saveRevision).toBe(1);
+  });
+
+  it("allows successive summary-note saves with updated revisions", async () => {
+    const completed: WorkoutLog = {
+      ...activeWorkout(), status: "completed",
+      endedAt: "2026-11-08T13:00:00.000Z",
+    };
+    await db.workoutLogs.put(completed);
+    const first = await saveWorkoutNotes(completed.id, 0, "First");
+    const second = await saveWorkoutNotes(completed.id, first.saveRevision, " Second ");
+    expect(second.saveRevision).toBe(2);
+    expect(second.notes).toBe("Second");
+    const cleared = await saveWorkoutNotes(completed.id, second.saveRevision, "");
+    expect(cleared.notes).toBeUndefined();
+  });
+
+  it("does not recreate deleted workouts or attach summary notes to active workouts", async () => {
+    const active = activeWorkout();
+    await expect(saveWorkoutNotes(active.id, 0, "Too early"))
+      .rejects.toThrow(/finalized/);
+    await db.workoutLogs.delete(active.id);
+    await expect(saveWorkoutNotes(active.id, 0, "Deleted"))
+      .rejects.toThrow(/no longer exists/);
+    expect(await db.workoutLogs.get(active.id)).toBeUndefined();
   });
 
   it("allows same-status post-completion updates such as notes", async () => {
