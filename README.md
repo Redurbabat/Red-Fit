@@ -24,8 +24,11 @@ Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
 
 - **openGym**: Aufwärmsatz-Vorschläge und Supersatz-Gruppen im Planeditor,
   automatischer Wechsel im aktiven Workout und Gruppenpause nach einer Runde.
-- **Dietry**: Kalorienbedarf-/Makro-Rechner in Einstellungen sowie Kennzeichnung
-  geschätzter Essensmengen und verständliche Unsicherheitsanzeige.
+- **Dietry**: Kalorienbedarf-/Makro-Rechner, Kennzeichnung geschätzter
+  Essensmengen und **optionale Roh-/Gekocht-Umrechnung** für Reis, Nudeln
+  und weitere Zutaten. Das tatsächlich gekochte Gewicht und der Faktor
+  bleiben im Tagebuch erhalten; bestehende Rohdaten unverändert.
+  [Umrechnung und Grenzen](docs/DIETRY-COOKED-WEIGHT.md).
 - **wger**: 789 geprüfte und individuell attribuierte Übungen sind als
   **mitgelieferter Offline-Katalog** über Training → Übungen → wger-Katalog
   verfügbar. Die Datenbank wird erst nach Vorschau und ausdrücklicher
