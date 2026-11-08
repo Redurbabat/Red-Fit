@@ -24,14 +24,8 @@ function meal(id: string, foodId: string): MealLog {
 
 describe("consistent and restorable standard backup export", () => {
   beforeEach(async () => {
-    await db.transaction("rw", [
-      db.foodItems, db.mealLogs, db.workoutLogs, db.settings, db.metadata,
-    ], async () => {
-      await Promise.all([
-        db.foodItems.clear(), db.mealLogs.clear(), db.workoutLogs.clear(),
-        db.settings.clear(), db.metadata.clear(),
-      ]);
-    });
+    // Isolate all backup tables, not only the stores used in these cases.
+    await Promise.all(db.tables.map((table) => table.clear()));
   });
 
   it("includes settings and all data in a restorable document", async () => {
