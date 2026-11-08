@@ -4,9 +4,10 @@
 Ein React/TypeScript-Core; Dexie/IndexedDB bleibt lokal, kein verpflichtender Server.
 - Web: bestehende Vite-PWA.
 - iPhone: Capacitor-Shell (`capacitor.config.json`), Xcode/iOS-Projekt **noch nicht generiert**.
+- Android: dieselbe Capacitor-Shell mit `@capacitor/android`; Android-Studio-Projekt **noch nicht generiert**.
 - Windows: Tauri-2-Rust-Shell (`src-tauri/`); noch kein verifizierter Installer.
 
-**Status: Scaffold, keine lauffähigen Native-Releases.** Das reguläre
+**Status: Scaffold, keine verifizierten nativen iOS-, Android- oder Windows-Releases.** Das reguläre
 `package-lock.json` existiert, jedoch fehlen darin weiterhin die nativen
 Capacitor-/Tauri-CLI-Pakete. Außerdem fehlen Rust-`Cargo.lock`, Signierung,
 generierte iOS-Dateien und native Build-Nachweise. Die Windows-Icondateien
@@ -64,6 +65,28 @@ weshalb vor einem Store-Release eine visuelle Prüfung gegen eine
 native 1024-px-Quelle sinnvoll ist.
 
 Siehe [iOS-App-Icon und Testprotokoll](IOS-APPICON.md).
+
+## Android (Android Studio/SDK)
+
+Die gemeinsame React/Vite-App verwendet im nativen Android-WebView denselben
+Hash-Router wie iPhone. `tools/nativeDependencies.mjs` verlangt jetzt
+`@capacitor/android@8.6.0`, dieselbe Version wie Capacitor iOS/Core/CLI.
+Ein realer Build ist **nicht** ausgeführt oder bestätigt.
+
+```bash
+npm run native:bootstrap
+npm run native:check
+npm ci
+npm run typecheck && npm run lint && npm run test && npm run build
+npx cap add android
+npx cap sync android
+npx cap open android
+```
+
+Vor Freigabe: Android-Package-ID, Gradle/JDK/SDK-Versionen, Mindest-Android,
+Bereichtigungen, Offline-/App-Neustart, Deep Links, Backup, bestehendes
+Workout-Fortsetzen und Update-Persistenz prüfen. Mit Emulator und echtem Gerät
+testen. `android/` und signierte APK/AAB fehlen noch.
 
 ## Windows
 Voraussetzungen: Windows + Microsoft C++ Build Tools, Rust und WebView2, Node.js,
