@@ -20,7 +20,8 @@
     "native:check": "node tools/bootstrap-native.mjs --check",
     "test:native-deps": "node --test tools/native-deps.selftest.mjs",
     "test:wger-catalog": "node --test tools/bundled-wger.selftest.mjs",
-    "test:cooking-yield": "node --experimental-strip-types --test tools/cooking-yield.selftest.mjs"
+    "test:cooking-yield": "node --experimental-strip-types --test tools/cooking-yield.selftest.mjs",
+    "test:meal-integrity": "node --experimental-strip-types --test tools/meal-entry-ops.selftest.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
