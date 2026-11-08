@@ -194,8 +194,13 @@ export default function NutritionPage() {
       }
       const cooked = editing.entry.weighedAs === "cooked" &&
         editing.entry.cookingYieldFactor !== undefined;
+      const weighedAmountG = roundTo(value, 1);
+      if (weighedAmountG <= 0) {
+        setAmountError("Bitte gib mindestens 0,1 g ein.");
+        return;
+      }
       const amountG = roundTo(
-        rawEquivalentGrams(value, cooked ? editing.entry.cookingYieldFactor : 1),
+        rawEquivalentGrams(weighedAmountG, cooked ? editing.entry.cookingYieldFactor : 1),
         1,
       );
       if (amountG <= 0) {
@@ -213,7 +218,7 @@ export default function NutritionPage() {
           ? {
               ...e,
               amountG,
-              ...(cooked ? { weighedAmountG: roundTo(value, 1) } : {}),
+              ...(cooked ? { weighedAmountG } : {}),
               ...nutrition,
             }
           : e,
@@ -648,7 +653,9 @@ function EntryPreview({
   // Same rounding as saveEntryAmount so preview and stored values match.
   const factor = entry.weighedAs === "cooked"
     ? entry.cookingYieldFactor ?? 1 : 1;
-  const amountG = roundTo(rawEquivalentGrams(value, factor), 1);
+  const weighedAmountG = roundTo(value, 1);
+  if (weighedAmountG <= 0) return null;
+  const amountG = roundTo(rawEquivalentGrams(weighedAmountG, factor), 1);
   if (amountG <= 0) return null;
   const n = food ? buildEntryNutrition(food, amountG) : scaleSnapshot(entry, amountG);
   return (
