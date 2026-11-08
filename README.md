@@ -11,7 +11,7 @@ Gerät (IndexedDB), offline-fähig, ohne Konto und ohne Backend.
 ## Plattformen
 
 RED Fit bleibt eine lauffähige PWA. Auf dem Branch zur Mehrplattform-Integration
-sind ein **iPhone-Capacitor-Gerüst** und ein **Windows-Tauri-Gerüst** angelegt;
+sind ein **iPhone-/Android-Capacitor-Gerüst** und ein **Windows-Tauri-Gerüst** angelegt;
 Native-Builds und Installer sind noch nicht verifiziert. Die optionale
 Energie-/Makro-Schätzung ist integriert. **789 wger-Übungen** inklusive
 individueller Autor-/Lizenzangabe sind jetzt als lokaler, offlinefähiger
@@ -97,7 +97,7 @@ npm run native:check
 npm ci
 ```
 
-`native:bootstrap` trägt die nativen CLI-Pakete einschließlich der passenden
+`native:bootstrap` trägt die nativen Capacitor-/Tauri-Pakete einschließlich der passenden
 Lockfile-Einträge ein. Beide npm-Manifeste müssen anschließend gemeinsam
 committed werden. Bei einem npm-Fehler setzt das Tool die Manifestdateien
 zurück. [Native Bootstrap-Anleitung](docs/NATIVE-DEPENDENCY-BOOTSTRAP.md).
