@@ -8,6 +8,7 @@ import { Card } from "../../components/ui/Card";
 import { SegmentedControl } from "../../components/ui/inputs";
 import type { RedFitBackup } from "../../models/backup";
 import { db } from "../../services/storage/database";
+import { BackupTooLargeError } from "../../services/backup/backupExportPolicy";
 import {
   exportPhotoBackupFile,
   importPhotoBackup,
@@ -69,8 +70,10 @@ export default function BackupPage() {
     try {
       await exportBackupFile();
       showToast("Backup wurde erstellt.");
-    } catch {
-      showToast("Backup konnte nicht erstellt werden. Bitte versuche es erneut.");
+    } catch (error) {
+      showToast(error instanceof BackupTooLargeError
+        ? error.message
+        : "Backup konnte nicht erstellt werden. Bitte versuche es erneut.");
     }
   }
 
