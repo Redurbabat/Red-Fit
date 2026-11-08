@@ -117,10 +117,13 @@ node tools/offline-regressions.mjs --list
 npm run test:offline
 ```
 
-Der Runner hat fünf eigene Tests bestanden; in einer lokal
-zusammengestellten Kopie wurden **15 der 19 Suiten mit 113/113
-bestandenen Einzeltests** ausgeführt. Ein vollständiger 19-Suiten-
-GitHub-Run bleibt wegen der Runner-Zuteilung offen.
+**Der vollständige Offline-Testlauf wurde lokal erfolgreich ausgeführt:
+19/19 Suiten und 144/144 Einzeltests bestanden.** Alle verwendeten
+Testdateien sowie die relevanten Quellmodule wurden bytegenau mit dem
+GitHub-Branch abgeglichen. Der Lauf erfolgte in einer rekonstruierten
+lokalen Prüfumgebung; der echte GitHub-Actions-Run bleibt wegen
+fehlender Runner-Zuteilung offen. Die vollständige React-/Dexie-Suite
+und native Builds sind noch nicht geprüft.
 [Offline-Prüfprotokoll](docs/OFFLINE-REGRESSION-GATE.md).
 
 ## Prüfen ohne GitHub-Actions-Runner
