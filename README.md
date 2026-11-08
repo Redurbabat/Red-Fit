@@ -19,6 +19,25 @@ Vorschauen, importiert aber ohne Freigabe keine fremden Übungsdaten.
 Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
 [Plattform-Build-Anleitung](docs/PLATFORM-BUILDS.md).
 
+## Integrationsstand des Feature-Branches (November 2026)
+
+- **openGym**: Aufwärmsatz-Vorschläge und Supersatz-Gruppen im Planeditor,
+  automatischer Wechsel im aktiven Workout und Gruppenpause nach einer Runde.
+- **Dietry**: Kalorienbedarf-/Makro-Rechner in Einstellungen sowie Kennzeichnung
+  geschätzter Essensmengen und verständliche Unsicherheitsanzeige.
+- **wger**: lokaler JSON-Übungsimport mit Quellen-ID, Autor, Lizenz, Vorschau,
+  Duplikat-Erkennung und atomarer Speicherung. Der
+  [Katalog-Konverter](docs/WGER-IMPORT.md) bereitet 789 ausreichend
+  attribuierte Übungen aus der bereitgestellten wger-Quelle auf.
+- **Windows**: responsive Sidebar ab Desktop-Breite; Tauri-Rust-Projektgerüst.
+- **iPhone**: gemeinsame Oberfläche und Capacitor-Konfiguration.
+
+Der neue Code ist in einem Draft-Pull-Request. GitHub Actions konnte zuletzt
+keinen Runner starten; die Implementierung gilt daher **nicht als Build-verifiziert**.
+Native App-Binaries und ein vollständiger Merge aller drei Originalprojekte
+sind noch nicht vorhanden. Quell-/Lizenzstatus:
+[Status](docs/SOURCE-ARCHIVE-STATUS.md).
+
 ## Voraussetzungen
 
 - Node.js ≥ 20
@@ -60,9 +79,10 @@ src/
 
 ## Lokale Speicherung
 
-Alle Daten liegen in IndexedDB (`red-fit`, 14 Stores: exercises, workoutPlans,
+Alle Daten liegen in IndexedDB (`red-fit`, 17 Stores: exercises, workoutPlans,
 workoutLogs, foodItems, mealLogs, nutritionGoals, waterLogs, bodyMeasurements,
-shoppingLists, mealPlans, recipes, userProfiles, settings, metadata).
+shoppingLists, mealPlans, recipes, userProfiles, recoveryLogs, mediaAssets,
+progressPhotos, settings, metadata).
 Ein aktives Workout ist ein persistenter Datensatz (`status: "active"`) mit
 Autosave — Reload oder App-Schließen verliert nie Daten. Der Pausentimer läuft
 über absolute Zeitstempel (`restEndsAt`) und übersteht Backgrounding.
