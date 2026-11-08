@@ -40,6 +40,31 @@ describe("wger exercise import preview", () => {
       muscleGroup: "chest", equipment: "none",
     });
   });
+  it("never guesses biceps for wger's ambiguous Arms category", () => {
+    const armExercise = previewWgerExercise({
+      ...example, sourceId: 31, name: "Axe Hold",
+      categoryId: 8, muscleIds: [], secondaryMuscleIds: [],
+    });
+    expect(armExercise.muscleGroup).toBe("fullBody");
+    expect(armExercise.needsMuscleReview).toBe(true);
+  });
+
+  it("marks category-only muscle assignments as requiring review", () => {
+    const categoryOnly = previewWgerExercise({
+      ...example, categoryId: 10, muscleIds: [], secondaryMuscleIds: [],
+    });
+    expect(categoryOnly.muscleGroup).toBe("abs");
+    expect(categoryOnly.needsMuscleReview).toBe(true);
+    expect(previewWgerExercise(example).needsMuscleReview).toBe(false);
+  });
+
+  it("does not interpret a gym mat as no equipment", () => {
+    const matExercise = previewWgerExercise({
+      ...example, equipmentIds: [4],
+    });
+    expect(matExercise.equipment).toBe("other");
+  });
+
   it("rejects unattributed imports", () => {
     expect(() => previewWgerExercise({ ...example, sourceLicense: "" })).toThrow();
   });
