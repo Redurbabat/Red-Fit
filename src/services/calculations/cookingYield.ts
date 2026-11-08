@@ -77,7 +77,11 @@ export function rawEquivalentGrams(weighedGrams: number, factor = 1): number {
       !Number.isFinite(factor) || factor < 0.1 || factor > 10) {
     throw new RangeError("Invalid weighed amount or cooking yield");
   }
-  return weighedGrams / factor;
+  const equivalent = weighedGrams / factor;
+  if (!Number.isFinite(equivalent) || equivalent <= 0) {
+    throw new RangeError("Cooking yield overflow");
+  }
+  return equivalent;
 }
 
 const rank: Record<EstimateLevel, number> = {
