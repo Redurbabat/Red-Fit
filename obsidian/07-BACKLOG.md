@@ -6,8 +6,8 @@ updated: 2026-11-08
 
 ## P0 — openGym 1:1 Quellbasis (Owner-Priorität 2026-11-08)
 - [x] Eigentümerfreigabe, Original-Commit und ZIP-Identität prüfen; 8.869 unveränderte Source-Dateien im Medien-bereinigten Artefakt per SHA-256 verifiziert; Lizenznotizen erhalten.
-- [x] Ersten Satz Originaldateien (Lizenz, Frontend-Einstieg, API, Komponenten) bytegleich auf `main` unter `vendor/opengym-upstream/` importiert; sicher fortsetzbaren ZIP-Importer `tools/import-opengym.py` hinzugefügt.
-- [ ] **Alle 8.869 zulässigen Originaldateien** per `python3 tools/import-opengym.py ... --apply` auf einem Checkout ergänzen und auf `main` committen (noch nicht in GitHub abgeschlossen).
+- [x] Original-Quellimport nachgeführt: **104/8.869** zulässige Originaldateien auf `main` (34 Baseline + 70 neue Progressions-/Importmodule); neue 70/70 Git-Blob-SHAs gegen `tools/opengym-progression-source.lock.json` geprüft; 10/10 Node-Smoke-Tests und 68/68 JS-Syntaxchecks bestanden. Fortsetzbarer ZIP-Importer `tools/import-opengym.py` vorhanden; **8.765 Dateien fehlen weiterhin**.
+- [ ] **Verbleibende 8.765 von 8.869 zulässigen Originaldateien** per `python3 tools/import-opengym.py ... --apply` auf einem Checkout ergänzen und auf `main` committen (Gesamtimport noch nicht abgeschlossen).
 - [ ] Original openGym React-Frontend und Node-API mit passenden Lockfiles bauen, testen und Zugriffs-/Sync-/Datenschutzmodell prüfen.
 - [ ] Nutzerdaten/Backup aus bestehendem RED Fit sicher übernehmen; danach aktive RED-Fit-Startkonfiguration auf geprüfte openGym-Basis umstellen.
 
@@ -26,6 +26,7 @@ updated: 2026-11-08
 
 ## P2 — fachliche Lücken der drei Quellapps
 - [ ] openGym: zusätzliche Progressionsmodi, Workout-Modi, Timer-/Workout-UX und ggf. Erinnerungen modular integrieren (keine Gym-visual-Medien). Gewicht-/Wiederholungs-PRs inklusive Eigengewicht, Null-Wiederholungen- und Abbruchschutz sind seit 2026-11-08 umgesetzt; Gesamtaufgabe bleibt offen.
+- [x] openGym-Original-Progression: 70 zusammengehörige Originalmodule, sechs Modi, Tests und Importabhängigkeiten **1:1 in `vendor/` abgelegt**, **10/10 eigene quellbasierte Node-Tests bestanden**. Das ist noch **keine aktive RED-Fit-Progressionsfunktion und keine vollständige openGym-Buildfreigabe**; Details: `docs/OPENGYM-BASELINE.md`.
 - [x] openGym-Satznotizen (kleiner Funktionstransfer): `SetLog.notes` bereits vorhanden, jetzt 140-Zeichen-Eingabe pro Satz + Anzeige in Historie, ohne DB-Migration/Medien; 3/3 reine Node-Tests und 9/9 Quellabgleiche, voller App-Build offen. Details: `docs/OPENGYM-SET-NOTES.md`.
 - [x] Trainingsrekord-Fix: mehr Wiederholungen bei gleicher Höchstlast, Eigengewichts-PR, keine Rekorde aus abgebrochenen/aktiven Workouts, Zusammenfassungsanzeige angepasst; **historische Rekordreihenfolge korrigiert, vollständigen Node-Selbsttest 9/9 bestanden** (2026-11-08, Node 22.16, Originaldateien per Git-Blob verifiziert); Vitest/Build noch offen.
 - [ ] wger: Übungstaxonomie/Attributionen, zusätzliche Bibliotheks- und Progressionsfunktionen an aktuelles RED-Fit-Datenmodell anpassen.
