@@ -22,12 +22,12 @@ Die Originalarchive sind **noch nicht im GitHub-Repository**: openGym überschre
 ## Integrationszuordnung
 | Zielbereich | Basis | Quelleninspiration | Vorgehen |
 |---|---|---|---|
-| Workout und Trainingspläne | `src/features/training/`, Workout-Repositories | openGym, wger | bestehende Funktionen zuerst abgleichen; Lücken gezielt implementieren |
-| Übungs-Taxonomie | `src/models/exercise.ts` und Katalog | wger | eigene Normalisierungsadapter, stabile IDs, Herkunft prüfen |
+| Workout und Trainingspläne | `src/features/training/`, Workout-Repositories | openGym, wger | Aufwärmsatz- und Supersatz-System implementiert; weitere Modi/Progression offen |
+| Übungs-Taxonomie | `src/models/exercise.ts` und Katalog | wger | Attributionspflichtiger JSON-Import, Quellen-ID und Konverter für 789 Übungen |
 | Kalorien-/Energiebedarfsberechnung | `src/services/calculations/` | Dietry | eigenständige Mifflin-St-Jeor-/TDEE-Berechnung, isoliert getestet |
-| Ernährung und Mahlzeiten | `src/features/nutrition/` | Dietry, wger | vorhandene Food-Items/100-g-Quelle und Meal-Snapshots behalten |
+| Ernährung und Mahlzeiten | `src/features/nutrition/` | Dietry, wger | 100-g-Quelle/Snapshots behalten, schätzbedingte Unsicherheit ergänzt |
 | iPhone | React + Vite | openGym Capacitor-Konzept | minimale Capacitor-Shell, sichere Native Bridges |
-| Windows | React + Vite | vorhandene RED-Fit-PWA | Tauri 2-Shell, Desktop-spezifische UI später |
+| Windows | React + Vite | vorhandene RED-Fit-PWA | Tauri 2-Shell-Gerüst, responsive Desktop-Sidebar implementiert |
 | Synchronisierung | lokal via Dexie | – | optional; erst nach Daten- und Konfliktmodell |
 
 ## Architekturregeln
@@ -47,7 +47,20 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [x] Vorhandene RED-Fit-Architektur gesichtet
 - [x] openGym-Aufwärmsatz-Rampenberechnung (Quellkonzept) + Workout-Vorschau und Unit-Tests als Code gepusht, CI noch offen
 - [x] Dietry-inspirierte Energiebedarfsberechnung (Code + Unit-Tests gepusht, CI noch offen)
+- [x] openGym-Supersatz-Planung/Rotation/Pausen und Unit-Tests als Code gepusht
+- [x] Dietry-Schätzunsicherheit mit Eintragskennzeichnung und Tagesanzeige gepusht
+- [x] wger-JSON-Import mit Provenance, atomarem Repository, Parser- und Repo-Tests gepusht
+- [x] wger-Konverter für 789 attribuierte Übungseinträge, 83 nicht attribuierte verworfen
+- [x] Breite Desktop-Navigation (Windows-freundliche UI) gepusht
 - [ ] Weitere Funktionen der drei Quellen vollständig integriert
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [ ] Tauri-/Windows-Build auf Windows geprüft
 - [ ] Offline-, Backup- und Geräte-Regressionen abgeschlossen
+
+## CI-Infrastrukturhinweis (2026-11-08)
+
+Bei den abgefragten GitHub-Actions-Runs meldete der Job `failure`, aber
+`runner_id=0` und `steps=[]`. Er wurde ohne zugeteilten Runner beendet.
+Daraus folgt weder ein erfolgreicher noch ein fehlgeschlagener TypeScript-Build.
+Die genaue Ursache (GitHub-Actions-/Kontokonfiguration, Runner-Bereitstellung
+oder Abrechnung) muss direkt in den GitHub-Actions-Run-Details geklärt werden.
