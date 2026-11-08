@@ -51,6 +51,11 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   finaler Abschluss in fester Reihenfolge; terminale Status-Rückschritte
   zusätzlich innerhalb der Dexie-Transaktion blockiert. 13/13 reine
   Node-Tests bestanden, native/IndexedDB-Integrationstests offen
+- [x] Auch bei zwei **aktiven** Workout-Tabs optimistische Revision 0→N
+  eingeführt: Status + Versionsvergleich unter einem Dexie-`rw`-Commit;
+  bei Konflikt klare UI-Warnung statt Überschreiben. 8/8 weitere
+  Node-Tests und isolierter TypeScript-Check bestanden;
+  9 Workout-Persistence-Vitest-Tests vorbereitet, noch nicht ausgeführt
 - [x] openGym-Supersatz-Planung/Rotation/Pausen und Unit-Tests als Code gepusht
 - [x] Dietry-Schätzunsicherheit mit Eintragskennzeichnung und Tagesanzeige gepusht
 - [x] Mahlzeiten-Logging in UI und Rezepten auf atomare Dexie-Transaktionen
