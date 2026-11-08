@@ -43,6 +43,10 @@ review. **Do not** copy the excluded Gym visual assets.
 ## Functional integration status
 - openGym-based automatic warm-up suggestion: in WorkoutPage; code and tests committed
 - Dietry-inspired energy needs calculator: Settings UI and tests committed
-- wger exercise taxonomy: preview adapter and tests committed
+- wger exercise taxonomy: Zod import parser, ExerciseList UI, atomic attributed import and tests committed
+- wger fixture converter: `tools/convert-wger-fixtures.py`; 789 records with licence URLs, 83 uncredited skipped
+- openGym superset round-robin: plan editor, workout navigation and tests committed
+- Dietry-inspired estimated meal amount uncertainty: logging UI, daily display and tests committed
+- Desktop sidebar: visible from 1024px, mobile nav preserved
 - Capacitor and Tauri configurations: scaffolds only; no native build proof
-- GitHub CI: red at inspection time; run logs unavailable over connector.
+- GitHub CI: red, but runner_id=0 and steps=[]; no test step ever started. Root cause not yet established.
