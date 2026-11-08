@@ -28,7 +28,7 @@ def convert(root: Path) -> tuple[list[dict], dict]:
     bases = load_fixture(root, "wger/exercises/fixtures/exercise-base-data.json")
     translations = load_fixture(root, "wger/exercises/fixtures/translations.json")
     licences = load_fixture(root, "wger/core/fixtures/licenses.json")
-    by_license = {row["pk"]: row["fields"]["short_name"].strip() for row in licences}
+    by_license = {row["pk"]: row["fields"]["short_name"].strip() + " (" + row["fields"]["url"] + ")" for row in licences}
 
     by_exercise: dict[int, dict[int, dict]] = {}
     for row in translations:
