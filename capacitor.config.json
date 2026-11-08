@@ -1,0 +1,8 @@
+{
+  "appId": "com.redfit.app",
+  "appName": "RED Fit",
+  "webDir": "dist",
+  "server": {
+    "iosScheme": "capacitor"
+  }
+}
