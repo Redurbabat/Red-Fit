@@ -13,7 +13,7 @@ Stand: 2026-11-08. **Nutzerentscheid:** Der Eigentümer hat ausdrücklich erklä
 
 ## Tatsächlich im privaten GitHub-Repository
 
-Der Ordner `vendor/opengym-upstream/` enthält inzwischen **120** Originaldateien direkt auf `main`: die zuerst importierten **34** Basisdateien, **70** zusätzliche, vollständig zusammengehörige Dateien des Progressionskerns sowie **16** weitere originale Coach-API-Module (`frontend/src/lib/`, einschließlich seiner sechs Modi, Tests, Historie und generiertem Übungskatalog). Die 70 neuen Dateien wurden einzeln anhand der SHA-1-Git-Blob-Prüfsummen mit dem Original verglichen (**70/70 identisch**); die ursprünglichen 34 Dateien waren bereits zuvor bytegleich bestätigt. **8.749 der 8.869 zulässigen Originaldateien liegen weiterhin noch nicht vollständig im GitHub-Repository.**
+Der Ordner `vendor/opengym-upstream/` enthält inzwischen **128** Originaldateien direkt auf `main`: die zuerst importierten **34** Basisdateien, **70** zusätzliche, vollständig zusammengehörige Dateien des Progressionskerns sowie **24** weitere originale Coach-API-Module (`frontend/src/lib/`, einschließlich seiner sechs Modi, Tests, Historie und generiertem Übungskatalog). Die 70 neuen Dateien wurden einzeln anhand der SHA-1-Git-Blob-Prüfsummen mit dem Original verglichen (**70/70 identisch**); die ursprünglichen 34 Dateien waren bereits zuvor bytegleich bestätigt. **8.741 der 8.869 zulässigen Originaldateien liegen weiterhin noch nicht vollständig im GitHub-Repository.**
 
 ### Den vollständigen Quellstand ohne Medien nachziehen
 
@@ -60,3 +60,10 @@ Die zuerst übernommenen 34 Dateien umfassen unter anderem `frontend/package-loc
 - Git-Blob-Hashes der 16 Module im Zielbaum mit den Blob-Hashes des fixierten openGym-Commits `8fb98b16861a2728652302a7e6e30c50548493a0` abgeglichen: **16/16 identisch**.
 - Weiterhin **kein** Nachweis, dass diese Teilmodule eigenständig lauffähig sind oder dass die vollständige API bzw. der Frontend-Build funktioniert. RED-Fit-Produktivcode unverändert.
 - Nächster Schritt: restlichen Quellstand mit `tools/import-opengym.py` aus dem SHA-256-geprüften Original-ZIP importieren und anschliessend Frontend/API/Tests validieren. RED Morph dient als separate Designreferenz.
+
+
+## Weitere Coach-Module (2026-11-08)
+
+- Commit `7ac465315d27c54329b759c383946b5620691b5d` importiert acht weitere unveränderte Dateien aus dem fixierten openGym-Commit (Claude-/Codex-/Spawn-Adapter, Cadence, Cohort, Konfiguration, HTTP-Adapter, Library).
+- Der Git-Baum von `main` wurde nach dem Commit abgerufen: **128** Dateien unter `vendor/opengym-upstream/`; die acht neuen Blob-SHAs entsprechen dem Quellstand.
+- **8.741** zulässige Originaldateien stehen noch aus. Kein nativer Build und kein vollständiger openGym-Serverstart nachgewiesen. RED Morph ist Designreferenz, nicht Trainings-Quellbasis.
