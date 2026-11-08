@@ -83,3 +83,18 @@ Nächster konkreter Schritt:
 - **Code-Commit:** `286e7a4aa2b7f459d53019dde3455665d0de86ad`.
 - **Tatsächlicher Nachweis:** Die Inhalte von `main` (`package.json`, `wrangler.jsonc`, `docs/CLOUDFLARE-DEPLOY.md`, `tools/cloudflare-deploy.selftest.mjs`) über GitHub abgerufen und **12/12 direkte Konfigurations-/Textchecks** gegen genau diese Inhalte erfolgreich ausgeführt. Kein npm-/Node-Testlauf, kein vollständiger Vite- oder Cloudflare-Build in dieser Sitzung; ein erfolgreicher Deployment-Status ist weiter unbelegt.
 - **Weiter:** `npm run test:offline`, `npm run typecheck && npm run lint && npm run test && npm run build` auf einem Checkout mit Abhängigkeiten ausführen; Cloudflare Workers von neuestem `main` deployen und echte URL/Offline-Verhalten testen. Den Browser-/Cloudflare-Erfolg erst nach Lognachweis abhaken.
+
+
+## 2026-11-08 — Cloudflare-Konfigurationstest real ausgeführt (3/3)
+
+- **Aufgabe:** Den zuvor reparierten Deployment-Test erstmals tatsächlich ausführen, ohne einen erfolgreichen Cloudflare-Deploy vorzutäuschen.
+- **Reproduktionsumgebung:** Node.js `v22.16.0`; Projektdateien in einem isolierten lokalen Testverzeichnis aus dem aktuellen GitHub-`main` nachgebildet; GitHub-Checkout über Netzwerk nicht möglich (DNS für github.com nicht erreichbar).
+- **Bytegenauer Nachweis gegen `main` via `git hash-object`:**
+  - `package.json` → `7155d1d203c8c04552f4ec1887099531f92dd293`
+  - `wrangler.jsonc` → `cdf6a411cdf16a633dfcb6f3f10d4973283e4832`
+  - `docs/CLOUDFLARE-DEPLOY.md` → `7c51f0937f31b84d8310ec9807e27568ecf33d50`
+  - `tools/cloudflare-deploy.selftest.mjs` → `5166826ea41c1d9cf649329358471c384b2198cc`
+- **Tatsächlich ausgeführt:** `node --test tools/cloudflare-deploy.selftest.mjs` im Testverzeichnis.
+- **Ergebnis:** `tests 3, pass 3, fail 0` (Node TAP); geprüft wurden Build-vor-Wrangler-Skript, statische Asset-/SPA-Konfiguration und Abgleich der dokumentierten Cloudflare-Einstellungen.
+- **Keine neuen Produktdateien geändert:** Das ist ein Nachweis der vorher committeten Korrektur. **Nicht getestet:** andere `tools/*.selftest.mjs`-Suiten, `npm ci`, TypeScript, ESLint, vollständige Vitest-Suite, Vite-Bundle, echte Cloudflare-Live-URL.
+- **Nächster Schritt:** aktuellen Cloudflare-Build nach neuestem `main` anhand der Remote-Logs prüfen; nur nach tatsächlichem `vite build`-Erfolg die Worker-Asset-Auslieferung und Datenintegrität auf echter URL testen.
