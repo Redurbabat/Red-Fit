@@ -131,6 +131,8 @@ export function findNewRecords(
   workout: WorkoutLog,
   previousWorkouts: WorkoutLog[],
 ): ExerciseRecord[] {
+  // Discarded/in-progress sessions must never produce a new personal record.
+  if (workout.status !== "completed") return [];
   const previous = findExerciseRecords(
     previousWorkouts.filter((w) => w.id !== workout.id),
   );
