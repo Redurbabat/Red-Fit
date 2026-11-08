@@ -11,7 +11,8 @@ updated: 2026-11-08
 - [ ] Daten-/Backup-Verlusttests: aktive Workouts, Notizen, Mahlzeiten, Foto-Export und ältere Backups.
 
 ## P1 — iPhone / Android / Windows
-- [ ] Android-Capacitor-Runtime und Lockfile reproduzierbar konfigurieren; echtes Android-Projekt erzeugen; APK/AAB prüfen.
+- [x] `@capacitor/android` in den versionierten Bootstrap-Vertrag aufnehmen; Quell-Selftests um Android-Fälle erweitern (nicht ausgeführt).
+- [ ] Android-Capacitor-Lockfile mit Registry-Zugriff erzeugen, natives Projekt via Android Studio generieren; APK/AAB bauen und prüfen.
 - [ ] iOS-Capacitor-Runtime/Lockfile installieren, `ios/` per Xcode erzeugen; iPhone-Simulator und Realgerät testen.
 - [ ] Tauri Windows MSI/NSIS auf Windows bauen, signierbaren Upgrade-Pfad und IndexedDB-Persistenz prüfen.
 - [ ] Datenspeicherung und Update-Lifecycle je Plattform verifizieren; keine behauptete automatische Cross-Device-Synchronisation.
