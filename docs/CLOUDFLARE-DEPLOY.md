@@ -1,5 +1,7 @@
 # RED Fit auf Cloudflare Pages oder Workers deployen
 
+> **Ab 08.11.2026:** Diese Konfiguration deployt weiterhin nur den **bisherigen RED-Fit-React/TypeScript-Core**. Die neue, eigentümerseitig gewünschte openGym-Basis enthält ein separates Node-API-Backend; `wrangler.jsonc` mit statischem `dist/` startet diesen Server nicht. Das ursprüngliche openGym-Frontend und seine API erfordern eine gesondert getestete Build-/Auth-/Sync-Deploymentarchitektur. Quelle und Status: [openGym-Übernahme](OPENGYM-BASELINE.md).
+
 > Stand: 2026-11-08. Beide Wege deployen dieselbe RED-Fit-Vite-App (React/TypeScript, Dexie/IndexedDB). Es entsteht **keine zweite App** und **kein Backend**. Eine erfolgreiche Live-Veröffentlichung wurde hier noch nicht verifiziert.
 
 ## Empfehlung: Cloudflare Pages (Git-Integration)
