@@ -109,10 +109,16 @@ Autosave — Reload oder App-Schließen verliert nie Daten. Der Pausentimer läu
 
 ## Backup
 
-`Mehr → Backup & Import`: Export als `red-fit-backup-YYYY-MM-DD.json`
-(alle Stores, versioniertes Format). Import mit Runtime-Validierung (Zod),
-Schutz vor manipulierten Dateien, Vorschau und Merge-Strategie — bestehende
-Daten werden nie ungefragt gelöscht.
+`Mehr → Backup & Import`: Standardexport `red-fit-backup-YYYY-MM-DD.json`
+für Trainings-, Ernährungs-, Körper- und Recovery-Daten. Er ist Zod-validiert
+und wird mit Vorschau sowie Merge-Strategie importiert. **Fortschrittsfotos
+sind ausdrücklich nicht enthalten**, da sie als private Medien gelten.
+
+Für den manuellen iPhone-↔-Windows-Transfer gibt es einen separaten,
+freiwilligen Foto-Export/Import (`red-fit-photos-YYYY-MM-DD.json`) mit
+Metadatenprüfung, atomarer Speicherung und ohne Cloud-Upload. **Die
+Foto-Datei ist unverschlüsselt** und muss vertraulich aufbewahrt werden.
+Grenzen und Anleitung: [Foto-Transfer](docs/PHOTO-TRANSFER.md).
 
 ## PWA / iPhone
 
