@@ -11,7 +11,7 @@ updated: 2026-11-08
 - [ ] Daten-/Backup-Verlusttests: aktive Workouts, Notizen, Mahlzeiten, Foto-Export und ältere Backups.
 
 ## P1 — iPhone / Android / Windows
-- [x] `@capacitor/android` in den versionierten Bootstrap-Vertrag aufnehmen; Quell-Selftests um Android-Fälle erweitern (nicht ausgeführt).
+- [x] `@capacitor/android` in den versionierten Bootstrap-Vertrag aufnehmen; 16/16 Native-Bootstrap-Selftests am 2026-11-08 mit Node 22.16 auf bytegleich abgeglichenen `main`-Quellen bestanden (kein App-/Plattform-Build).
 - [ ] Android-Capacitor-Lockfile mit Registry-Zugriff erzeugen, natives Projekt via Android Studio generieren; APK/AAB bauen und prüfen.
 - [ ] iOS-Capacitor-Runtime/Lockfile installieren, `ios/` per Xcode erzeugen; iPhone-Simulator und Realgerät testen.
 - [ ] Tauri Windows MSI/NSIS auf Windows bauen, signierbaren Upgrade-Pfad und IndexedDB-Persistenz prüfen.
