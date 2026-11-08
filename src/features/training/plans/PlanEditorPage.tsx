@@ -28,6 +28,7 @@ import type {
 } from "../../../models";
 import { DIFFICULTIES, FITNESS_GOALS, TRAINING_LOCATIONS } from "../../../models";
 import { exerciseRepository, workoutPlanRepository } from "../../../services/storage";
+import { invalidSupersetGroup } from "../../../services/calculations/supersets";
 import { nowIso, weekdayNameDe } from "../../../utils/dates";
 import { newId } from "../../../utils/ids";
 import {
@@ -495,20 +496,9 @@ export default function PlanEditorPage() {
       if (session.name.trim() === "") {
         return "Jede Einheit braucht einen Namen.";
       }
-      // A valid superset has at least two adjacent exercises, never a
-      // disconnected group with the same name later in the session.
-      const groups = new Map<string, number[]>();
-      session.exercises.forEach((exercise, index) => {
-        const group = exercise.supersetGroup?.trim();
-        if (!group) return;
-        groups.set(group, [...(groups.get(group) ?? []), index]);
-      });
-      for (const [group, indices] of groups) {
-        if (indices.length < 2 || indices.some((index, position) =>
-          index !== indices[0] + position
-        )) {
-          return `Supersatz ${group} benötigt mindestens zwei direkte aufeinanderfolgende Übungen.`;
-        }
+      const invalidGroup = invalidSupersetGroup(session.exercises);
+      if (invalidGroup) {
+        return `Supersatz ${invalidGroup} benötigt mindestens zwei direkte aufeinanderfolgende Übungen.`;
       }
       for (const planExercise of session.exercises) {
         const exerciseName =
