@@ -128,3 +128,100 @@
     padding-top: 32px;
   }
 }
+
+/* Windows/desktop: the same routes use a spacious sidebar layout.
+   iPhone and tablet retain the existing thumb-friendly bottom navigation. */
+.desktop-nav {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .app-shell:not(.app-shell--fullscreen) {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .desktop-nav {
+    grid-column: 1;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100dvh;
+    min-height: 600px;
+    border-right: 1px solid var(--border-soft);
+    background: var(--bg-soft);
+    padding: 28px 16px 20px;
+  }
+
+  .desktop-nav__brand {
+    color: var(--accent);
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    padding: 4px 12px 0;
+  }
+
+  .desktop-nav__brand span {
+    color: var(--text);
+  }
+
+  .desktop-nav__tagline {
+    padding: 0 12px 18px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .desktop-nav__links {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .desktop-nav__link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-size: 15px;
+    font-weight: 600;
+    transition: background 160ms var(--ease), color 160ms var(--ease);
+  }
+
+  .desktop-nav__link:hover {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+
+  .desktop-nav__link[aria-current="page"] {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  }
+
+  .desktop-nav__spacer { flex: 1; }
+
+  .app-shell:not(.app-shell--fullscreen) .app-shell__content {
+    grid-column: 2;
+    max-width: 1100px;
+    padding: 30px clamp(28px, 4vw, 66px) 90px;
+  }
+
+  .bottom-nav {
+    display: none;
+  }
+
+  .fab {
+    bottom: 24px;
+    right: 32px;
+  }
+
+  .app-shell--fullscreen .app-shell__content {
+    max-width: 780px;
+  }
+}
