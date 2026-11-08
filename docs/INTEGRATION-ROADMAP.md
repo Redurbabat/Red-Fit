@@ -51,6 +51,11 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   finaler Abschluss in fester Reihenfolge; terminale Status-Rückschritte
   zusätzlich innerhalb der Dexie-Transaktion blockiert. 13/13 reine
   Node-Tests bestanden, native/IndexedDB-Integrationstests offen
+- [x] Gleichzeitigen Trainingsstart in getrennten Fenstern mit einer
+  Dexie-`rw`-Transaktion gegen Doppelanlage abgesichert; manueller
+  und planbasierter Start verwenden `createOrResumeWorkout`.
+  Acht Stub-Tests mit identischem Produktions-Funktionskörper bestanden;
+  sieben echte Dexie-Regressionsfälle committed, noch nicht ausgeführt
 - [x] Auch bei zwei **aktiven** Workout-Tabs optimistische Revision 0→N
   eingeführt: Status + Versionsvergleich unter einem Dexie-`rw`-Commit;
   bei Konflikt klare UI-Warnung statt Überschreiben. 8/8 weitere
