@@ -27,6 +27,7 @@ import { useRestTimer } from "../../../hooks/useRestTimer";
 import { PlateCalculatorSheet } from "../../../components/workout/PlateCalculatorSheet";
 import { armTimerSignal, playTimerSignal } from "../../../services/audio/timerSignal";
 import { createSerializedWorkoutWriter } from "../../../services/workout/serializedWorkoutWriter";
+import { normalizeSetNote, SET_NOTE_MAX_LENGTH } from "../../../services/workout/setNotes";
 import { WorkoutRevisionConflictError } from "../../../services/workout/workoutRevision";
 import { assertWorkoutWriteScope, isCurrentWorkoutRoute } from "../../../services/workout/workoutRouteScope";
 import type {
@@ -834,6 +835,38 @@ export default function WorkoutPage() {
                     onBlur={(e) => commitRpe(setIndex, e.target.value)}
                   />
                 </div>
+                {/* Stored on this individual set; no separate database store. */}
+                <details style={{ marginTop: 12 }}>
+                  <summary
+                    style={{
+                      minHeight: 44,
+                      padding: "12px 0",
+                      cursor: "pointer",
+                      color: "var(--text-muted)",
+                      fontSize: 14,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {set.notes?.trim() ? `Notiz: ${set.notes.trim()}` : "Satznotiz hinzufügen"}
+                  </summary>
+                  <textarea
+                    className="input"
+                    rows={2}
+                    maxLength={SET_NOTE_MAX_LENGTH}
+                    value={set.notes ?? ""}
+                    aria-label={`Notiz zu Satz ${setIndex + 1}`}
+                    placeholder="z. B. Griff verrutscht"
+                    onChange={(event) =>
+                      updateSet(setIndex, { notes: event.currentTarget.value })
+                    }
+                    onBlur={(event) => {
+                      const normalized = normalizeSetNote(event.currentTarget.value);
+                      if (set.notes !== normalized) {
+                        updateSet(setIndex, { notes: normalized }, "now");
+                      }
+                    }}
+                  />
+                </details>
               </Card>
             ))}
           </div>
