@@ -304,7 +304,7 @@ export default function ExerciseListPage() {
                   <span className="list-row__subtitle" style={{ display: "block" }}>
                     {muscleGroupLabels[exercise.muscleGroup]} ·{" "}
                     {equipmentLabels[exercise.equipment]}
-                    {exercise.sourceRef ? ` · Import: ${exercise.sourceRef}`
+                    {exercise.sourceRef ? ` · Import: ${exercise.sourceRef}${exercise.taxonomyNeedsReview ? " · Muskelzuordnung prüfen" : ""}`
                       : exercise.isCustom ? " · Eigene Übung" : ""}
                   </span>
                 </span>
@@ -354,6 +354,13 @@ export default function ExerciseListPage() {
                 </p>
               ) : null}
             </div>
+            {importPreview.some((entry) => entry.needsMuscleReview) ? (
+              <p style={{ fontSize: 13, color: "var(--warning)", marginBottom: 12 }}>
+                {importPreview.filter((entry) => entry.needsMuscleReview).length} Übungen haben
+                keine eindeutige Muskelangabe in der Quelle. Ihre Zuordnung muss
+                nach dem Import geprüft werden.
+              </p>
+            ) : null}
             <Button disabled={importBusy} onClick={() => void saveWgerImport()}>
               {importBusy ? "Import wird gespeichert …" : "Übungen importieren"}
             </Button>
