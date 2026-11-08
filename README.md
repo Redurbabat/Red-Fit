@@ -40,6 +40,8 @@ Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
   Beim Wechsel zwischen zwei Workout-Routen bleiben ältere Autosaves
   fest an das ursprüngliche Training gebunden; die Zusammenfassung
   verlässt die Seite erst nach erfolgreichem Speichern der Notiz.
+  Gleiche Notiztexte aus Debounce, Blur oder Pagehide werden nur einmal
+  geschrieben; auch ein schnelles Zurücksetzen der Notiz bleibt korrekt.
   [Schreibreihenfolge und Teststatus](docs/WORKOUT-SAVE-INTEGRITY.md).
 - **Dietry**: Kalorienbedarf-/Makro-Rechner, Kennzeichnung geschätzter
   Essensmengen und **optionale Roh-/Gekocht-Umrechnung** für Reis, Nudeln
