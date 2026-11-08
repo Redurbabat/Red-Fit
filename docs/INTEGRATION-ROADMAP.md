@@ -57,6 +57,8 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [x] Breite Desktop-Navigation (Windows-freundliche UI) gepusht
 - [x] Separater, nutzerinitiierter iPhone/Windows-Foto-Transfer: Daten,
   Privacy-Warnung, Vorschaudialog, transaktionaler Import und Regressionstests
+- [x] SHA-256-Pflichtprüfsummen im Foto-Backup v2 gegen gleich lange
+  beschädigte Bilddateien; reiner Codec mit 5/5 lokalen Node-Tests bestätigt
 - [ ] Vollständige Foto-Sammlungen >25 MiB als geteiltes/verschlüsseltes
   Archiv übertragen (derzeit begrenzter optionaler JSON-Transfer)
 - [ ] Weitere Funktionen der drei Quellen vollständig integriert
