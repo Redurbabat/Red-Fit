@@ -186,3 +186,30 @@ export function encodeWindowsIco(layers) {
   }
   return Buffer.concat([header, ...layers.map(({ png }) => png)]);
 }
+
+
+/** Encode an 8-bit RGB PNG with NO alpha channel (color type 2). */
+export function encodeRgbPng(width, height, rgb) {
+  if (!Number.isInteger(width) || !Number.isInteger(height) ||
+      width < 1 || height < 1 || width > MAX_DIMENSION || height > MAX_DIMENSION ||
+      rgb.length !== width * height * 3) {
+    throw new Error('Invalid RGB PNG dimensions or payload');
+  }
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 2; // PNG truecolor, deliberately no alpha channel
+  const stride = width * 3;
+  const raw = Buffer.alloc((stride + 1) * height);
+  const source = Buffer.from(rgb.buffer, rgb.byteOffset, rgb.byteLength);
+  for (let y = 0; y < height; y++) {
+    const offset = y * (stride + 1);
+    raw[offset] = 0;
+    source.copy(raw, offset + 1, y * stride, (y + 1) * stride);
+  }
+  return Buffer.concat([
+    PNG_SIG, pngChunk('IHDR', ihdr), pngChunk('IDAT', deflateSync(raw)),
+    pngChunk('IEND', Buffer.alloc(0)),
+  ]);
+}
