@@ -51,6 +51,11 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [x] Dietry-Schätzunsicherheit mit Eintragskennzeichnung und Tagesanzeige gepusht
 - [x] wger-JSON-Import mit Provenance, atomarem Repository, Parser- und Repo-Tests gepusht
 - [x] wger-Konverter für 789 attribuierte Übungseinträge, 83 nicht attribuierte verworfen
+- [x] Exakten wger-Quellkatalog mit 789 Datensätzen als `public/data/` im
+  App-Bundle integriert; offlinefähig und nur mit Nutzerbestätigung importierbar,
+  Autor-/Lizenzdaten vollständig erhalten (SHA-256 gegen Original geprüft)
+- [x] 6/6 direkt auf dem geprüften Konvertergebnis ausgeführte Katalog-Datenprüfungen;
+  Vitest-Tests für das gebündelte Laden ergänzt, CI weiterhin vor Runner blockiert
 - [x] wger-Datenqualitätsprüfung: 120 ungeklärte Muskelgruppen markiert;
   16 unspezifische „Arme“-Übungen nicht mehr dem Bizeps zugeordnet;
   Gymnastikmatte (14 Datensätze) korrekt als Equipment klassifiziert
