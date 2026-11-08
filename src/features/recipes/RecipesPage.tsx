@@ -233,12 +233,7 @@ export default function RecipesPage() {
         fat: roundTo(totals.fat * factor, 2),
       };
       const today = getLocalDateKey();
-      const existing = await mealRepository.findByDateAndType(today, logMealType);
-      if (existing) {
-        await mealRepository.update(existing.id, { entries: [...existing.entries, entry] });
-      } else {
-        await mealRepository.create({ date: today, mealType: logMealType, entries: [entry] });
-      }
+      await mealRepository.appendEntry(today, logMealType, entry);
       setLogRecipe(null);
       showToast("Mahlzeit hinzugefügt.");
     } catch {

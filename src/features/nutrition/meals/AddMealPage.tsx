@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { Plus, SearchX } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { BottomSheet } from "../../../components/feedback/Modal";
 import { EmptyState, LoadingState } from "../../../components/feedback/states";
@@ -9,12 +9,17 @@ import { PageHeader, SectionHeader } from "../../../components/layout/PageHeader
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { Chip, Field, NumberInput, TextInput } from "../../../components/ui/inputs";
-import type { FoodItem, MealFoodEntry, MealType } from "../../../models";
+import type { EstimateLevel, FoodItem, MealFoodEntry, MealType } from "../../../models";
 import { MEAL_TYPES } from "../../../models";
 import {
   buildEntryNutrition,
   calculateFoodNutrition,
 } from "../../../services/calculations/nutrition";
+import {
+  combinedAmountUncertainty,
+  getCookingYield,
+  rawEquivalentGrams,
+} from "../../../services/calculations/cookingYield";
 import { foodRepository, mealRepository } from "../../../services/storage";
 import { formatDateGerman, getLocalDateKey, parseDateKey } from "../../../utils/dates";
 import { newId } from "../../../utils/ids";
@@ -55,8 +60,11 @@ export default function AddMealPage() {
   const [query, setQuery] = useState(() => searchParams.get("query") ?? "");
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [amountInput, setAmountInput] = useState("100");
+  const [estimateLevel, setEstimateLevel] = useState<EstimateLevel>("none");
+  const [weightBasis, setWeightBasis] = useState<"raw" | "cooked">("raw");
   const [amountError, setAmountError] = useState<string | undefined>(undefined);
   const [saving, setSaving] = useState(false);
+  const saveInFlight = useRef(false);
 
   const foods = useLiveQuery(() => foodRepository.search(query), [query]);
   const recentFoods = useLiveQuery(() => foodRepository.listRecent(6), []);
@@ -64,9 +72,17 @@ export default function AddMealPage() {
   const trimmedQuery = query.trim();
   const favorites = trimmedQuery === "" ? (foods ?? []).filter((f) => f.favorite) : [];
   const isToday = date === getLocalDateKey();
+  const cookingYield = selectedFood ? getCookingYield(selectedFood) : null;
+  const cookingFactor = weightBasis === "cooked" && cookingYield
+    ? cookingYield.factor : 1;
+  const effectiveEstimateLevel = weightBasis === "cooked" && cookingYield
+    ? combinedAmountUncertainty(estimateLevel, cookingYield.uncertainty)
+    : estimateLevel;
 
   const selectFood = useCallback((food: FoodItem) => {
     setSelectedFood(food);
+    setEstimateLevel("none");
+    setWeightBasis("raw");
     setAmountInput(toInputValue(food.servingSizeG && food.servingSizeG > 0 ? food.servingSizeG : 100));
     setAmountError(undefined);
   }, []);
@@ -90,15 +106,27 @@ export default function AddMealPage() {
   }, [foodIdParam, selectFood]);
 
   async function handleSave() {
-    if (!selectedFood || saving) return;
+    if (!selectedFood || saveInFlight.current) return;
     const value = parseDecimalInput(amountInput);
-    if (value == null || value <= 0) {
-      setAmountError("Bitte gib eine Menge über 0 g ein.");
+    if (value == null || value <= 0 || value > 1_000_000) {
+      setAmountError("Bitte gib eine realistische Menge über 0 g ein.");
       return;
     }
+    // A cooked amount is converted to the raw/dry label's unit BEFORE
+    // applying /100 g. Keep the exact weighed amount for later editing.
+    const weighedAmountG = roundTo(value, 1);
+    if (weighedAmountG <= 0) {
+      setAmountError("Bitte gib mindestens 0,1 g ein.");
+      return;
+    }
+    const amountG = roundTo(rawEquivalentGrams(weighedAmountG, cookingFactor), 1);
+    if (amountG <= 0) {
+      setAmountError("Die umgerechnete Menge ist zu klein.");
+      return;
+    }
+    saveInFlight.current = true;
     setSaving(true);
     try {
-      const amountG = roundTo(value, 1);
       // Snapshot principle: name + computed values are frozen on the entry.
       const nutrition = buildEntryNutrition(selectedFood, amountG);
       const entry: MealFoodEntry = {
@@ -106,20 +134,25 @@ export default function AddMealPage() {
         foodId: selectedFood.id,
         foodName: selectedFood.name,
         amountG,
+        ...(weightBasis === "cooked" && cookingYield
+          ? {
+              weighedAs: "cooked" as const,
+              weighedAmountG,
+              cookingYieldFactor: cookingYield.factor,
+            }
+          : {}),
+        estimateLevel: effectiveEstimateLevel,
         ...nutrition,
       };
-      const existing = await mealRepository.findByDateAndType(date, mealType);
-      if (existing) {
-        await mealRepository.update(existing.id, { entries: [...existing.entries, entry] });
-      } else {
-        await mealRepository.create({ date, mealType, entries: [entry] });
-      }
-      // Touch updatedAt so the food surfaces under "Zuletzt verwendet".
-      await foodRepository.update(selectedFood.id, {});
+      await mealRepository.appendEntry(date, mealType, entry);
+      // The meal is already committed: failure to update "recent foods"
+      // must not claim the meal failed or invite a duplicate retry.
+      void foodRepository.update(selectedFood.id, {}).catch(() => undefined);
       showToast("Mahlzeit hinzugefügt.");
       // Return to the day the entry was saved for, not blindly to today.
       navigate(`/nutrition?date=${date}`);
     } catch {
+      saveInFlight.current = false;
       setSaving(false);
       setAmountError("Speichern fehlgeschlagen. Bitte versuche es erneut.");
     }
@@ -221,7 +254,24 @@ export default function AddMealPage() {
               {selectedFood.brand ? `${selectedFood.brand} · ` : ""}
               {formatKcal(selectedFood.kcalPer100g)} / 100 g · {mealTypeLabels[mealType]}
             </p>
-            <Field label="Menge (g)" error={amountError}>
+            {cookingYield ? (
+              <Field label="Welche Menge hast du gewogen?">
+                {(id) => (
+                  <select
+                    id={id}
+                    className="select"
+                    value={weightBasis}
+                    onChange={(event) =>
+                      setWeightBasis(event.target.value as "raw" | "cooked")
+                    }
+                  >
+                    <option value="raw">Roh / trocken (laut Nährwertangabe)</option>
+                    <option value="cooked">Gekocht (Gewicht auf dem Teller)</option>
+                  </select>
+                )}
+              </Field>
+            ) : null}
+            <Field label={weightBasis === "cooked" ? "Menge gekocht (g)" : "Menge (g)"} error={amountError}>
               {(id) => (
                 <NumberInput
                   id={id}
@@ -233,7 +283,7 @@ export default function AddMealPage() {
             </Field>
             {/* Quick amounts: portion multiples when known, gram presets otherwise. */}
             <div className="chip-row" aria-label="Schnellmengen">
-              {(selectedFood.servingSizeG && selectedFood.servingSizeG > 0
+              {(weightBasis === "raw" && selectedFood.servingSizeG && selectedFood.servingSizeG > 0
                 ? [
                     { label: "½ Portion", grams: selectedFood.servingSizeG / 2 },
                     { label: "1 Portion", grams: selectedFood.servingSizeG },
@@ -255,7 +305,44 @@ export default function AddMealPage() {
                 />
               ))}
             </div>
-            <LiveNutrition food={selectedFood} amountInput={amountInput} />
+            {weightBasis === "cooked" && cookingYield ? (
+              <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 8 }}>
+                Näherung für {cookingYield.label}: 1 g roh entspricht etwa{" "}
+                {cookingYield.factor.toLocaleString("de-DE", { maximumFractionDigits: 2 })} g gekocht.
+                {cookingYield.kind === "fatLoss"
+                  ? " Beim Braten/Grillen gehen auch Nährstoffe verloren; die Umrechnung ist besonders ungenau."
+                  : " Der Faktor hängt von der Zubereitung ab."}
+                {" "}Die zusätzliche Unsicherheit wird im Tagebuch markiert.
+              </p>
+            ) : null}
+            <Field label="Wie genau ist die Mengenangabe?">
+              {(id) => (
+                <select
+                  id={id}
+                  className="select"
+                  value={estimateLevel}
+                  onChange={(event) =>
+                    setEstimateLevel(event.target.value as EstimateLevel)
+                  }
+                >
+                  <option value="none">Genau abgewogen</option>
+                  <option value="low">Leicht geschätzt</option>
+                  <option value="medium">Portion grob geschätzt</option>
+                  <option value="high">Sehr ungenau geschätzt</option>
+                </select>
+              )}
+            </Field>
+            {weightBasis === "cooked" && cookingYield && effectiveEstimateLevel !== estimateLevel ? (
+              <p style={{ fontSize: 12, color: "var(--warning)", marginTop: 8 }}>
+                Wegen der Umrechnung wird die Menge mindestens als{" "}
+                {cookingYield.uncertainty === "medium" ? "grob" : "leicht"} geschätzt markiert.
+              </p>
+            ) : null}
+            <LiveNutrition
+              food={selectedFood}
+              amountInput={amountInput}
+              cookingFactor={cookingFactor}
+            />
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
               <Button disabled={saving} onClick={() => void handleSave()}>
                 {saving ? "Wird gespeichert…" : "Hinzufügen"}
@@ -291,12 +378,21 @@ function FoodRow({ food, onClick }: { food: FoodItem; onClick: () => void }) {
 }
 
 /** Live line like "296 kcal · 10,4 g Protein · 48 g KH · 5,6 g Fett". */
-function LiveNutrition({ food, amountInput }: { food: FoodItem; amountInput: string }) {
+function LiveNutrition({
+  food,
+  amountInput,
+  cookingFactor,
+}: { food: FoodItem; amountInput: string; cookingFactor: number }) {
   const value = parseDecimalInput(amountInput);
-  if (value == null || value <= 0) return null;
-  const n = calculateFoodNutrition(food, value);
+  if (value == null || value <= 0 || value > 1_000_000) return null;
+  const weighedAmountG = roundTo(value, 1);
+  if (weighedAmountG <= 0) return null;
+  const amountG = roundTo(rawEquivalentGrams(weighedAmountG, cookingFactor), 1);
+  if (amountG <= 0) return null;
+  const n = calculateFoodNutrition(food, amountG);
   return (
     <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 4 }}>
+      {cookingFactor !== 1 ? `≈ ${formatGrams(amountG)} roh/trocken · ` : ""}
       {formatKcal(n.kcal)} · {formatGrams(n.protein)} Protein · {formatGrams(n.carbs)} KH ·{" "}
       {formatGrams(n.fat)} Fett
     </p>

@@ -7,8 +7,9 @@ Diese Architektur ist verbindlich für die Implementierung.
 
 ## Produkt
 
-RED Fit — Training und Ernährung in einer App. Eigenständige, mobile-first PWA
-fürs iPhone. Local-first, kein Konto, kein Backend, vollständig im Besitz des
+RED Fit — Training und Ernährung in einer App. Gemeinsamer React/TypeScript-Core
+mit PWA sowie geplanten installierbaren Shells für iPhone (Capacitor) und Windows
+(Tauri 2). Local-first, kein Konto, kein Backend, vollständig im Besitz des
 Projektinhabers — kein fremder Code wird eingebunden oder verlinkt.
 
 ## Zielstack (fixiert)
@@ -29,7 +30,9 @@ Three.js / R3F          3D-Übungs-Coach (lazy Chunk; GLB-Loader + prozeduraler 
 ```
 
 Bewusst NICHT: Redux/MobX, Material/Chakra/Bootstrap, schwere Chart-Libs (Charts als
-SVG/CSS), Backend-SDKs, native Apps.
+SVG/CSS), Backend-SDKs, getrennte native Neuimplementierungen der Fachlogik.
+Capacitor-/Tauri-Shells sind ausdrücklich erlaubt; Status und Build-Grenzen:
+`docs/PLATFORM-BUILDS.md`.
 
 ## Architekturprinzipien
 

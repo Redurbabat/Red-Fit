@@ -4,8 +4,9 @@ import { newId } from "../../utils/ids";
 import { db } from "./database";
 
 /**
- * Blob storage (§46): binaries never travel through the JSON backup and are
- * only readable via explicit user actions. Deleting metadata without its
+ * Blob storage (§46): binaries never travel through the standard JSON backup.
+ * A separate explicit photo-backup action may serialize the user's own photos;
+ * no background uploads or cloud transfer take place. Deleting metadata without its
  * asset would leak storage — deletion happens through progressPhotoRepository.
  */
 export const mediaRepository = {

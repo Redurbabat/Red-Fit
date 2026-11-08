@@ -26,6 +26,9 @@ import { Stepper } from "../../../components/ui/Stepper";
 import { useRestTimer } from "../../../hooks/useRestTimer";
 import { PlateCalculatorSheet } from "../../../components/workout/PlateCalculatorSheet";
 import { armTimerSignal, playTimerSignal } from "../../../services/audio/timerSignal";
+import { createSerializedWorkoutWriter } from "../../../services/workout/serializedWorkoutWriter";
+import { WorkoutRevisionConflictError } from "../../../services/workout/workoutRevision";
+import { assertWorkoutWriteScope, isCurrentWorkoutRoute } from "../../../services/workout/workoutRouteScope";
 import type {
   Exercise,
   ExerciseLog,
@@ -39,6 +42,16 @@ import {
   suggestNextWeight,
 } from "../../../services/calculations/workout";
 import { db, workoutLogRepository, workoutPlanRepository } from "../../../services/storage";
+import {
+  calculateWarmupSets,
+  isCompoundMovement,
+} from "../../../services/calculations/warmup";
+import {
+  contiguousSuperset,
+  nextSupersetExerciseIndex,
+  shouldRestAfterSupersetSet,
+  supersetRestSeconds,
+} from "../../../services/calculations/supersets";
 import {
   cancelWorkout,
   completeSet,
@@ -93,9 +106,16 @@ export default function WorkoutPage() {
   const [search, setSearch] = useState("");
   const [finishOpen, setFinishOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [saveConflict, setSaveConflict] = useState(false);
 
   const logRef = useRef<WorkoutLog | null>(null);
+  const routeWorkoutId = useRef(workoutId);
+  routeWorkoutId.current = workoutId;
   const pendingSave = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Use ONE ordered writer for autosave, pagehide and terminal states.
+  const orderedSave = useRef(createSerializedWorkoutWriter<WorkoutLog>(saveWorkout));
+  const terminalSaveInFlight = useRef(false);
+  const conflictNotified = useRef(false);
 
   const restRemaining = useRestTimer(log?.restEndsAt);
 
@@ -142,31 +162,51 @@ export default function WorkoutPage() {
     }
   }, []);
 
+  const reportSaveError = useCallback((error: unknown, originWorkoutId?: string) => {
+    if (originWorkoutId &&
+        !isCurrentWorkoutRoute(routeWorkoutId.current, originWorkoutId)) {
+      // A previous route's outstanding write must not lock the new screen.
+      showToast("Das vorherige Training konnte nicht gespeichert werden.");
+      return;
+    }
+    const conflict = error instanceof WorkoutRevisionConflictError ||
+      (error instanceof Error && /already finalized|no longer exists/.test(error.message));
+    if (conflict) {
+      if (!conflictNotified.current) {
+        conflictNotified.current = true;
+        setSaveConflict(true);
+        showToast("Training wurde in einem anderen Fenster geändert. Bitte neu laden.");
+      }
+      return;
+    }
+    showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
+  }, [showToast]);
+
   /** Every mutation flows through here: set state + autosave (§128). */
   const apply = useCallback(
     (next: WorkoutLog, mode: "now" | "debounce") => {
+      if (terminalSaveInFlight.current || conflictNotified.current ||
+          !isCurrentWorkoutRoute(workoutId, next.id) ||
+          !isCurrentWorkoutRoute(workoutId, logRef.current?.id)) return;
       logRef.current = next;
       setLogState(next);
       cancelPendingSave();
       if (mode === "now") {
-        void saveWorkout(next).catch(() =>
-          showToast("Speichern fehlgeschlagen. Bitte versuche es erneut."),
-        );
+        void orderedSave.current(next).catch((error) => reportSaveError(error, next.id));
       } else {
         pendingSave.current = setTimeout(() => {
           pendingSave.current = null;
-          void saveWorkout(next).catch(() =>
-            showToast("Speichern fehlgeschlagen. Bitte versuche es erneut."),
-          );
+          void orderedSave.current(next).catch((error) => reportSaveError(error, next.id));
         }, SAVE_DEBOUNCE_MS);
       }
     },
-    [cancelPendingSave, showToast],
+    [cancelPendingSave, reportSaveError, workoutId],
   );
 
   // Initial load — one-time read into local state (this screen owns the log).
   useEffect(() => {
     let cancelled = false;
+    setLogState(undefined);
     if (!workoutId) {
       setLogState(null);
       return;
@@ -176,6 +216,24 @@ export default function WorkoutPage() {
       .then((found) => {
         if (cancelled) return;
         logRef.current = found ?? null;
+        conflictNotified.current = false;
+        setSaveConflict(false);
+        // A separate queue per loaded workout carries its own expected
+        // revision. Every successful queued write advances that revision.
+        // A second tab's edit makes this version stale and is rejected.
+        let savedRevision = found?.saveRevision ?? 0;
+        orderedSave.current = createSerializedWorkoutWriter<WorkoutLog>(
+          async (snapshot) => {
+            // A pending debounce from another route must not use this
+            // workout's revision token to persist a different workout.
+            assertWorkoutWriteScope(found?.id, snapshot.id);
+            const saved = await saveWorkout({
+              ...snapshot,
+              saveRevision: savedRevision,
+            });
+            savedRevision = saved.saveRevision ?? 0;
+          },
+        );
         setLogState(found ?? null);
       })
       .catch(() => {
@@ -183,8 +241,20 @@ export default function WorkoutPage() {
       });
     return () => {
       cancelled = true;
+      // Switching between /training/workout/:id routes reuses this React
+      // component. Flush the old route's pending debounce using its OWN
+      // writer before the new route installs another one.
+      if (pendingSave.current) {
+        clearTimeout(pendingSave.current);
+        pendingSave.current = null;
+        const previous = logRef.current;
+        const previousWriter = orderedSave.current;
+        if (previous?.id === workoutId) {
+          void previousWriter(previous).catch((error) => reportSaveError(error, previous.id));
+        }
+      }
     };
-  }, [workoutId]);
+  }, [workoutId, reportSaveError]);
 
   // Plan (for per-exercise rest seconds), if the workout came from one.
   const planId = log?.planId;
@@ -237,7 +307,9 @@ export default function WorkoutPage() {
       if (pendingSave.current) {
         clearTimeout(pendingSave.current);
         pendingSave.current = null;
-        if (logRef.current) void saveWorkout(logRef.current);
+        if (logRef.current) {
+          void orderedSave.current(logRef.current).catch(() => undefined);
+        }
       }
     };
   }, []);
@@ -250,7 +322,9 @@ export default function WorkoutPage() {
       if (!pendingSave.current) return;
       clearTimeout(pendingSave.current);
       pendingSave.current = null;
-      if (logRef.current) void saveWorkout(logRef.current);
+      if (logRef.current) {
+          void orderedSave.current(logRef.current).catch(() => undefined);
+        }
     };
     const onVisibilityChange = () => {
       if (document.visibilityState === "hidden") flushPendingSave();
@@ -263,7 +337,7 @@ export default function WorkoutPage() {
     };
   }, []);
 
-  if (log === undefined) {
+  if (log === undefined || (log !== null && !isCurrentWorkoutRoute(workoutId, log.id))) {
     return (
       <div style={{ paddingTop: 20 }}>
         <LoadingState rows={6} />
@@ -324,6 +398,15 @@ export default function WorkoutPage() {
     ? planSession?.exercises.find((e) => e.exerciseId === currentLog.exerciseId)
     : undefined;
   const suggestedKg = suggestNextWeight(lastPerformance, plannedExercise?.repsMax);
+  // Non-persistent warm-up preview: the main work sets remain unchanged.
+  const warmupWorkWeight = currentLog?.setLogs.find((set) => set.weightKg > 0)?.weightKg ?? 0;
+  const warmupPreview = currentExercise && warmupWorkWeight > 0
+    ? calculateWarmupSets({
+        workWeightKg: warmupWorkWeight,
+        compound: isCompoundMovement(currentExercise),
+        barWeightKg: currentExercise.equipment === "barbell" ? 20 : 0,
+      })
+    : [];
 
   const updateSet = (
     setIndex: number,
@@ -357,7 +440,21 @@ export default function WorkoutPage() {
     if (!currentLog || firstOpenSet < 0) return;
     // Unlock audio inside the tap gesture so the end-of-rest beep may play.
     armTimerSignal();
-    apply(completeSet(log, exerciseIndex, firstOpenSet, restSecondsFor(currentLog.exerciseId)), "now");
+    const completed = completeSet(log, exerciseIndex, firstOpenSet, 0);
+    const nextSupersetIndex = nextSupersetExerciseIndex(completed.exerciseLogs, exerciseIndex);
+    const shouldRest = shouldRestAfterSupersetSet(
+      completed.exerciseLogs, exerciseIndex, nextSupersetIndex,
+    );
+    const seconds = shouldRest
+      ? supersetRestSeconds(completed.exerciseLogs, exerciseIndex, restSecondsFor)
+      : 0;
+    apply({
+      ...completed,
+      currentExerciseIndex: nextSupersetIndex ?? exerciseIndex,
+      restEndsAt: seconds > 0
+        ? new Date(Date.now() + seconds * 1000).toISOString()
+        : undefined,
+    }, "now");
   };
 
   const goToExercise = (index: number) => {
@@ -411,28 +508,46 @@ export default function WorkoutPage() {
   };
 
   const handleFinish = async () => {
+    if (terminalSaveInFlight.current || conflictNotified.current) return;
+    terminalSaveInFlight.current = true;
     setFinishOpen(false);
     cancelPendingSave();
     const finished = finishWorkout(logRef.current ?? log);
     try {
-      await saveWorkout(finished);
-    } catch {
-      showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
+      // Drain all older active writes BEFORE the final status update.
+      await orderedSave.current(finished);
+      logRef.current = finished;
+    } catch (error) {
+      terminalSaveInFlight.current = false;
+      reportSaveError(error, finished.id);
       return;
     }
-    navigate(`/training/workout/${finished.id}/summary`, { replace: true });
+    if (routeWorkoutId.current === finished.id) {
+      navigate(`/training/workout/${finished.id}/summary`, { replace: true });
+    } else {
+      terminalSaveInFlight.current = false;
+    }
   };
 
   const handleDiscard = async () => {
+    if (terminalSaveInFlight.current || conflictNotified.current) return;
+    terminalSaveInFlight.current = true;
     setDiscardOpen(false);
     cancelPendingSave();
+    const discarded = cancelWorkout(logRef.current ?? log);
     try {
-      await saveWorkout(cancelWorkout(logRef.current ?? log));
-    } catch {
-      showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
+      await orderedSave.current(discarded);
+      logRef.current = discarded;
+    } catch (error) {
+      terminalSaveInFlight.current = false;
+      reportSaveError(error, discarded.id);
       return;
     }
-    navigate("/training", { replace: true });
+    if (routeWorkoutId.current === discarded.id) {
+      navigate("/training", { replace: true });
+    } else {
+      terminalSaveInFlight.current = false;
+    }
   };
 
   // Big thumb-zone primary action: complete set → next exercise → finish.
@@ -454,6 +569,29 @@ export default function WorkoutPage() {
   return (
     <div style={{ paddingBottom: 96 }}>
       <style>{REST_TIMER_CSS}</style>
+      {saveConflict ? (
+        <div
+          role="alert"
+          style={{
+            padding: 16,
+            marginBottom: 16,
+            border: "1px solid var(--warning)",
+            borderRadius: "var(--radius-md)",
+            background: "var(--surface)",
+          }}
+        >
+          <p style={{ fontWeight: 700, marginBottom: 8 }}>
+            Dieses Training wurde in einem anderen Fenster verändert.
+          </p>
+          <p style={{ fontSize: 14, marginBottom: 12 }}>
+            Neue Eingaben in diesem Fenster werden nicht gespeichert.
+            Beim Neuladen wird der aktuell gespeicherte Trainingsstand angezeigt.
+          </p>
+          <Button variant="secondary" onClick={() => window.location.reload()}>
+            Gespeicherten Stand neu laden
+          </Button>
+        </div>
+      ) : null}
 
       {/* Own compact top bar — back keeps the workout active (resume later). */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0 14px" }}>
@@ -573,6 +711,11 @@ export default function WorkoutPage() {
                 </Button>
               ) : null}
             </div>
+            {contiguousSuperset(log.exerciseLogs, exerciseIndex).length >= 2 ? (
+              <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--accent-2)" }}>
+                Supersatz {currentLog.supersetGroup} · automatischer Übungswechsel nach jedem Satz
+              </p>
+            ) : null}
             {lastPerformance ? (
               <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--text-muted)" }}>
                 Letztes Mal ({formatDateShortGerman(lastPerformance.date)}):{" "}
@@ -594,6 +737,26 @@ export default function WorkoutPage() {
                 <TrendingUp size={16} aria-hidden="true" style={{ flexShrink: 0 }} />
                 Vorschlag: {formatKg(suggestedKg)} — letztes Mal alle Sätze geschafft
               </p>
+            ) : null}
+            {warmupPreview.length > 0 ? (
+              <div
+                style={{
+                  marginTop: 10,
+                  borderRadius: 12,
+                  padding: "10px 12px",
+                  background: "var(--surface-2)",
+                  fontSize: 14,
+                }}
+              >
+                <strong>Aufwärmen (Vorschlag)</strong>
+                <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>
+                  {warmupPreview.map((set) => `${formatKg(set.weightKg)} × ${set.reps}`).join(" · ")}
+                </p>
+                <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-soft)" }}>
+                  Geschätzte Aufwärmsätze; nicht automatisch protokolliert.
+                  Bei Langhantel standardmäßig 20 kg Stange angenommen.
+                </p>
+              </div>
             ) : null}
           </section>
 

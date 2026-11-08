@@ -1,4 +1,5 @@
 import { registerSW } from "virtual:pwa-register";
+import { getPlatform, shouldRegisterPwaServiceWorker } from "../../core/platform/platform";
 
 type UpdateListener = (applyUpdate: () => void) => void;
 
@@ -11,7 +12,7 @@ let pendingUpdate: (() => void) | null = null;
  * Active workout data is safe either way — it is autosaved in IndexedDB.
  */
 export function registerServiceWorker(): void {
-  if (import.meta.env.DEV) return;
+  if (!shouldRegisterPwaServiceWorker(getPlatform(), import.meta.env.DEV)) return;
   const updateSW = registerSW({
     onNeedRefresh() {
       const apply = () => void updateSW(true);

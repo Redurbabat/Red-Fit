@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { ChevronRight, Dumbbell, Plus } from "lucide-react";
+import { BookOpen, ChevronRight, Dumbbell, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "../../../components/feedback/Modal";
@@ -25,6 +25,14 @@ import {
   type MuscleGroup,
 } from "../../../models";
 import { db, exerciseRepository } from "../../../services/storage";
+import {
+  parseWgerImportJson,
+  type WgerExercisePreview,
+} from "../../../services/import/wgerExerciseAdapter";
+import {
+  BUNDLED_WGER_CATALOG_SIZE,
+  loadBundledWgerCatalog,
+} from "../../../services/import/bundledWgerCatalog";
 import {
   difficultyLabels,
   equipmentLabels,
@@ -131,6 +139,10 @@ export default function ExerciseListPage() {
   const [muscleFilter, setMuscleFilter] = useState<MuscleGroup[]>([]);
   const [equipmentFilter, setEquipmentFilter] = useState<EquipmentType[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importPreview, setImportPreview] = useState<WgerExercisePreview[]>([]);
+  const [importError, setImportError] = useState("");
+  const [importBusy, setImportBusy] = useState(false);
 
   const exercises = useLiveQuery(() => db.exercises.toArray(), []);
 
@@ -180,6 +192,52 @@ export default function ExerciseListPage() {
     }
   };
 
+  async function readWgerFile(file: File | undefined) {
+    if (!file || importBusy) return;
+    setImportError("");
+    setImportPreview([]);
+    if (file.size > 5_000_000) {
+      setImportError("Die JSON-Datei darf höchstens 5 MB groß sein.");
+      return;
+    }
+    try {
+      const preview = parseWgerImportJson(await file.text());
+      setImportPreview(preview);
+    } catch {
+      setImportError("Ungültige wger-Datei. Prüfe Format, Lizenz und Urheber.");
+    }
+  }
+
+  async function showBundledWgerPreview() {
+    if (importBusy) return;
+    setImportBusy(true);
+    setImportError("");
+    setImportPreview([]);
+    try {
+      setImportPreview(await loadBundledWgerCatalog());
+    } catch {
+      setImportError("Der mitgelieferte wger-Katalog konnte nicht gelesen werden.");
+    } finally {
+      setImportBusy(false);
+    }
+  }
+
+  async function saveWgerImport() {
+    if (importBusy || importPreview.length === 0) return;
+    setImportBusy(true);
+    try {
+      const { created, skipped } = await exerciseRepository.importAttributedExercises(importPreview);
+      showToast(`${created} Übungen importiert${skipped > 0 ? `, ${skipped} bereits vorhanden` : ""}.`);
+      setImportOpen(false);
+      setImportPreview([]);
+      setImportError("");
+    } catch {
+      setImportError("Import fehlgeschlagen. Vorhandene Übungen wurden nicht ersetzt.");
+    } finally {
+      setImportBusy(false);
+    }
+  }
+
   return (
     <>
       <PageHeader
@@ -196,6 +254,11 @@ export default function ExerciseListPage() {
       />
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <Button variant="secondary" small autoWidth onClick={() => setImportOpen(true)}>
+            <BookOpen size={16} aria-hidden="true" /> wger-Katalog
+          </Button>
+        </div>
         <TextInput
           value={search}
           placeholder="Übung suchen …"
@@ -259,7 +322,8 @@ export default function ExerciseListPage() {
                   <span className="list-row__subtitle" style={{ display: "block" }}>
                     {muscleGroupLabels[exercise.muscleGroup]} ·{" "}
                     {equipmentLabels[exercise.equipment]}
-                    {exercise.isCustom ? " · Eigene Übung" : ""}
+                    {exercise.sourceRef ? ` · Import: ${exercise.sourceRef}${exercise.taxonomyNeedsReview ? " · Muskelzuordnung prüfen" : ""}`
+                      : exercise.isCustom ? " · Eigene Übung" : ""}
                   </span>
                 </span>
                 <span className="list-row__trailing">
@@ -270,6 +334,72 @@ export default function ExerciseListPage() {
           </Card>
         )}
       </div>
+
+      <BottomSheet
+        open={importOpen}
+        title="wger-Übungen hinzufügen"
+        onClose={() => { if (!importBusy) setImportOpen(false); }}
+      >
+        <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 14 }}>
+          Die {BUNDLED_WGER_CATALOG_SIZE} geprüften wger-Übungen sind in RED Fit
+          enthalten und auch offline verfügbar. Du kannst sie zunächst ansehen
+          und anschließend ausdrücklich importieren. Urheber und
+          Creative-Commons-Lizenzen bleiben pro Übung gespeichert;
+          eingeschränkt lizenzierte Bilder sind nicht enthalten.
+        </p>
+        <Button
+          variant="secondary"
+          disabled={importBusy}
+          onClick={() => void showBundledWgerPreview()}
+        >
+          <BookOpen size={17} aria-hidden="true" />
+          {importBusy ? "Katalog wird geladen …" : `Mitgelieferten Katalog ansehen (${BUNDLED_WGER_CATALOG_SIZE})`}
+        </Button>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "16px 0 8px" }}>
+          Alternativ: eigene, lizenzierte wger-JSON-Datei auswählen.
+        </p>
+        <Field label="JSON-Datei auswählen" error={importError || undefined}>
+          {(id) => (
+            <input
+              id={id}
+              className="input"
+              type="file"
+              accept=".json,application/json"
+              disabled={importBusy}
+              onChange={(event) => void readWgerFile(event.currentTarget.files?.[0])}
+            />
+          )}
+        </Field>
+        {importPreview.length > 0 ? (
+          <>
+            <p role="status" style={{ fontWeight: 700, marginBottom: 8 }}>
+              Vorschau: {importPreview.length} Übungen · Urheber und Lizenzen prüfen
+            </p>
+            <div style={{ maxHeight: 180, overflowY: "auto", marginBottom: 12 }}>
+              {importPreview.slice(0, 20).map((entry) => (
+                <p key={entry.sourceKey} style={{ fontSize: 13, padding: "3px 0" }}>
+                  {entry.name} · {entry.attribution.author} · {entry.attribution.license}
+                </p>
+              ))}
+              {importPreview.length > 20 ? (
+                <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                  … und {importPreview.length - 20} weitere
+                </p>
+              ) : null}
+            </div>
+            {importPreview.some((entry) => entry.needsMuscleReview) ? (
+              <p style={{ fontSize: 13, color: "var(--warning)", marginBottom: 12 }}>
+                {importPreview.filter((entry) => entry.needsMuscleReview).length} Übungen haben
+                keine eindeutige Muskelangabe in der Quelle. Ihre Zuordnung muss
+                nach dem Import geprüft werden.
+              </p>
+            ) : null}
+            <Button disabled={importBusy} onClick={() => void saveWgerImport()}>
+              {importBusy ? "Import wird gespeichert …" : "Übungen importieren"}
+            </Button>
+          </>
+        ) : null}
+      </BottomSheet>
 
       <BottomSheet
         open={sheetOpen}

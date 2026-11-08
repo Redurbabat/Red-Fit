@@ -67,16 +67,40 @@ export const MEAL_TYPES = [
 ] as const;
 export type MealType = (typeof MEAL_TYPES)[number];
 
+/**
+ * Optional uncertainty flag for amounts entered without a scale.
+ * Derived from the Dietry estimate-level model; legacy entries default to exact.
+ */
+export const ESTIMATE_LEVELS = ["none", "low", "medium", "high"] as const;
+export type EstimateLevel = (typeof ESTIMATE_LEVELS)[number];
+
 /** Snapshot principle: name + computed values are frozen so history stays stable. */
 export const mealFoodEntrySchema = z.object({
   id: z.string().min(1),
   foodId: z.string().min(1),
   foodName: z.string().min(1),
+  /** Nutrition basis (raw/dry equivalent grams) used for the frozen macros. */
   amountG: nonNegativeNumber,
+  /** Optional cooked-weight input; legacy entries have neither field. */
+  weighedAs: z.literal("cooked").optional(),
+  weighedAmountG: nonNegativeNumber.optional(),
+  /** Original cooked/raw factor snapshotted so later edits stay reproducible. */
+  cookingYieldFactor: z.number().finite().min(0.1).max(10).optional(),
+  estimateLevel: z.enum(ESTIMATE_LEVELS).optional(),
   kcal: nonNegativeNumber,
   protein: nonNegativeNumber,
   carbs: nonNegativeNumber,
   fat: nonNegativeNumber,
+}).superRefine((entry, ctx) => {
+  const cooked = entry.weighedAs === "cooked";
+  const hasWeighedAmount = entry.weighedAmountG !== undefined;
+  const hasFactor = entry.cookingYieldFactor !== undefined;
+  // Partial metadata could otherwise make history and later edits ambiguous.
+  if (cooked && (!hasWeighedAmount || !hasFactor || entry.weighedAmountG! <= 0)) {
+    ctx.addIssue({ code: "custom", message: "Gekochte Menge und Umrechnungsfaktor fehlen." });
+  } else if (!cooked && (hasWeighedAmount || hasFactor)) {
+    ctx.addIssue({ code: "custom", message: "Umrechnungsdaten ohne gekochtes Gewicht." });
+  }
 });
 export type MealFoodEntry = z.infer<typeof mealFoodEntrySchema>;
 

@@ -205,6 +205,8 @@ export default function ExerciseDetailPage() {
         muscleGroup: values.muscleGroup,
         equipment: values.equipment,
         difficulty: values.difficulty,
+        // Saving the exercise editor confirms this manual taxonomy review.
+        taxonomyNeedsReview: false,
       });
       setEditOpen(false);
       showToast("Änderungen gespeichert.");
@@ -258,7 +260,7 @@ export default function ExerciseDetailPage() {
       <PageHeader
         title={exercise.name}
         back
-        subtitle={exercise.isCustom ? "Eigene Übung" : undefined}
+        subtitle={exercise.sourceRef ? "Importierte Übung" : exercise.isCustom ? "Eigene Übung" : undefined}
         trailing={
           exercise.isCustom ? (
             <div style={{ display: "flex", gap: 4 }}>
@@ -284,6 +286,26 @@ export default function ExerciseDetailPage() {
             </span>
           ))}
         </div>
+
+        {exercise.sourceRef ? (
+          <Card>
+            <strong style={{ fontSize: 14 }}>Quelle und Lizenz</strong>
+            {exercise.taxonomyNeedsReview ? (
+              <p role="status" style={{ fontSize: 13, color: "var(--warning)", marginTop: 6 }}>
+                Muskelgruppe nur aus der Quellkategorie geschätzt – bitte prüfen.
+              </p>
+            ) : null}
+            <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>
+              Quelle: {exercise.sourceRef}
+            </p>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", overflowWrap: "anywhere" }}>
+              Urheber: {exercise.sourceAuthor ?? "Nicht angegeben"}
+            </p>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", overflowWrap: "anywhere" }}>
+              Lizenz: {exercise.sourceLicense ?? "Nicht angegeben"}
+            </p>
+          </Card>
+        ) : null}
 
         {exercise.animationType ? (
           <Card

@@ -2,7 +2,7 @@ import { Dumbbell, House, Menu, PersonStanding, Utensils } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 /* Navigation 2031 (§7): exactly five entries, Körper absorbs Fortschritt. */
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
   { to: "/today", label: "Heute", icon: House },
   { to: "/training", label: "Training", icon: Dumbbell },
   { to: "/nutrition", label: "Ernährung", icon: Utensils },

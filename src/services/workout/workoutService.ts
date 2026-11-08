@@ -10,6 +10,9 @@ import { getDayIndex, getLocalDateKey, nowIso } from "../../utils/dates";
 import { newId } from "../../utils/ids";
 import { calculateWorkoutDuration } from "../calculations/workout";
 import { workoutLogRepository } from "../storage/workoutLogRepository";
+import { db } from "../storage/database";
+import { canPersistWorkoutStatus } from "./workoutStatusGuard";
+import { nextWorkoutRevision } from "./workoutRevision";
 
 /**
  * The workout lifecycle. Core rule: an active workout is a persisted
@@ -44,6 +47,29 @@ function buildSetLogs(sets: number, targetWeightKg: number | undefined, repsMax:
 }
 
 /**
+ * A workout must be created or resumed in ONE IndexedDB write transaction.
+ * The previous UI did a separate getActive() and then put(), allowing two
+ * tabs to create different active workouts at the same time.
+ *
+ * Every training-start entry point uses this atomic operation; a losing
+ * concurrent starter resumes the winning workout (with its original ID
+ * and revision) rather than creating a second active session.
+ */
+export async function createOrResumeWorkout(proposed: WorkoutLog): Promise<WorkoutLog> {
+  if (proposed.status !== "active" || proposed.saveRevision !== 0) {
+    throw new Error("New workout must start active with revision zero");
+  }
+  return db.transaction("rw", db.workoutLogs, async () => {
+    const existing = await db.workoutLogs
+      .where("status").equals("active").first();
+    if (existing) return existing;
+    // add() rejects ID collisions rather than overwriting another workout.
+    await db.workoutLogs.add(proposed);
+    return proposed;
+  });
+}
+
+/**
  * Start a workout from a plan session — the log is persisted IMMEDIATELY
  * with status "active" before any UI renders (§45).
  */
@@ -63,6 +89,9 @@ export async function startPlannedWorkout(
       id: newId(),
       exerciseId: pe.exerciseId,
       name: exercise?.name ?? "Übung",
+      // Snapshot grouping so an active workout survives plan edits/deletion.
+      supersetGroup: pe.supersetGroup,
+      supersetRestSeconds: pe.supersetRestSeconds,
       setLogs: buildSetLogs(pe.sets, startWeight, pe.repsMax),
     };
   });
@@ -75,13 +104,13 @@ export async function startPlannedWorkout(
     name: session.name,
     startedAt: now,
     status: "active",
+    saveRevision: 0,
     exerciseLogs,
     currentExerciseIndex: 0,
     createdAt: now,
     updatedAt: now,
   };
-  await workoutLogRepository.put(log);
-  return log;
+  return createOrResumeWorkout(log);
 }
 
 /** Start an empty manual workout (exercises get added on the fly). */
@@ -93,20 +122,70 @@ export async function startManualWorkout(name = "Freies Training"): Promise<Work
     name,
     startedAt: now,
     status: "active",
+    saveRevision: 0,
     exerciseLogs: [],
     currentExerciseIndex: 0,
     createdAt: now,
     updatedAt: now,
   };
-  await workoutLogRepository.put(log);
-  return log;
+  return createOrResumeWorkout(log);
 }
 
-/** Autosave — every mutation of the active workout flows through here (§128). */
+/**
+ * Autosave the latest snapshot atomically. A separate browser tab could still
+ * have a stale active copy of a workout already completed elsewhere. Check the
+ * persisted lifecycle under the same IndexedDB read-write transaction before
+ * overwriting it. Same-status edits (e.g. notes after completion) remain legal.
+ */
 export async function saveWorkout(log: WorkoutLog): Promise<WorkoutLog> {
-  const updated = { ...log, updatedAt: nowIso() };
-  await workoutLogRepository.put(updated);
-  return updated;
+  return db.transaction("rw", db.workoutLogs, async () => {
+    const stored = await db.workoutLogs.get(log.id as never);
+    if (!stored) {
+      // A concurrent deletion or stale screen must not recreate a workout.
+      throw new Error("Workout no longer exists");
+    }
+    if (!canPersistWorkoutStatus(stored.status, log.status)) {
+      throw new Error("Workout is already finalized with another status");
+    }
+    // Compare and increment under one write transaction: two active tabs
+    // cannot both save based on the same historical set snapshot.
+    const saveRevision = nextWorkoutRevision(log.saveRevision, stored.saveRevision);
+    const updated: WorkoutLog = { ...log, saveRevision, updatedAt: nowIso() };
+    await db.workoutLogs.put(updated);
+    return updated;
+  });
+}
+
+/**
+ * Persist summary notes without replacing the complete workout snapshot.
+ * This used to bypass saveRevision via workoutLogRepository.update(), allowing
+ * a stale full-workout write to overwrite a more recent note. Only terminal
+ * workouts have a summary; the revision comparison is atomic with the patch.
+ */
+export async function saveWorkoutNotes(
+  logId: string,
+  expectedRevision: number | undefined,
+  notes: string,
+): Promise<WorkoutLog> {
+  return db.transaction("rw", db.workoutLogs, async () => {
+    const stored = await db.workoutLogs.get(logId as never);
+    if (!stored) throw new Error("Workout no longer exists");
+    if (stored.status !== "completed" && stored.status !== "cancelled") {
+      throw new Error("Workout summary notes require a finalized workout");
+    }
+    const saveRevision = nextWorkoutRevision(
+      expectedRevision,
+      stored.saveRevision,
+    );
+    const updated: WorkoutLog = {
+      ...stored,
+      notes: notes.trim() || undefined,
+      saveRevision,
+      updatedAt: nowIso(),
+    };
+    await db.workoutLogs.put(updated);
+    return updated;
+  });
 }
 
 /** Mark a set completed and arm the rest timer as an absolute deadline (§49/50). */

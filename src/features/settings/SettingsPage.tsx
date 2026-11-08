@@ -10,6 +10,7 @@ import { Card } from "../../components/ui/Card";
 import { Field, NumberInput, SegmentedControl } from "../../components/ui/inputs";
 import { useSettings } from "../../hooks/useSettings";
 import { DEFAULT_GOAL } from "../../services/demoData/defaults";
+import EnergyGoalCalculator from "../nutrition/EnergyGoalCalculator";
 import { db } from "../../services/storage/database";
 import { goalRepository, settingsRepository } from "../../services/storage";
 import { getLocalDateKey } from "../../utils/dates";
@@ -134,7 +135,8 @@ export default function SettingsPage() {
       [
         db.exercises, db.workoutPlans, db.workoutLogs, db.foodItems, db.mealLogs,
         db.nutritionGoals, db.waterLogs, db.bodyMeasurements, db.shoppingLists,
-        db.mealPlans, db.recipes, db.userProfiles, db.settings, db.metadata,
+        db.mealPlans, db.recipes, db.userProfiles, db.recoveryLogs,
+        db.mediaAssets, db.progressPhotos, db.settings, db.metadata,
       ],
       async () => {
         await Promise.all([
@@ -142,6 +144,7 @@ export default function SettingsPage() {
           db.foodItems.clear(), db.mealLogs.clear(), db.nutritionGoals.clear(),
           db.waterLogs.clear(), db.bodyMeasurements.clear(), db.shoppingLists.clear(),
           db.mealPlans.clear(), db.recipes.clear(), db.userProfiles.clear(),
+          db.recoveryLogs.clear(), db.mediaAssets.clear(), db.progressPhotos.clear(),
           db.settings.clear(), db.metadata.clear(),
         ]);
       },
@@ -217,6 +220,21 @@ export default function SettingsPage() {
           }
         />
       </Card>
+
+      <SectionHeader title="Kalorienbedarf (Schätzung)" />
+      <EnergyGoalCalculator
+        onApply={(estimate) => {
+          setGoalDraft((previous) => ({
+            dailyKcal: String(estimate.dailyKcal),
+            dailyProtein: String(estimate.dailyProtein),
+            dailyFat: String(estimate.dailyFat),
+            dailyCarbs: String(estimate.dailyCarbs),
+            dailyWaterMl: String(estimate.dailyWaterMl),
+            validFrom: previous?.validFrom ?? getLocalDateKey(),
+          }));
+          showToast("Schätzung übernommen. Bitte Ziel speichern.");
+        }}
+      />
 
       <SectionHeader title="Ernährungsziel" />
       <Card>

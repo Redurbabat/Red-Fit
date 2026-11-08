@@ -5,63 +5,76 @@ import {
   type BackupData,
   type RedFitBackup,
 } from "../../models/backup";
-import type { MealFoodEntry, MealLog } from "../../models/nutrition";
+import type { MealLog } from "../../models/nutrition";
 import type { UserSettings } from "../../models/settings";
 import { getLocalDateKey, nowIso } from "../../utils/dates";
 import { db, SETTINGS_ID } from "../storage/database";
 import { settingsRepository } from "../storage/settingsRepository";
 import { APP_VERSION } from "../appVersion";
+import { assertRestorableBackupSize, MAX_STANDARD_BACKUP_BYTES } from "./backupExportPolicy";
+import { nextImportedWorkoutRevision } from "./workoutImportRevision";
+import { mergeImportedMealSlot } from "./mealImportMerge";
 
 /** Import files above this size are rejected outright (§107). */
-export const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
+export const MAX_IMPORT_BYTES = MAX_STANDARD_BACKUP_BYTES;
 
 export async function collectBackupData(): Promise<BackupData> {
-  const settings = await settingsRepository.getSettings();
-  const [
-    exercises,
-    workoutPlans,
-    workoutLogs,
-    foodItems,
-    mealLogs,
-    nutritionGoals,
-    waterLogs,
-    bodyMeasurements,
-    shoppingLists,
-    mealPlans,
-    recipes,
-    userProfiles,
-    recoveryLogs,
-  ] = await Promise.all([
-    db.exercises.toArray(),
-    db.workoutPlans.toArray(),
-    db.workoutLogs.toArray(),
-    db.foodItems.toArray(),
-    db.mealLogs.toArray(),
-    db.nutritionGoals.toArray(),
-    db.waterLogs.toArray(),
-    db.bodyMeasurements.toArray(),
-    db.shoppingLists.toArray(),
-    db.mealPlans.toArray(),
-    db.recipes.toArray(),
-    db.userProfiles.toArray(),
-    db.recoveryLogs.toArray(),
-  ]);
-  return {
-    exercises,
-    workoutPlans,
-    workoutLogs,
-    foodItems,
-    mealLogs,
-    nutritionGoals,
-    waterLogs,
-    bodyMeasurements,
-    shoppingLists,
-    mealPlans,
-    recipes,
-    userProfiles,
-    settings: [settings satisfies UserSettings],
-    recoveryLogs,
-  };
+  // All tables and the settings singleton must be read within ONE IDB
+  // read-only transaction. Otherwise concurrent edits across tabs can produce
+  // a torn snapshot (e.g. a new meal entry without its food item).
+  return db.transaction("r", [
+    db.exercises, db.workoutPlans, db.workoutLogs, db.foodItems,
+    db.mealLogs, db.nutritionGoals, db.waterLogs, db.bodyMeasurements,
+    db.shoppingLists, db.mealPlans, db.recipes, db.userProfiles,
+    db.recoveryLogs, db.settings,
+  ], async () => {
+    const settings = await settingsRepository.getSettings();
+    const [
+      exercises,
+      workoutPlans,
+      workoutLogs,
+      foodItems,
+      mealLogs,
+      nutritionGoals,
+      waterLogs,
+      bodyMeasurements,
+      shoppingLists,
+      mealPlans,
+      recipes,
+      userProfiles,
+      recoveryLogs,
+    ] = await Promise.all([
+      db.exercises.toArray(),
+      db.workoutPlans.toArray(),
+      db.workoutLogs.toArray(),
+      db.foodItems.toArray(),
+      db.mealLogs.toArray(),
+      db.nutritionGoals.toArray(),
+      db.waterLogs.toArray(),
+      db.bodyMeasurements.toArray(),
+      db.shoppingLists.toArray(),
+      db.mealPlans.toArray(),
+      db.recipes.toArray(),
+      db.userProfiles.toArray(),
+      db.recoveryLogs.toArray(),
+    ]);
+    return {
+      exercises,
+      workoutPlans,
+      workoutLogs,
+      foodItems,
+      mealLogs,
+      nutritionGoals,
+      waterLogs,
+      bodyMeasurements,
+      shoppingLists,
+      mealPlans,
+      recipes,
+      userProfiles,
+      settings: [settings satisfies UserSettings],
+      recoveryLogs,
+    };
+  });
 }
 
 export async function createBackup(): Promise<RedFitBackup> {
@@ -72,10 +85,11 @@ export async function createBackup(): Promise<RedFitBackup> {
     exportedAt: nowIso(),
     data: await collectBackupData(),
   };
-  // Remembered for Speicher & Diagnose — failure to stamp never blocks the export.
-  await settingsRepository
-    .updateMetadata({ lastBackupAt: backup.exportedAt })
-    .catch(() => undefined);
+  // A locally malformed record must not produce a file that the importer
+  // would later reject. Validate without stripping unknown local properties.
+  if (!backupSchema.safeParse(backup).success) {
+    throw new Error("Current local data cannot be restored from a valid backup");
+  }
   return backup;
 }
 
@@ -89,14 +103,25 @@ export async function exportBackupFile(): Promise<void> {
   const blob = new Blob([JSON.stringify(backup, null, 2)], {
     type: "application/json",
   });
+  // Browser Blob.size measures actual UTF-8 bytes, including Unicode names.
+  // Never offer a file the normal RED Fit importer would refuse to restore.
+  assertRestorableBackupSize(blob.size);
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = backupFileName();
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
+  try {
+    anchor.href = url;
+    anchor.download = backupFileName();
+    document.body.appendChild(anchor);
+    anchor.click();
+  } finally {
+    anchor.remove();
+    // Revoking immediately can abort downloads in embedded/native WebViews.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+  // Only mark the backup as created after validation and download initiation.
+  // Metadata failure is non-critical, unlike data or size validation.
+  await settingsRepository.updateMetadata({ lastBackupAt: backup.exportedAt })
+    .catch(() => undefined);
 }
 
 /**
@@ -231,6 +256,7 @@ async function normalizeActiveWorkouts(preferIds: Set<string>): Promise<void> {
     if (workout.id === keep.id) continue;
     await db.workoutLogs.update(workout.id, {
       status: "cancelled",
+      saveRevision: nextImportedWorkoutRevision(workout.saveRevision),
       updatedAt: nowIso(),
     });
   }
@@ -239,7 +265,8 @@ async function normalizeActiveWorkouts(preferIds: Set<string>): Promise<void> {
 /**
  * Exactly one meal log per (date, mealType): duplicates are merged into the
  * kept log (entries concatenated, deduplicated by entry id, notes joined) —
- * no user data is lost, only the redundant container rows are removed.
+ * distinct snapshot conflicts retain both entries under stable recovered IDs.
+ * Only exact duplicate entry snapshots and redundant container rows are removed.
  */
 async function mergeDuplicateMealLogs(preferIds: Set<string>): Promise<void> {
   const all = await db.mealLogs.toArray();
@@ -252,30 +279,9 @@ async function mergeDuplicateMealLogs(preferIds: Set<string>): Promise<void> {
   }
   for (const group of bySlot.values()) {
     if (group.length <= 1) continue;
-    group.sort(
-      (a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id),
-    );
-    const keep = group.find((l) => preferIds.has(l.id)) ?? group[0];
-    const entries: MealFoodEntry[] = [];
-    const seenEntryIds = new Set<string>();
-    const notes: string[] = [];
-    for (const log of [keep, ...group.filter((l) => l.id !== keep.id)]) {
-      for (const entry of log.entries) {
-        if (seenEntryIds.has(entry.id)) continue;
-        seenEntryIds.add(entry.id);
-        entries.push(entry);
-      }
-      if (log.notes && !notes.includes(log.notes)) notes.push(log.notes);
-    }
-    await db.mealLogs.put({
-      ...keep,
-      entries,
-      notes: notes.length > 0 ? notes.join("\n") : undefined,
-      updatedAt: nowIso(),
-    });
-    for (const log of group) {
-      if (log.id !== keep.id) await db.mealLogs.delete(log.id);
-    }
+    const { keeper, duplicateIds } = mergeImportedMealSlot(group, preferIds);
+    await db.mealLogs.put({ ...keeper, updatedAt: nowIso() });
+    for (const id of duplicateIds) await db.mealLogs.delete(id);
   }
 }
 
@@ -295,6 +301,7 @@ export async function importBackup(
   async function mergeTable<T extends { id: string }>(
     table: import("dexie").EntityTable<T, "id">,
     items: T[],
+    onReplace?: (local: T, imported: T) => T,
   ): Promise<void> {
     for (const item of items) {
       const existing = await table.get(item.id as never);
@@ -302,7 +309,8 @@ export async function importBackup(
         await table.put(item as Parameters<typeof table.put>[0]);
         result.added++;
       } else if (strategy === "replaceWithBackup") {
-        await table.put(item as Parameters<typeof table.put>[0]);
+        const replacement = onReplace ? onReplace(existing, item) : item;
+        await table.put(replacement as Parameters<typeof table.put>[0]);
         result.replaced++;
       } else {
         result.skipped++;
@@ -346,7 +354,15 @@ export async function importBackup(
 
       await mergeTable(db.exercises, d.exercises);
       await mergeTable(db.workoutPlans, d.workoutPlans);
-      await mergeTable(db.workoutLogs, d.workoutLogs);
+      await mergeTable(db.workoutLogs, d.workoutLogs, (local, imported) => ({
+        ...imported,
+        // A restored same-ID workout is a NEW mutation, not a rewind of
+        // the local revision. Stale UI views must fail their next save.
+        saveRevision: nextImportedWorkoutRevision(
+          local.saveRevision,
+          imported.saveRevision,
+        ),
+      }));
       await mergeTable(db.foodItems, d.foodItems);
       await mergeTable(db.mealLogs, d.mealLogs);
       await mergeTable(db.nutritionGoals, d.nutritionGoals);

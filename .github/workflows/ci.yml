@@ -5,7 +5,25 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
+  # This job has no npm install, package cache, external action plugins or
+  # browser dependencies. It provides an independent regression signal even
+  # when npm ci fails before the regular application suite can start.
+  offline-regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check standalone integration regressions
+        run: node tools/offline-regressions.mjs
+
   verify:
     runs-on: ubuntu-latest
     steps:

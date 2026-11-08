@@ -8,6 +8,65 @@ Bewegungsfiguren, Ernährungstracking (Nährwerte pro 100 g), Wasser, Körperwer
 Fortschritt, Wochen-Essensplan, Einkaufsliste und Backup — alles lokal auf dem
 Gerät (IndexedDB), offline-fähig, ohne Konto und ohne Backend.
 
+## Plattformen
+
+RED Fit bleibt eine lauffähige PWA. Auf dem Branch zur Mehrplattform-Integration
+sind ein **iPhone-Capacitor-Gerüst** und ein **Windows-Tauri-Gerüst** angelegt;
+Native-Builds und Installer sind noch nicht verifiziert. Die optionale
+Energie-/Makro-Schätzung ist integriert. **789 wger-Übungen** inklusive
+individueller Autor-/Lizenzangabe sind jetzt als lokaler, offlinefähiger
+Katalog enthalten. Der Import ist ausschließlich nach Vorschau und
+ausdrücklicher Bestätigung möglich; andere Übungen bleiben erhalten.
+Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
+[Plattform-Build-Anleitung](docs/PLATFORM-BUILDS.md).
+
+## Integrationsstand des Feature-Branches (November 2026)
+
+- **openGym**: Aufwärmsatz-Vorschläge und Supersatz-Gruppen im Planeditor,
+  automatischer Wechsel im aktiven Workout und Gruppenpause nach einer Runde.
+- **Workout-Datenintegrität**: aktive Satzänderungen werden jetzt geordnet
+  gespeichert; „Training abschließen“ wartet auf ältere Writes.
+  Zwei Fenster können auch nicht mehr gleichzeitig ein zweites aktives
+  Training anlegen: Der Start prüft und erstellt/resumiert in einer
+  einzelnen IndexedDB-Transaktion.
+  Ein bereits abgeschlossenes oder verworfenes Workout kann auch aus einem
+  zweiten Browser-Tab nicht per altem Aktiv-Snapshot wieder aktiviert werden.
+  Bei **zwei gleichzeitig aktiven Tabs** verhindert jetzt eine transaktional
+  geprüfte Workout-Revision, dass ein veralteter Satzstand stillschweigend
+  überschrieben wird. Im Konfliktfall erscheint eine Warnung mit Neuladen.
+  Auch die **Notizen der Trainings-Zusammenfassung** werden jetzt mit
+  Revisionsvergleich gespeichert; bei einem Konflikt wird das Fenster
+  gesperrt und der aktuell gespeicherte Stand angeboten.
+  Beim Wechsel zwischen zwei Workout-Routen bleiben ältere Autosaves
+  fest an das ursprüngliche Training gebunden; die Zusammenfassung
+  verlässt die Seite erst nach erfolgreichem Speichern der Notiz.
+  Gleiche Notiztexte aus Debounce, Blur oder Pagehide werden nur einmal
+  geschrieben; auch ein schnelles Zurücksetzen der Notiz bleibt korrekt.
+  [Schreibreihenfolge und Teststatus](docs/WORKOUT-SAVE-INTEGRITY.md).
+- **Dietry**: Kalorienbedarf-/Makro-Rechner, Kennzeichnung geschätzter
+  Essensmengen und **optionale Roh-/Gekocht-Umrechnung** für Reis, Nudeln
+  und weitere Zutaten. Das tatsächlich gekochte Gewicht und der Faktor
+  bleiben im Tagebuch erhalten; bestehende Rohdaten unverändert.
+  [Umrechnung und Grenzen](docs/DIETRY-COOKED-WEIGHT.md).
+  Mahlzeiteneinträge und Rezepte werden jetzt **atomar** gespeichert, damit
+  parallele Speichervorgänge keine anderen Einträge überschreiben. Auch
+  gekochte Mengen bleiben bei späteren Änderungen konsistent.
+  [Datenintegrität](docs/MEAL-LOG-INTEGRITY.md).
+- **wger**: 789 geprüfte und individuell attribuierte Übungen sind als
+  **mitgelieferter Offline-Katalog** über Training → Übungen → wger-Katalog
+  verfügbar. Die Datenbank wird erst nach Vorschau und ausdrücklicher
+  Bestätigung verändert. Ein eigener JSON-Import bleibt möglich.
+  [Importanleitung](docs/WGER-IMPORT.md) ·
+  [Autoren- und Lizenznachweise](docs/WGER-CATALOG-ATTRIBUTION.md).
+- **Windows**: responsive Sidebar ab Desktop-Breite; Tauri-Rust-Projektgerüst.
+- **iPhone**: gemeinsame Oberfläche und Capacitor-Konfiguration.
+
+Der neue Code ist in einem Draft-Pull-Request. GitHub Actions konnte zuletzt
+keinen Runner starten; die Implementierung gilt daher **nicht als Build-verifiziert**.
+Native App-Binaries und ein vollständiger Merge aller drei Originalprojekte
+sind noch nicht vorhanden. Quell-/Lizenzstatus:
+[Status](docs/SOURCE-ARCHIVE-STATUS.md).
+
 ## Voraussetzungen
 
 - Node.js ≥ 20
@@ -24,6 +83,73 @@ npm run typecheck  # TypeScript strict
 npm run lint       # ESLint
 npm run test       # Vitest (Berechnungen, Backup-Validierung)
 ```
+
+## Native Abhängigkeiten reproduzierbar vorbereiten
+
+Im Integrations-Branch steht jetzt ein versionsfestes Werkzeug für
+**Capacitor 8 (iPhone) und Tauri 2 (Windows)** bereit. Vor dem ersten
+nativen Build ist auf einem Rechner mit Registry-Zugriff auszuführen:
+
+```bash
+npm run native:plan
+npm run native:bootstrap
+npm run native:check
+npm ci
+```
+
+`native:bootstrap` trägt die nativen CLI-Pakete einschließlich der passenden
+Lockfile-Einträge ein. Beide npm-Manifeste müssen anschließend gemeinsam
+committed werden. Bei einem npm-Fehler setzt das Tool die Manifestdateien
+zurück. [Native Bootstrap-Anleitung](docs/NATIVE-DEPENDENCY-BOOTSTRAP.md).
+In der aktuellen Ausführungsumgebung ist die npm-Registry nicht erreichbar;
+ein echter iOS-/Windows-Build ist damit **noch nicht nachgewiesen**.
+
+Nach `npx cap add ios` erzeugt `npm run ios:icons` das standardisierte
+**1024px-App-Icon für Xcode** aus dem vorhandenen RED-Fit-Branding.
+Individuelle Xcode-Icons werden nicht still überschrieben.
+`npm run test:ios-icons` prüft die Generator-Pipeline auch ohne Xcode
+(**11/11 isolierte iOS-Node-Tests bestanden; zusätzlich 6/6 bestehende Windows-Tests**).
+[iPhone-App-Icon-Anleitung](docs/IOS-APPICON.md).
+
+## Offline-Regressionen ohne npm-Installation
+
+Der Branch besitzt jetzt einen **separaten CI-Job**, der alle
+`tools/*.selftest.mjs` mit Node.js 22 prüft, auch wenn der
+vollständige `npm ci`-/Vitest-/Build-Job noch nicht ausführbar ist:
+
+```bash
+node tools/offline-regressions.mjs --list
+npm run test:offline
+```
+
+**Der vollständige Offline-Testlauf wurde lokal erfolgreich ausgeführt:
+21/21 Suiten und 166/166 Einzeltests bestanden.** Alle verwendeten
+Testdateien sowie die relevanten Quellmodule wurden bytegenau mit dem
+GitHub-Branch abgeglichen. Der Lauf erfolgte in einer rekonstruierten
+lokalen Prüfumgebung; der echte GitHub-Actions-Run bleibt wegen
+fehlender Runner-Zuteilung offen. Die vollständige React-/Dexie-Suite
+und native Builds sind noch nicht geprüft.
+[Offline-Prüfprotokoll](docs/OFFLINE-REGRESSION-GATE.md).
+
+## Prüfen ohne GitHub-Actions-Runner
+
+Der GitHub-Actions-Runner wird derzeit nicht zugewiesen; dasselbe Problem
+bestand schon auf `main` im August 2026. Alle fünf App-Prüfschritte lassen
+sich auf Windows oder macOS direkt im lokalen Checkout ausführen:
+
+```bash
+node tools/verify-local.mjs
+```
+
+Das Ergebnis steht in `artifacts/verify-local.json`. Zum Prüfen des
+Ablaufs ohne installierte Abhängigkeiten:
+
+```bash
+node --test tools/verify-local.selftest.mjs
+```
+
+Detaillierte Diagnose und Hinweise: [CI-Wiederherstellung](docs/CI-RECOVERY.md).
+Die Selbsttests des Prüfscripts ersetzen **keinen** erfolgreichen App-Build.
 
 ## Architektur
 
@@ -49,19 +175,39 @@ src/
 
 ## Lokale Speicherung
 
-Alle Daten liegen in IndexedDB (`red-fit`, 14 Stores: exercises, workoutPlans,
+Alle Daten liegen in IndexedDB (`red-fit`, 17 Stores: exercises, workoutPlans,
 workoutLogs, foodItems, mealLogs, nutritionGoals, waterLogs, bodyMeasurements,
-shoppingLists, mealPlans, recipes, userProfiles, settings, metadata).
+shoppingLists, mealPlans, recipes, userProfiles, recoveryLogs, mediaAssets,
+progressPhotos, settings, metadata).
 Ein aktives Workout ist ein persistenter Datensatz (`status: "active"`) mit
 Autosave — Reload oder App-Schließen verliert nie Daten. Der Pausentimer läuft
 über absolute Zeitstempel (`restEndsAt`) und übersteht Backgrounding.
 
 ## Backup
 
-`Mehr → Backup & Import`: Export als `red-fit-backup-YYYY-MM-DD.json`
-(alle Stores, versioniertes Format). Import mit Runtime-Validierung (Zod),
-Schutz vor manipulierten Dateien, Vorschau und Merge-Strategie — bestehende
-Daten werden nie ungefragt gelöscht.
+`Mehr → Backup & Import`: Standardexport `red-fit-backup-YYYY-MM-DD.json`
+für Trainings-, Ernährungs-, Körper- und Recovery-Daten. Der Export
+verwendet einen **konsistenten Dexie-Lesesnapshot**, validiert die Datei mit
+dem aktuellen Zod-Schema und verweigert Dateien über der identischen
+25-MiB-Importgrenze. Der Import bietet Vorschau und Merge-Strategie.
+[Backup-Snapshot und Grenzen](docs/BACKUP-SNAPSHOT-INTEGRITY.md).
+Beim Import unter **„Backup bevorzugen“** wird eine ersetzte Workout-ID
+mit einer höheren Revisionsnummer gespeichert. Damit kann ein noch
+geöffnetes Trainingsfenster die wiederhergestellten Sätze nicht
+unbemerkt überschreiben.
+[Backup-Revisionen](docs/BACKUP-WORKOUT-REVISIONS.md).
+Auch beim Zusammenführen von Mahlzeiten werden jetzt **unterschiedliche
+Nährwert-Einträge mit zufällig gleicher ID nicht mehr verworfen**.
+Wiederholte Importe bleiben ohne zusätzliche Eintrags- und Notizduplikate.
+[Mahlzeiten-Kollisionsschutz](docs/BACKUP-MEAL-COLLISION-SAFETY.md).
+**Fortschrittsfotos
+sind ausdrücklich nicht enthalten**, da sie als private Medien gelten.
+
+Für den manuellen iPhone-↔-Windows-Transfer gibt es einen separaten,
+freiwilligen Foto-Export/Import (`red-fit-photos-YYYY-MM-DD.json`) mit
+Metadatenprüfung, atomarer Speicherung und ohne Cloud-Upload. **Die
+Foto-Datei ist unverschlüsselt** und muss vertraulich aufbewahrt werden.
+Grenzen und Anleitung: [Foto-Transfer](docs/PHOTO-TRANSFER.md).
 
 ## PWA / iPhone
 
