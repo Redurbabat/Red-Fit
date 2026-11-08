@@ -36,3 +36,18 @@ export function decodePhotoBase64(encoded: string, expectedBytes: number): Uint8
   }
   return bytes;
 }
+
+/**
+ * SHA-256 of the exact image bytes. The hash detects accidental corruption
+ * during local transfer, but is NOT authentication or encryption.
+ * Copying the bytes avoids a TypeScript ArrayBuffer/SharedArrayBuffer mismatch.
+ */
+export async function sha256PhotoBytes(bytes: Uint8Array): Promise<string> {
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", buffer);
+  return Array.from(
+    new Uint8Array(digest),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
