@@ -1,4 +1,5 @@
 import type { Difficulty, EquipmentType, MuscleGroup } from "../../models/exercise";
+import { z } from "zod";
 
 /**
  * Interoperability adapter for an individually licensed, user-supplied
@@ -72,4 +73,31 @@ export function previewWgerExercise(input: WgerExerciseInput): WgerExercisePrevi
       source: "wger",
     },
   };
+}
+
+/** Versioned, explicitly attributed JSON interchange format for local imports.
+ * Raw upstream fixtures need translation/rights review before creating this format.
+ */
+const wgerImportRecordSchema = z.object({
+  sourceId: z.number().int().positive(),
+  name: z.string().trim().min(1).max(160),
+  categoryId: z.number().int().nonnegative(),
+  muscleIds: z.array(z.number().int().nonnegative()).max(30),
+  secondaryMuscleIds: z.array(z.number().int().nonnegative()).max(30),
+  equipmentIds: z.array(z.number().int().nonnegative()).max(30),
+  sourceLicense: z.string().trim().min(1).max(300),
+  sourceAuthor: z.string().trim().min(1).max(300),
+}).strict();
+
+export function parseWgerImportJson(text: string): WgerExercisePreview[] {
+  // Restrict file and array size before storage. No images or remote URLs.
+  if (text.length > 5_000_000) throw new Error("Import file is too large");
+  const parsed: unknown = JSON.parse(text);
+  const records = z.array(wgerImportRecordSchema).min(1).max(3000).parse(parsed);
+  const seen = new Set<number>();
+  return records.map((record) => {
+    if (seen.has(record.sourceId)) throw new Error("Duplicate source ID: " + record.sourceId);
+    seen.add(record.sourceId);
+    return previewWgerExercise(record);
+  });
 }
