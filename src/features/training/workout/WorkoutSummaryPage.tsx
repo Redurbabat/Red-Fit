@@ -49,6 +49,9 @@ export default function WorkoutSummaryPage() {
     workoutId: string;
     save: (notes: string) => Promise<void>;
   } | null>(null);
+  // Route IDs can change while an old, ordered note write is in flight.
+  const routeWorkoutId = useRef(workoutId);
+  routeWorkoutId.current = workoutId;
   const notesConflictRef = useRef(false);
 
   useEffect(() => {
@@ -124,9 +127,19 @@ export default function WorkoutSummaryPage() {
       if (trimmed === lastSavedNotes.current) return true;
       try {
         await writer.save(trimmed);
-        if (showFeedback) showToast("Notiz gespeichert.");
+        if (showFeedback &&
+            isCurrentWorkoutRoute(routeWorkoutId.current, writer.workoutId)) {
+          showToast("Notiz gespeichert.");
+        }
         return true;
       } catch (error) {
+        if (!isCurrentWorkoutRoute(routeWorkoutId.current, writer.workoutId) ||
+            notesWriter.current !== writer) {
+          // A background write from a former summary must not flag this one
+          // as conflicted; still report that an older note failed to persist.
+          showToast("Notiz des vorherigen Trainings konnte nicht gespeichert werden.");
+          return false;
+        }
         const stale = error instanceof WorkoutRevisionConflictError ||
           (error instanceof Error && /no longer exists|require a finalized/.test(error.message));
         if (stale) {
