@@ -44,6 +44,12 @@ import {
   isCompoundMovement,
 } from "../../../services/calculations/warmup";
 import {
+  contiguousSuperset,
+  nextSupersetExerciseIndex,
+  shouldRestAfterSupersetSet,
+  supersetRestSeconds,
+} from "../../../services/calculations/supersets";
+import {
   cancelWorkout,
   completeSet,
   countIncompleteSets,
@@ -370,7 +376,21 @@ export default function WorkoutPage() {
     if (!currentLog || firstOpenSet < 0) return;
     // Unlock audio inside the tap gesture so the end-of-rest beep may play.
     armTimerSignal();
-    apply(completeSet(log, exerciseIndex, firstOpenSet, restSecondsFor(currentLog.exerciseId)), "now");
+    const completed = completeSet(log, exerciseIndex, firstOpenSet, 0);
+    const nextSupersetIndex = nextSupersetExerciseIndex(completed.exerciseLogs, exerciseIndex);
+    const shouldRest = shouldRestAfterSupersetSet(
+      completed.exerciseLogs, exerciseIndex, nextSupersetIndex,
+    );
+    const seconds = shouldRest
+      ? supersetRestSeconds(completed.exerciseLogs, exerciseIndex, restSecondsFor)
+      : 0;
+    apply({
+      ...completed,
+      currentExerciseIndex: nextSupersetIndex ?? exerciseIndex,
+      restEndsAt: seconds > 0
+        ? new Date(Date.now() + seconds * 1000).toISOString()
+        : undefined,
+    }, "now");
   };
 
   const goToExercise = (index: number) => {
@@ -586,6 +606,11 @@ export default function WorkoutPage() {
                 </Button>
               ) : null}
             </div>
+            {contiguousSuperset(log.exerciseLogs, exerciseIndex).length >= 2 ? (
+              <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--accent-2)" }}>
+                Supersatz {currentLog.supersetGroup} · automatischer Übungswechsel nach jedem Satz
+              </p>
+            ) : null}
             {lastPerformance ? (
               <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--text-muted)" }}>
                 Letztes Mal ({formatDateShortGerman(lastPerformance.date)}):{" "}
