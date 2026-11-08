@@ -34,6 +34,18 @@ describe("cooked food weight snapshot format", () => {
     }
   });
 
+  it("rejects incomplete cooked metadata instead of silently miscalculating", () => {
+    expect(mealFoodEntrySchema.safeParse({
+      ...legacy, weighedAs: "cooked", weighedAmountG: 260,
+    }).success).toBe(false);
+    expect(mealFoodEntrySchema.safeParse({
+      ...legacy, weighedAs: "cooked", cookingYieldFactor: 2.6,
+    }).success).toBe(false);
+    expect(mealFoodEntrySchema.safeParse({
+      ...legacy, weighedAmountG: 260, cookingYieldFactor: 2.6,
+    }).success).toBe(false);
+  });
+
   it("rejects negative cooked weights", () => {
     expect(mealFoodEntrySchema.safeParse({
       ...legacy, weighedAs: "cooked", weighedAmountG: -5,
