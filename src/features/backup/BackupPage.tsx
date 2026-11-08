@@ -1,4 +1,5 @@
-import { Download, Upload } from "lucide-react";
+import { Download, Image as ImageIcon, Upload } from "lucide-react";
+import { useLiveQuery } from "dexie-react-hooks";
 import { useRef, useState } from "react";
 import { useToast } from "../../components/feedback/ToastProvider";
 import { PageHeader, SectionHeader } from "../../components/layout/PageHeader";
@@ -6,6 +7,15 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { SegmentedControl } from "../../components/ui/inputs";
 import type { RedFitBackup } from "../../models/backup";
+import { db } from "../../services/storage/database";
+import {
+  exportPhotoBackupFile,
+  importPhotoBackup,
+  MAX_PHOTO_BACKUP_FILE_BYTES,
+  parsePhotoBackupJson,
+  type PhotoBackup,
+  type PhotoBackupImportResult,
+} from "../../services/backup/photoBackupService";
 import {
   buildPreview,
   exportBackupFile,
@@ -22,6 +32,12 @@ type ImportState =
   | { status: "error"; message: string }
   | { status: "preview"; backup: RedFitBackup; preview: BackupPreview }
   | { status: "done"; result: ImportResult };
+
+type PhotoImportState =
+  | { status: "idle" }
+  | { status: "error"; message: string }
+  | { status: "preview"; backup: PhotoBackup }
+  | { status: "done"; result: PhotoBackupImportResult };
 
 const PREVIEW_LABELS: [keyof BackupPreview, string, string][] = [
   ["exercises", "Übung", "Übungen"],
@@ -41,9 +57,13 @@ const PREVIEW_LABELS: [keyof BackupPreview, string, string][] = [
 export default function BackupPage() {
   const { showToast } = useToast();
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const photoFileRef = useRef<HTMLInputElement | null>(null);
+  const photoCount = useLiveQuery(() => db.progressPhotos.count(), []);
   const [importState, setImportState] = useState<ImportState>({ status: "idle" });
   const [strategy, setStrategy] = useState<ImportStrategy>("keepExisting");
   const [busy, setBusy] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoImportState, setPhotoImportState] = useState<PhotoImportState>({ status: "idle" });
 
   async function handleExport() {
     try {
@@ -88,6 +108,52 @@ export default function BackupPage() {
       });
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handlePhotoExport() {
+    if (photoBusy) return;
+    setPhotoBusy(true);
+    try {
+      const count = await exportPhotoBackupFile();
+      showToast(`${count} Fotos separat exportiert.`);
+    } catch {
+      showToast("Foto-Export fehlgeschlagen. Prüfe Dateigröße und gespeicherte Fotos.");
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
+  async function handlePhotoFile(file: File) {
+    setPhotoImportState({ status: "idle" });
+    if (file.size > MAX_PHOTO_BACKUP_FILE_BYTES) {
+      setPhotoImportState({ status: "error", message: "Die Foto-Datei ist größer als 36 MiB." });
+      return;
+    }
+    try {
+      const parsed = parsePhotoBackupJson(await file.text());
+      setPhotoImportState(parsed.ok
+        ? { status: "preview", backup: parsed.backup }
+        : { status: "error", message: parsed.error });
+    } catch {
+      setPhotoImportState({ status: "error", message: "Foto-Datei konnte nicht gelesen werden." });
+    }
+  }
+
+  async function handlePhotoImport(backup: PhotoBackup) {
+    if (photoBusy) return;
+    setPhotoBusy(true);
+    try {
+      const result = await importPhotoBackup(backup);
+      setPhotoImportState({ status: "done", result });
+      showToast(`${result.added} Fotos importiert.`);
+    } catch {
+      setPhotoImportState({
+        status: "error",
+        message: "Foto-Import fehlgeschlagen. Bestehende Fotos wurden nicht ersetzt.",
+      });
+    } finally {
+      setPhotoBusy(false);
     }
   }
 
@@ -177,6 +243,76 @@ export default function BackupPage() {
           </div>
         </Card>
       ) : null}
+
+      <SectionHeader title="Fortschrittsfotos – separates Backup" />
+      <Card>
+        <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 12 }}>
+          Deine {photoCount ?? "…"} Fortschrittsfotos sind aus Datenschutzgründen
+          nicht im normalen RED-Fit-Backup enthalten. Du kannst sie hier
+          ausdrücklich in einer separaten Datei sichern oder auf ein anderes
+          Gerät übertragen. Es findet kein Server-Upload statt.
+        </p>
+        <p style={{ fontSize: 13, color: "var(--warning)", marginBottom: 12 }}>
+          Achtung: Diese Foto-Datei ist nicht verschlüsselt und enthält private
+          Bilder. Bewahre sie geschützt auf und lösche ungeschützte Kopien.
+          Pro Datei sind maximal 25 MiB Bilddaten möglich.
+        </p>
+        <Button
+          variant="secondary"
+          disabled={photoBusy || photoCount === undefined || photoCount === 0}
+          onClick={() => void handlePhotoExport()}
+        >
+          <ImageIcon size={18} aria-hidden="true" /> Fotos separat exportieren
+        </Button>
+        <input
+          ref={photoFileRef}
+          type="file"
+          accept="application/json,.json"
+          hidden
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            if (file) void handlePhotoFile(file);
+            event.currentTarget.value = "";
+          }}
+        />
+        <Button
+          variant="ghost"
+          disabled={photoBusy}
+          onClick={() => photoFileRef.current?.click()}
+          style={{ marginTop: 8 }}
+        >
+          <Upload size={18} aria-hidden="true" /> Foto-Backup auswählen
+        </Button>
+
+        {photoImportState.status === "preview" ? (
+          <div style={{ marginTop: 12 }}>
+            <p style={{ fontWeight: 700 }}>
+              {photoImportState.backup.photos.length} Fotos zum Import
+            </p>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "8px 0 12px" }}>
+              Bestehende Foto-IDs bleiben unangetastet; der Import erfolgt nur
+              auf diesem Gerät. Du bestätigst den Import ausdrücklich.
+            </p>
+            <Button
+              disabled={photoBusy}
+              onClick={() => void handlePhotoImport(photoImportState.backup)}
+            >
+              Foto-Import bestätigen
+            </Button>
+          </div>
+        ) : null}
+        {photoImportState.status === "error" ? (
+          <p role="alert" style={{ fontSize: 13, color: "var(--danger)", marginTop: 12 }}>
+            {photoImportState.message}
+          </p>
+        ) : null}
+        {photoImportState.status === "done" ? (
+          <p role="status" style={{ fontSize: 13, marginTop: 12 }}>
+            {photoImportState.result.added} hinzugefügt,
+            {" "}{photoImportState.result.skipped} bereits vorhanden.
+          </p>
+        ) : null}
+      </Card>
 
       {importState.status === "done" ? (
         <Card style={{ marginTop: 14 }}>
