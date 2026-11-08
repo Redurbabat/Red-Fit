@@ -23,10 +23,9 @@ export function BottomNav() {
   const scrollRef = useRef(initialDockScrollState(0));
 
   useEffect(() => {
-    // Route transitions reset the dock; changes made while the page is active
-    // depend only on scroll direction, not on elapsed animation time.
+    // AppShell keys this dock by route, resetting it on navigation.
+    // While this route is active, only actual scroll direction changes state.
     scrollRef.current = initialDockScrollState(window.scrollY);
-    setCompact(false);
 
     const onScroll = () => {
       const next = updateDockScrollState(scrollRef.current, window.scrollY);
