@@ -169,6 +169,16 @@ describe("records", () => {
     });
     expect(findNewRecords(zeroReps, [])).toHaveLength(0);
   });
+
+  it("ignores discarded and still-active workouts for personal records", () => {
+    const exerciseLogs = [
+      { id: "e", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(100, 12)] },
+    ];
+    expect(findNewRecords(workout({ status: "cancelled", exerciseLogs }), []))
+      .toHaveLength(0);
+    expect(findNewRecords(workout({ status: "active", exerciseLogs }), []))
+      .toHaveLength(0);
+  });
 });
 
 describe("estimated 1RM (Epley)", () => {
