@@ -31,6 +31,7 @@ describe("importAttributedExercises", () => {
       name: "Test Squat",
       sourceRef: "wger:42",
       sourceAuthor: "Source Author",
+      taxonomyNeedsReview: false,
       muscleGroup: "legs",
       equipment: "barbell",
       isCustom: true,
@@ -55,5 +56,17 @@ describe("importAttributedExercises", () => {
     expect(result).toEqual({ created: 1, skipped: 1 });
     expect(await db.exercises.count()).toBe(2);
     expect((await exerciseRepository.list()).some((e) => e.name === "Personal movement")).toBe(true);
+  });
+
+  it("persists review status without modifying existing exercises", async () => {
+    const unclassified = {
+      ...preview,
+      sourceKey: "wger:77",
+      muscleGroup: "fullBody" as const,
+      needsMuscleReview: true,
+    };
+    await exerciseRepository.importAttributedExercises([unclassified]);
+    const imported = (await exerciseRepository.list()).find((e) => e.sourceRef === "wger:77");
+    expect(imported?.taxonomyNeedsReview).toBe(true);
   });
 });
