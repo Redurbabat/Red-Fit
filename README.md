@@ -106,6 +106,23 @@ Individuelle Xcode-Icons werden nicht still überschrieben.
 (**11/11 isolierte iOS-Node-Tests bestanden; zusätzlich 6/6 bestehende Windows-Tests**).
 [iPhone-App-Icon-Anleitung](docs/IOS-APPICON.md).
 
+## Offline-Regressionen ohne npm-Installation
+
+Der Branch besitzt jetzt einen **separaten CI-Job**, der alle
+`tools/*.selftest.mjs` mit Node.js 22 prüft, auch wenn der
+vollständige `npm ci`-/Vitest-/Build-Job noch nicht ausführbar ist:
+
+```bash
+node tools/offline-regressions.mjs --list
+npm run test:offline
+```
+
+Der Runner hat fünf eigene Tests bestanden; in einer lokal
+zusammengestellten Kopie wurden **15 der 19 Suiten mit 113/113
+bestandenen Einzeltests** ausgeführt. Ein vollständiger 19-Suiten-
+GitHub-Run bleibt wegen der Runner-Zuteilung offen.
+[Offline-Prüfprotokoll](docs/OFFLINE-REGRESSION-GATE.md).
+
 ## Prüfen ohne GitHub-Actions-Runner
 
 Der GitHub-Actions-Runner wird derzeit nicht zugewiesen; dasselbe Problem
