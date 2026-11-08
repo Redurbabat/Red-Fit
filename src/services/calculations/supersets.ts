@@ -1,4 +1,4 @@
-import type { ExerciseLog } from "../../models";
+import type { ExerciseLog, WorkoutPlanExercise } from "../../models";
 
 /**
  * RED Fit superset navigation, developed from the unit/round model reviewed in
@@ -77,4 +77,27 @@ export function supersetRestSeconds(
     .find((seconds) => seconds > 0);
   if (custom != null) return custom;
   return Math.max(0, ...group.map((index) => restForExercise(logs[index].exerciseId)));
+}
+
+/**
+ * Plan-editor validation: nonempty group IDs must occur at least twice and
+ * only as one contiguous run. Returns the first invalid name, if any.
+ */
+export function invalidSupersetGroup(
+  exercises: Pick<WorkoutPlanExercise, "supersetGroup">[],
+): string | undefined {
+  const groups = new Map<string, number[]>();
+  exercises.forEach((exercise, index) => {
+    const group = exercise.supersetGroup?.trim();
+    if (!group) return;
+    groups.set(group, [...(groups.get(group) ?? []), index]);
+  });
+  for (const [group, indices] of groups) {
+    if (indices.length < 2 || indices.some((index, pos) =>
+      index !== indices[0] + pos
+    )) {
+      return group;
+    }
+  }
+  return undefined;
 }
