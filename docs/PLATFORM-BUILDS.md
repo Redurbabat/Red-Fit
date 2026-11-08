@@ -56,6 +56,9 @@ vorsorglich freigegeben.
 6. HealthKit-Berechtigungen nur nach ausdrücklicher Aktion anfordern.
 7. iPhone: echte Geräte-Tests für Backgrounding, Safe Areas und Touch-Ziele.
 8. Windows: Installer, Update, Skalierung, Tastatur und Datenpersistenz testen.
+8a. Optionalen separaten Foto-Transfer von iPhone → Windows → iPhone mit
+    realen JPEG/HEIC-Bildern, kontrollierten IDs und sicherer Dateifreigabe
+    prüfen; Format ist unverschlüsselt und begrenzt (siehe `docs/PHOTO-TRANSFER.md`).
 9. Keine Green-Build- oder Installationsbehauptungen ohne tatsächlichen Nachweis.
 
 ## Quellen und Rechtliches
