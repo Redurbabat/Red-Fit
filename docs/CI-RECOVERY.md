@@ -86,11 +86,16 @@ Der Integrations-Branch enthält jetzt in
 eigenständigen Qualitätsstatus. Der reguläre `verify`-Job bleibt
 für `typecheck`, `lint`, Vitest und Build notwendig.
 
-**Lokal verifiziert:** 5/5 Tests des Test-Starters, außerdem
-113/113 Einzeltests in 15 lokal verfügbaren von 19 GitHub-Suiten
-bestanden. **Nicht verifiziert:** Der vollständige 19-Suiten-Lauf
-im echten Checkout; ohne GitHub-Runner startet auch der neue Job
-noch nicht. Details und genauer Umfang:
+**Lokal verifiziert:** Nach Ergänzung der zuvor fehlenden
+Originaldateien aus dem privaten Branch wurden **alle 19 Offline-Suiten
+mit 144/144 bestandenen Tests** auf Node.js 22.16.0 ausgeführt.
+Die relevanten Test- und Quelldateien stimmen per Git-Blob-SHA-1
+mit GitHub überein. Der Lauf erfolgte in einer lokal rekonstruierten
+Prüfumgebung (kein direkter Git-Checkout).
+
+**Noch nicht verifiziert:** ein echter GitHub-Actions-Run, die vollständige
+npm-/Dexie-/React-Suite und die nativen Builds. Ohne Runner-Zuteilung
+startet auch der neue Offline-Job nicht. Details und genauer Umfang:
 [OFFLINE-REGRESSION-GATE.md](OFFLINE-REGRESSION-GATE.md).
 
 ## Freigabekriterium
