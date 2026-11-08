@@ -107,8 +107,8 @@ export default function AddMealPage() {
   async function handleSave() {
     if (!selectedFood || saving) return;
     const value = parseDecimalInput(amountInput);
-    if (value == null || value <= 0) {
-      setAmountError("Bitte gib eine Menge über 0 g ein.");
+    if (value == null || value <= 0 || value > 1_000_000) {
+      setAmountError("Bitte gib eine realistische Menge über 0 g ein.");
       return;
     }
     // A cooked amount is converted to the raw/dry label's unit BEFORE
@@ -385,7 +385,7 @@ function LiveNutrition({
   cookingFactor,
 }: { food: FoodItem; amountInput: string; cookingFactor: number }) {
   const value = parseDecimalInput(amountInput);
-  if (value == null || value <= 0) return null;
+  if (value == null || value <= 0 || value > 1_000_000) return null;
   const weighedAmountG = roundTo(value, 1);
   if (weighedAmountG <= 0) return null;
   const amountG = roundTo(rawEquivalentGrams(weighedAmountG, cookingFactor), 1);
