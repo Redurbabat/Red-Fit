@@ -125,3 +125,16 @@ Nächster konkreter Schritt:
 - **Commits:** `9ada120` PR-Reps, `4627a25` Vitest, `08638ed` Eigengewichts-UI, `380da87` Abbruchschutz, `59b0b2e` Status-Vitest, `aca2d88` source-backed Node-Selftest.
 - **Offen:** `node --test tools/workout-records.selftest.mjs` im vollständigen Checkout, vollständiger `npm ci && npm run typecheck && npm run lint && npm run test && npm run build`, Cloudflare und native Zielgeräte. Diesen Schritt erst nach realen Erfolgslogs abhaken.
 - **Nächster Schritt:** Den source-backed Selbsttest mit echtem Checkout und Node 22.16+ ausführen; danach den aktuellen Cloudflare Worker-Build kontrollieren. Für native Binary-Builds fehlt weiter ein atomar aktualisiertes `package.json` + `package-lock.json`.
+
+
+## 2026-11-08 — Trainingsrekord-Quellselbsttest real ausgeführt (7/7)
+
+- **Ziel:** Die bisher nur als Quellfunktionsprüfung verifizierte neue Datei `tools/workout-records.selftest.mjs` erstmals tatsächlich mit Node als vollständige Suite ausführen.
+- **GitHub-`main` am Testbeginn:** `80a2ba7a721fc0cdd3a73584a55c3a5b66e8bf5f`. Originaldateien aus dem privaten GitHub-Repository in eine isolierte lokale Teststruktur übertragen; GitHub-Blob-SHAs mit `git hash-object` bestätigt:
+  - `tools/workout-records.selftest.mjs` → `8dc398b822f1530696ba932697584cad4f53d531`;
+  - `src/services/calculations/workout.ts` → `a505f693771d767ce72fd0ed978c7203150e6d1d`.
+- **Tatsächlich ausgeführt:** `node --test tools/workout-records.selftest.mjs` unter **Node.js 22.16.0**, TAP-Ergebnis **7 Tests, 7 bestanden, 0 fehlgeschlagen**, Laufzeit 112,8 ms. Gesonderter Testlog im ausführenden Arbeitsverzeichnis `/mnt/data/redfit-pr-verification/TEST-RESULTS.log`.
+- **Inhalt:** höheres Gewicht; mehr Wiederholungen bei identischem Spitzengewicht; keine Scheinrekorde bei Gleichstand; Eigengewichts-PR; Null-Wiederholungs-/nicht abgeschlossene Sätze; abgebrochene, aktive und geplante Trainings; mehrere Blöcke derselben Übung.
+- **Testgrenze:** Voller neuer npm-freier **Node-Selbsttest** erfolgreich, aber im isolierten Nachbau mit den zwei exakt hash-geprüften `main`-Dateien und gestubbten fremden Datumsfunktionen, **nicht** als `npm ci`, Vitest-Gesamtlauf, Typecheck, Vite-Build oder Cloudflare-/nativer Deploy.
+- **Weiterer Dokumentschritt:** `docs/CI-RECOVERY.md` auf bereits zusammengeführte PRs/`main` aktualisiert und veraltete Freigabeformulierung zum unmerged Draft-PR korrigiert; `obsidian/07-BACKLOG.md` markiert den neuen Ausführungsnachweis. Produktionscode unverändert.
+- **Nächste offene Aufgabe:** `npm ci && npm run typecheck && npm run lint && npm run test && npm run build` auf einem Checkout mit erreichbarer npm-Registry ausführen; den neuesten Cloudflare-Build und die Live-URL erst nach Logs/HTTP-Prüfung bestätigen. Native npm-Abhängigkeiten fehlen weiterhin im Lockfile.
