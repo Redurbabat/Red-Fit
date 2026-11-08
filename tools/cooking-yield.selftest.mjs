@@ -54,6 +54,7 @@ test("rejects invalid measurements and impossible factors", () => {
   for (const factor of [0, -1, NaN, Infinity, 11]) {
     assert.throws(() => rawEquivalentGrams(100, factor), RangeError);
   }
+  assert.throws(() => rawEquivalentGrams(1e308, 0.1), RangeError);
 });
 
 test("raw snapshots and cooked snapshots display their original weighed amount", () => {
