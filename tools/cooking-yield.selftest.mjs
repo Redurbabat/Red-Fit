@@ -29,7 +29,8 @@ test("already cooked foods are not offered the conversion", () => {
 
 test("composite dishes are not matched", () => {
   for (const name of ["Milchreis", "Pasta Sauce", "Reissalat", "Reiswaffeln",
-    "Curry mit Reis", "Preiselbeeren", "Instant Nudeln", "Wasser"]) {
+    "Curry mit Reis", "Preiselbeeren", "Instant Nudeln", "Wasser",
+    "Chicken Nuggets", "Beef Burger", "Fischstäbchen"]) {
     assert.equal(getCookingYield({ name }), null, name);
   }
 });
