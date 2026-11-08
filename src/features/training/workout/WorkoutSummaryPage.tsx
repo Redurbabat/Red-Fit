@@ -16,6 +16,9 @@ import {
   type ExerciseRecord,
 } from "../../../services/calculations/workout";
 import { workoutLogRepository } from "../../../services/storage";
+import { saveWorkoutNotes } from "../../../services/workout/workoutService";
+import { WorkoutRevisionConflictError } from "../../../services/workout/workoutRevision";
+import { createSerializedWorkoutWriter } from "../../../services/workout/serializedWorkoutWriter";
 import { formatDateGerman, formatDurationLong } from "../../../utils/dates";
 import { formatKg } from "../../../utils/numbers";
 
@@ -36,14 +39,19 @@ export default function WorkoutSummaryPage() {
   const [log, setLog] = useState<WorkoutLog | null | undefined>(undefined);
   const [records, setRecords] = useState<ExerciseRecord[]>([]);
   const [notes, setNotes] = useState("");
+  const [notesConflict, setNotesConflict] = useState(false);
   // Refs keep the latest value visible to flush handlers (hidden/pagehide/unmount).
   const notesRef = useRef("");
   const lastSavedNotes = useRef("");
-  const logIdRef = useRef<string | null>(null);
   const pendingNotesSave = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notesWriter = useRef<((notes: string) => Promise<void>) | null>(null);
+  const notesConflictRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    notesWriter.current = null;
+    notesConflictRef.current = false;
+    setNotesConflict(false);
     if (!workoutId) {
       setLog(null);
       return;
@@ -53,7 +61,18 @@ export default function WorkoutSummaryPage() {
       .then((found) => {
         if (cancelled) return;
         setLog(found ?? null);
-        logIdRef.current = found?.id ?? null;
+        if (found) {
+          // Serial saves use a revision updated ONLY after persistence.
+          // Two independent summary views cannot silently overwrite notes.
+          let revision = found.saveRevision ?? 0;
+          notesWriter.current = createSerializedWorkoutWriter<string>(
+            async (text) => {
+              const saved = await saveWorkoutNotes(found.id, revision, text);
+              revision = saved.saveRevision ?? 0;
+              lastSavedNotes.current = text;
+            },
+          );
+        }
         const initialNotes = found?.notes ?? "";
         setNotes(initialNotes);
         notesRef.current = initialNotes;
@@ -87,18 +106,25 @@ export default function WorkoutSummaryPage() {
   /** Persist the current ref state; toast only on explicit saves (blur). */
   const persistNotes = useCallback(
     async (showFeedback: boolean) => {
-      const logId = logIdRef.current;
-      if (!logId) return;
+      const writer = notesWriter.current;
+      if (!writer || notesConflictRef.current) return;
       const trimmed = notesRef.current.trim();
       if (trimmed === lastSavedNotes.current) return;
       try {
-        await workoutLogRepository.update(logId, {
-          notes: trimmed === "" ? undefined : trimmed,
-        });
-        lastSavedNotes.current = trimmed;
+        await writer(trimmed);
         if (showFeedback) showToast("Notiz gespeichert.");
-      } catch {
-        if (showFeedback) showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
+      } catch (error) {
+        const stale = error instanceof WorkoutRevisionConflictError ||
+          (error instanceof Error && /no longer exists|require a finalized/.test(error.message));
+        if (stale) {
+          if (!notesConflictRef.current) {
+            notesConflictRef.current = true;
+            setNotesConflict(true);
+            showToast("Notizen wurden in einem anderen Fenster geändert. Bitte neu laden.");
+          }
+        } else if (showFeedback) {
+          showToast("Speichern fehlgeschlagen. Bitte versuche es erneut.");
+        }
       }
     },
     [showToast],
@@ -118,6 +144,7 @@ export default function WorkoutSummaryPage() {
 
   /** Autosave while typing (debounced) — the note never lives only in state. */
   const handleNotesChange = (value: string) => {
+    if (notesConflictRef.current) return;
     setNotes(value);
     notesRef.current = value;
     if (pendingNotesSave.current) clearTimeout(pendingNotesSave.current);
@@ -260,7 +287,24 @@ export default function WorkoutSummaryPage() {
 
       <section>
         <SectionHeader title="Notiz" />
+        {notesConflict ? (
+          <div role="alert" style={{
+            padding: 14,
+            marginBottom: 12,
+            border: "1px solid var(--warning)",
+            borderRadius: "var(--radius-md)",
+          }}>
+            <p style={{ marginBottom: 10 }}>
+              Diese Trainingsnotizen wurden in einem anderen Fenster verändert.
+              Ungespeicherte Änderungen hier werden nicht übernommen.
+            </p>
+            <Button variant="secondary" onClick={() => window.location.reload()}>
+              Gespeicherten Stand neu laden
+            </Button>
+          </div>
+        ) : null}
         <textarea
+          disabled={notesConflict}
           className="input"
           value={notes}
           onChange={(e) => handleNotesChange(e.target.value)}
