@@ -8,6 +8,7 @@ import {
   decodePhotoBase64,
   encodePhotoBase64,
   MAX_SINGLE_PHOTO_BYTES,
+  sha256PhotoBytes,
 } from "../src/services/backup/photoBackupCodec.ts";
 
 test("round-trip for 1, 2, 3 and >12 KiB byte arrays", () => {
@@ -26,4 +27,21 @@ test("reject invalid base64, truncated values and metadata mismatches", () => {
 test("reject empty files and wrong sizes beyond 10 MiB", () => {
   assert.throws(() => decodePhotoBase64("", 0));
   assert.throws(() => decodePhotoBase64("AA==", MAX_SINGLE_PHOTO_BYTES + 1));
+});
+
+test("SHA-256 detects same-length photo corruption", async () => {
+  const unchanged = new TextEncoder().encode("a-private-image");
+  const corrupted = new TextEncoder().encode("b-private-image");
+  assert.equal(unchanged.byteLength, corrupted.byteLength);
+  const originalDigest = await sha256PhotoBytes(unchanged);
+  const corruptedDigest = await sha256PhotoBytes(corrupted);
+  assert.match(originalDigest, /^[0-9a-f]{64}$/);
+  assert.notEqual(originalDigest, corruptedDigest);
+});
+
+test("SHA-256 conforms to the NIST abc test vector", async () => {
+  assert.equal(
+    await sha256PhotoBytes(new TextEncoder().encode("abc")),
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+  );
 });
