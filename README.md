@@ -26,10 +26,12 @@ Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
   automatischer Wechsel im aktiven Workout und Gruppenpause nach einer Runde.
 - **Dietry**: Kalorienbedarf-/Makro-Rechner in Einstellungen sowie Kennzeichnung
   geschätzter Essensmengen und verständliche Unsicherheitsanzeige.
-- **wger**: lokaler JSON-Übungsimport mit Quellen-ID, Autor, Lizenz, Vorschau,
-  Duplikat-Erkennung und atomarer Speicherung. Der
-  [Katalog-Konverter](docs/WGER-IMPORT.md) bereitet 789 ausreichend
-  attribuierte Übungen aus der bereitgestellten wger-Quelle auf.
+- **wger**: 789 geprüfte und individuell attribuierte Übungen sind als
+  **mitgelieferter Offline-Katalog** über Training → Übungen → wger-Katalog
+  verfügbar. Die Datenbank wird erst nach Vorschau und ausdrücklicher
+  Bestätigung verändert. Ein eigener JSON-Import bleibt möglich.
+  [Importanleitung](docs/WGER-IMPORT.md) ·
+  [Autoren- und Lizenznachweise](docs/WGER-CATALOG-ATTRIBUTION.md).
 - **Windows**: responsive Sidebar ab Desktop-Breite; Tauri-Rust-Projektgerüst.
 - **iPhone**: gemeinsame Oberfläche und Capacitor-Konfiguration.
 
