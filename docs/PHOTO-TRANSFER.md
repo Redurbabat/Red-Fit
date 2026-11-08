@@ -1,0 +1,69 @@
+# RED Fit – privater Fortschrittsfoto-Transfer (iPhone ↔ Windows)
+
+## Datenschutz: bewusst getrennt vom Standard-Backup
+
+Fortschrittsfotos sind als `sensitiveMedia` markiert und werden nur lokal in
+IndexedDB (`progressPhotos` + `mediaAssets` mit `Blob`) gespeichert.
+
+Der bisherige Standard-Export
+`red-fit-backup-YYYY-MM-DD.json` enthält **keine Fotos/Bilddaten**.
+Er bleibt unverändert und weiterhin rückwärtskompatibel. Es wird nichts in
+einen Cloud-Dienst hochgeladen.
+
+Im neuen, **ausdrücklich ausgelösten** Ablauf kann ein Nutzer seine eigenen
+Fotos separat als `red-fit-photos-YYYY-MM-DD.json` exportieren und in einer
+anderen RED-Fit-Installation importieren. Die Datei ist **nicht verschlüsselt**.
+Daher nur sicher aufbewahren, nicht ungeschützt versenden oder online stellen.
+
+## Bedienung
+
+1. Auf dem Quellgerät zu **Mehr → Backup & Import** gehen.
+2. Zunächst das **normale Backup** exportieren (Workouts, Ernährung, Profil).
+3. Unter **Fortschrittsfotos – separates Backup** auf
+   **Fotos separat exportieren** tippen.
+4. Beide Dateien auf dem Zielgerät sicher bereitstellen.
+5. Auf dem Zielgerät zuerst das normale JSON-Backup importieren.
+6. **Foto-Backup auswählen** klicken, Zahl der Fotos prüfen und den
+   **Foto-Import bestätigen**.
+
+Das normale Backup wird nicht automatisch durch das Foto-Backup ersetzt oder
+ergänzt. Beide Dateien müssen bei einem Gerätewechsel separat übertragen
+werden. Ohne bewusste Nutzeraktion werden keine Fotos exportiert.
+
+## Technischer Vertrag
+
+`src/services/backup/photoBackupService.ts`:
+
+- Eigenständiges Format `red-fit-photo-backup`, Version `1`.
+- Pro Element: vollständige `ProgressPhoto`-Metadaten,
+  `MediaAsset`-Metadaten und Bildbytes als Base64.
+- Zulässige Bild-MIME-Typen: JPEG, PNG, WebP, HEIC, HEIF, AVIF, GIF.
+  `image/svg+xml` ist nicht zulässig.
+- Je Foto höchstens **10 MiB**, je Export höchstens **25 MiB** Rohdaten,
+  Dateigröße höchstens **36 MiB**, maximal **250 Fotos**.
+- Parser prüft Schema, Referenzen, eindeutige IDs, MIME-Typ,
+  `sensitiveMedia`, Datenlänge und gültiges Base64 vor dem Import.
+- **Kein stiller Datenverlust beim Export:** Ein Foto ohne gespeicherten
+  Blob oder mit abweichender Dateigröße führt zum Abbruch.
+- **Transaktionaler Import**: Bestehende Foto-IDs bleiben unangetastet;
+  überschneidende Asset-IDs bekommen neue IDs, damit kein fremdes lokales
+  Bild überschrieben wird. Alle Bilder werden vor dem Datenbanktransaction
+  dekodiert (Dexie-Transaction-Lifetime).
+- **Keine automatische Synchronisierung**. Der Transfer ist ein manueller,
+  lokaler Datei-Workflow.
+
+## Grenzen und Tests
+
+Der Transfer ist für kleinere, lokale Foto-Sammlungen vorgesehen.
+Sammlungen über 25 MiB Rohdaten können derzeit **nicht in einer einzigen
+Datei** exportiert werden. Dafür folgt ein separates, partitioniertes oder
+verschlüsseltes Archivformat; keine Behauptung einer vollständigen
+Massendatenmigration ohne dieses Feature.
+
+`src/services/backup/photoBackupService.test.ts` enthält Tests für
+Base64-Roundtrip über Chunk-Grenzen, Erhalt von Metadaten, Import,
+Idempotenz, ID-Kollisionen, beschädigte Dateien und fehlende Blobs.
+
+Solange die GitHub-Actions-Runner nicht gestartet werden können, sind
+die Anwendungstests und echte iPhone-/Windows-Importe **noch nicht
+durchgehend verifiziert**; kein voreiliger Merge nach `main`.
