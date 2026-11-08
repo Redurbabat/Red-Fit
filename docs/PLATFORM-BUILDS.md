@@ -17,17 +17,21 @@ Voraussetzungen: ein passendes aktuelles Xcode, Apple-Toolchain, Node.js sowie g
 ein Apple-Developer-Konto für Gerätedistribution.
 
 ```bash
+npm run native:plan
+npm run native:bootstrap
+npm run native:check
 npm ci
-npm install @capacitor/core @capacitor/ios
-npm install -D @capacitor/cli
 npm run typecheck && npm run test && npm run build
 npx cap add ios
 npx cap sync ios
 npx cap open ios
 ```
 
-Diese Paketinstallationen müssen in einem getrennten Commit mit aktualisierter
-`package-lock.json` gesichert werden. Bundle-ID `com.redfit.app` ist ein
+`native:bootstrap` installiert explizit Capacitor 8.6.0 und Tauri CLI 2.12.4
+und prüft danach `package.json` sowie `package-lock.json`. **Beide
+Manifestdateien müssen gemeinsam gepusht werden**; eine npm-Installation wurde
+hier mangels Registry-Netzwerk nicht ausgeführt.
+Details: [Nativer Dependency-Bootstrap](NATIVE-DEPENDENCY-BOOTSTRAP.md). Bundle-ID `com.redfit.app` ist ein
 **Platzhalter**, der vor dem Signieren mit einer verfügbaren eigenen ID zu ersetzen ist.
 Native APIs (HealthKit/Notifications/Camera) sind noch **nicht** eingebunden.
 `src/core/platform/platform.ts` meldet Health-Daten ausdrücklich als nicht unterstützt.
@@ -38,18 +42,42 @@ Tauri-CLI. Gerüst: `src-tauri/Cargo.toml`, `build.rs`, `src/main.rs`,
 `tauri.conf.json`, minimale Capability.
 
 ```bash
+npm run native:bootstrap
+npm run native:check
 npm ci
-npm install -D @tauri-apps/cli
 npm run typecheck && npm run test && npm run build
 npx tauri dev
 npx tauri build
 ```
 
-Diese Installationen aktualisieren `package-lock.json`. Der Rust-/MSVC-Build
+Nach der geprüften Bootstrap-Installation müssen `package.json` und
+`package-lock.json` gemeinsam versioniert werden. Der Rust-/MSVC-Build
 und die tatsächlichen MSI-/NSIS-Installer müssen weiterhin auf Windows geprüft
 werden. Das Icon-Generatorgerüst ist vorhanden und lokal getestet.
 Tauri-Core-Berechtigungen sind minimal; Datei-/Health-Plugins werden nicht
 vorsorglich freigegeben.
+
+## Offline verifizierbarer nativer Dependency-Bootstrap
+
+`tools/nativeDependencies.mjs` verwaltet die explizit gepinnten
+Capacitor-/Tauri-Pakete und prüft die beiden npm-Manifeste inklusive der
+aufgelösten Lockfile-Pakete. `tools/bootstrap-native.mjs` bietet einen
+`--plan`-, `--install`- und `--check`-Modus (auch als npm-Skripte
+`native:plan`, `native:bootstrap` und `native:check`). Fehlschläge
+beim Installieren stellen Manifest und Lockfile zurück.
+
+In isolierter Linux-Testumgebung mit Node 22.16 liefen
+`node --test tools/native-deps.selftest.mjs` erfolgreich: **14/14 Tests**.
+Enthalten sind korrekte Versionen, fehlende/mangelhafte Lockfile-Pakete,
+Konflikte, nicht verändernder Planmodus und Rollback nach fehlgeschlagenem
+Mock-npm. Die verwendeten lokalen Quelltexte wurden mit den GitHub-Dateien
+per Länge und FNV32 abgeglichen. Dieser Nachweis **installiert keine
+Abhängigkeiten** und ist kein nativer Build.
+
+Die Registry ist aus der ausführenden Umgebung nicht erreichbar; für einen
+fertigen `package-lock.json`-Commit muss `native:bootstrap` in einem
+Repository-Checkout mit funktionierender npm-Netzwerkverbindung laufen.
+Siehe [Nativer Dependency-Bootstrap](NATIVE-DEPENDENCY-BOOTSTRAP.md).
 
 ## Native Navigation und App-Updates (2026-11-08)
 
