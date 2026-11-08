@@ -28,6 +28,7 @@ import { PlateCalculatorSheet } from "../../../components/workout/PlateCalculato
 import { armTimerSignal, playTimerSignal } from "../../../services/audio/timerSignal";
 import { createSerializedWorkoutWriter } from "../../../services/workout/serializedWorkoutWriter";
 import { WorkoutRevisionConflictError } from "../../../services/workout/workoutRevision";
+import { assertWorkoutWriteScope, isCurrentWorkoutRoute } from "../../../services/workout/workoutRouteScope";
 import type {
   Exercise,
   ExerciseLog,
@@ -179,8 +180,8 @@ export default function WorkoutPage() {
   const apply = useCallback(
     (next: WorkoutLog, mode: "now" | "debounce") => {
       if (terminalSaveInFlight.current || conflictNotified.current ||
-          !workoutId || next.id !== workoutId ||
-          logRef.current?.id !== workoutId) return;
+          !isCurrentWorkoutRoute(workoutId, next.id) ||
+          !isCurrentWorkoutRoute(workoutId, logRef.current?.id)) return;
       logRef.current = next;
       setLogState(next);
       cancelPendingSave();
@@ -219,9 +220,7 @@ export default function WorkoutPage() {
           async (snapshot) => {
             // A pending debounce from another route must not use this
             // workout's revision token to persist a different workout.
-            if (snapshot.id !== found?.id) {
-              throw new Error("Workout writer received a different session");
-            }
+            assertWorkoutWriteScope(found?.id, snapshot.id);
             const saved = await saveWorkout({
               ...snapshot,
               saveRevision: savedRevision,
@@ -332,7 +331,7 @@ export default function WorkoutPage() {
     };
   }, []);
 
-  if (log === undefined || (log !== null && log.id !== workoutId)) {
+  if (log === undefined || (log !== null && !isCurrentWorkoutRoute(workoutId, log.id))) {
     return (
       <div style={{ paddingTop: 20 }}>
         <LoadingState rows={6} />
