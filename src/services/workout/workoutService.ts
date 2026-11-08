@@ -63,6 +63,9 @@ export async function startPlannedWorkout(
       id: newId(),
       exerciseId: pe.exerciseId,
       name: exercise?.name ?? "Übung",
+      // Snapshot grouping so an active workout survives plan edits/deletion.
+      supersetGroup: pe.supersetGroup,
+      supersetRestSeconds: pe.supersetRestSeconds,
       setLogs: buildSetLogs(pe.sets, startWeight, pe.repsMax),
     };
   });
