@@ -96,7 +96,7 @@ Lebensmittel proportional fortgeführt.
   reinen Umrechnung, mit
   `node --experimental-strip-types --test tools/cooking-yield.selftest.mjs`.
 
-**Ausgeführt:** 8/8 unabhängige Berechnungsfälle auf der aus dem
+**Ausgeführt:** 9/9 unabhängige Berechnungsfälle auf der aus dem
 GitHub-Quelltext isolierten Rechenlogik bestanden. Ein vollständiger
 `npm run typecheck`, Vitest- und iPhone-/Windows-Build bleibt ausstehend,
 solange npm-Abhängigkeiten und GitHub-Actions-Runner nicht bereitstehen.
