@@ -47,6 +47,29 @@ function buildSetLogs(sets: number, targetWeightKg: number | undefined, repsMax:
 }
 
 /**
+ * A workout must be created or resumed in ONE IndexedDB write transaction.
+ * The previous UI did a separate getActive() and then put(), allowing two
+ * tabs to create different active workouts at the same time.
+ *
+ * Every training-start entry point uses this atomic operation; a losing
+ * concurrent starter resumes the winning workout (with its original ID
+ * and revision) rather than creating a second active session.
+ */
+export async function createOrResumeWorkout(proposed: WorkoutLog): Promise<WorkoutLog> {
+  if (proposed.status !== "active" || proposed.saveRevision !== 0) {
+    throw new Error("New workout must start active with revision zero");
+  }
+  return db.transaction("rw", db.workoutLogs, async () => {
+    const existing = await db.workoutLogs
+      .where("status").equals("active").first();
+    if (existing) return existing;
+    // add() rejects ID collisions rather than overwriting another workout.
+    await db.workoutLogs.add(proposed);
+    return proposed;
+  });
+}
+
+/**
  * Start a workout from a plan session — the log is persisted IMMEDIATELY
  * with status "active" before any UI renders (§45).
  */
@@ -87,8 +110,7 @@ export async function startPlannedWorkout(
     createdAt: now,
     updatedAt: now,
   };
-  await workoutLogRepository.put(log);
-  return log;
+  return createOrResumeWorkout(log);
 }
 
 /** Start an empty manual workout (exercises get added on the fly). */
@@ -106,8 +128,7 @@ export async function startManualWorkout(name = "Freies Training"): Promise<Work
     createdAt: now,
     updatedAt: now,
   };
-  await workoutLogRepository.put(log);
-  return log;
+  return createOrResumeWorkout(log);
 }
 
 /**
