@@ -126,8 +126,9 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [x] Separater, npm-unabhängiger CI-Job für die aktuell 19
   `tools/*.selftest.mjs`-Suiten erstellt (automatische Erkennung,
   Fehlerweitergabe, Node 22). Starter 5/5 geprüft;
-  15/19 lokal zusammengestellte Suiten mit 113/113 Tests erfolgreich,
-  vollständiger GitHub-Run mangels Runner noch ausstehend
+  danach **19/19 lokal rekonstruierte Suiten mit 144/144 Tests**
+  erfolgreich; Git-Blob-Abgleich aller Testdateien bestanden.
+  GitHub-Runner, vollständige App-Suite und native Builds noch offen
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [x] Branded Windows/Tauri-Icons aus vorhandenem PWA-Icon automatisch
   vor Dev/Build generieren; 6/6 isolierte PNG-/ICO-Tests bestanden
