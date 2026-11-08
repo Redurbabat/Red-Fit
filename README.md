@@ -123,7 +123,7 @@ npm run test:offline
 ```
 
 **Der vollständige Offline-Testlauf wurde lokal erfolgreich ausgeführt:
-20/20 Suiten und 154/154 Einzeltests bestanden.** Alle verwendeten
+21/21 Suiten und 166/166 Einzeltests bestanden.** Alle verwendeten
 Testdateien sowie die relevanten Quellmodule wurden bytegenau mit dem
 GitHub-Branch abgeglichen. Der Lauf erfolgte in einer rekonstruierten
 lokalen Prüfumgebung; der echte GitHub-Actions-Run bleibt wegen
