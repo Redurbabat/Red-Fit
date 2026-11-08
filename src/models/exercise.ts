@@ -67,6 +67,8 @@ export const exerciseSchema = baseEntitySchema.extend({
   sourceRef: z.string().optional(),
   sourceAuthor: z.string().optional(),
   sourceLicense: z.string().optional(),
+  /** Unverified upstream category fallback; the muscle group must not be presented as confirmed. */
+  taxonomyNeedsReview: z.boolean().optional(),
   isCustom: z.boolean(),
 });
 
