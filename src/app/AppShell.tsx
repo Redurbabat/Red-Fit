@@ -40,7 +40,7 @@ export function AppShell() {
       {fullscreen ? null : (
         <>
           <QuickLogButton />
-          <BottomNav />
+          <BottomNav key={location.pathname} />
         </>
       )}
     </div>
