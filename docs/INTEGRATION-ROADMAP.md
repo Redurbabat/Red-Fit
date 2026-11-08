@@ -49,6 +49,10 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
 - [x] Dietry-inspirierte Energiebedarfsberechnung (Code + Unit-Tests gepusht, CI noch offen)
 - [x] openGym-Supersatz-Planung/Rotation/Pausen und Unit-Tests als Code gepusht
 - [x] Dietry-Schätzunsicherheit mit Eintragskennzeichnung und Tagesanzeige gepusht
+- [x] Mahlzeiten-Logging in UI und Rezepten auf atomare Dexie-Transaktionen
+  umgestellt; parallele Einträge, Duplikat-Container und stale Updates gesichert.
+  10/10 reine Node-Integritätschecks tatsächlich bestanden; 10 zusätzliche
+  Dexie-Regressionstests eingereicht, aber CI-Ausführung noch ausstehend
 - [x] Dietry-inspirierte optionale Roh-/Gekocht-Umrechnung beim Mahlzeiten-Logging:
   10 konservative Lebensmittelfaktoren, Warnstufen, gespeichertes Kochgewicht,
   nachträgliche Bearbeitung ohne Doppelumrechnung, rückwärtskompatibler Zod-Snapshot
