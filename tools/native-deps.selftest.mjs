@@ -48,7 +48,8 @@ function cli(root, mode) {
 }
 
 test("versions are pinned and Capacitor JS/native/CLI versions match", () => {
-  assert.equal(NATIVE_PACKAGES.length, 4);
+  assert.equal(NATIVE_PACKAGES.length, 5);
+  assert.ok(NATIVE_PACKAGES.some(p => p.name === "@capacitor/android"));
   const versions = NATIVE_PACKAGES.filter(p => p.name.startsWith("@capacitor/"))
     .map(p => p.version);
   assert.equal(new Set(versions).size, 1);
@@ -65,6 +66,8 @@ test("bootstrap uses exact versions without audit or funding prompts", () => {
     assert.ok(command.includes("--no-fund"));
   }
   assert.ok(commands[1].includes("--save-dev"));
+  assert.ok(commands[0].includes("@capacitor/android@8.6.0"));
+  assert.ok(commands[0].includes("@capacitor/ios@8.6.0"));
 });
 
 test("valid manifest and v3 lockfile pass without network access", () => {
@@ -76,6 +79,19 @@ test("reject missing native packages", () => {
   const { manifest, lock } = valid();
   delete manifest.dependencies["@capacitor/ios"];
   assert.ok(inspectNativeLock(manifest, lock).some(s => s.includes("@capacitor/ios")));
+});
+
+test("reject missing Android runtime lock entry", () => {
+  const { manifest, lock } = valid();
+  delete lock.packages["node_modules/@capacitor/android"];
+  assert.ok(inspectNativeLock(manifest, lock).some(s => s.includes("@capacitor/android")));
+});
+
+test("reject Android runtime in devDependencies", () => {
+  const { manifest, lock } = valid();
+  delete manifest.dependencies["@capacitor/android"];
+  manifest.devDependencies["@capacitor/android"] = "8.6.0";
+  assert.ok(inspectNativeLock(manifest, lock).some(s => s.includes("belongs in dependencies")));
 });
 
 test("reject incorrect resolved version even when declarations match", () => {
