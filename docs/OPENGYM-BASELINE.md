@@ -13,7 +13,7 @@ Stand: 2026-11-08. **Nutzerentscheid:** Der Eigentümer hat ausdrücklich erklä
 
 ## Tatsächlich im privaten GitHub-Repository
 
-Der Ordner `vendor/opengym-upstream/` enthält einen bereits direkt nach `main` übernommenen, SHA-geprüften Teil des Originalquellbaums: Original-Lizenz, Notices, README, Changelog, Roadmap, Frontend-App-Einstieg und weitere React-Komponenten sowie `api/server.js` und Paketmanifeste. Die überprüften Dateien haben identische Git-Blob-SHAs wie openGym. **Noch nicht behaupten, dass alle 8.869 Dateien in GitHub liegen.**
+Der Ordner `vendor/opengym-upstream/` enthält inzwischen **34** Originaldateien direkt auf `main`, SHA-geprüft und ohne inhaltliche Änderungen: Original-Lizenz, Notices, README, Changelog, Roadmap, Frontend-App-Einstieg und weitere React-Komponenten sowie `api/server.js` und Paketmanifeste. Die überprüften Dateien haben identische Git-Blob-SHAs wie openGym. **Noch nicht behaupten, dass alle 8.869 Dateien in GitHub liegen.**
 
 ### Den vollständigen Quellstand ohne Medien nachziehen
 
@@ -34,3 +34,12 @@ Das Skript prüft die genaue Archiv-SHA-256, verweigert Symlinks und unsichere P
 3. Prüfen, welcher openGym-Frontend-Aufruf (React/JS, Vite 8, eigenes npm-Lockfile) und welche Server-Funktionen (Node `api/server.js`, Auth/Sync) notwendig sind. Eine reine statische Cloudflare-Worker-Site ist **kein** Ersatz für die Node-API. Keine öffentliche Produktion ohne geprüften Login-, Sync- und Datenschutzpfad.
 4. Anschließend die eigenen RED-Fit-Ernährungsfunktionen und ausgewählte wger-/Dietry-Funktionalität **in diese eine openGym-basierte App** integrieren. RED Morph/BBT Bit bleiben nur Design-/iOS-Referenzen.
 5. Erst nach `npm ci`, Tests, Build, Datenmigration/Backup, Auth-/Netzwerkprüfung und Plattformtests die aktive RED-Fit-Startkonfiguration umschalten. Bis dahin ist `vendor/opengym-upstream/` eine **Quellbasis**, keine bestätigte laufende App.
+
+
+## Vorbereiteter Import als RED-Fit-Wurzel-ZIP
+
+Zusätzlich wurde ein direkt in die Wurzel des RED-Fit-Checkouts entpackbares Archiv `RED-Fit-openGym-vendor-import.zip` erzeugt. Es enthält **ausschließlich** `vendor/opengym-upstream/...` mit allen 8.869 zulässigen Originaldateien (und eine maschinenlesbare Import-Info an der ZIP-Wurzel), keine produktiven RED-Fit-Dateien. SHA-256 des ZIPs: `7089f61e5939eb08968486dda7af1ffe10b0bda3bd0c6db2c6b48a77d80e071c`; ZIP-Integritätsprüfung bestanden. Das ZIP ist ein Chat-Artefakt und **nicht** im privaten GitHub-Repository hochgeladen.
+
+Zusätzlich tatsächlich ausgeführt: `node --check` für **169/169** originale openGym-`api/**/*.js`/`.mjs`/`.cjs`-Dateien in einem isolierten lokalen Extract, ohne Syntaxfehler. `frontend/vite.config.js` wurde ebenfalls mit `node --check` syntaktisch geprüft. Dies ist **kein** npm-Install, API-Start, HTTP-/Auth-Test oder Frontend-Build.
+
+Die 34 bereits auf GitHub übernommenen Dateien umfassen unter anderem `frontend/package-lock.json`, `frontend/vite.config.js`, `frontend/capacitor.config.json`, `frontend/src/index.css`, `frontend/src/sheets.jsx`, `api/package-lock.json`, die originale Frontend-/API-Grundstruktur und erste Komponenten. Es fehlen weiterhin zahlreiche `src/`-Module, API-Routen und Katalogdateien; ein unmittelbarer Start dieses unvollständigen GitHub-Teilbaums wäre nicht belastbar.
