@@ -63,6 +63,10 @@ export const exerciseSchema = baseEntitySchema.extend({
   animationType: z.enum(ANIMATION_TYPES).optional(),
   animation3dUrl: z.string().optional(),
   imageUrl: z.string().optional(),
+  /** Provenance for optionally imported external exercise records. */
+  sourceRef: z.string().optional(),
+  sourceAuthor: z.string().optional(),
+  sourceLicense: z.string().optional(),
   isCustom: z.boolean(),
 });
 
