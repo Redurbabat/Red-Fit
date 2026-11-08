@@ -29,7 +29,6 @@ function environment() {
   let revision = 0;
   let active = null;
   const scopes = [];
-  const copy = (item) => structuredClone(item);
   const tables = Object.fromEntries(names.map((name) => [
     name, { name, toArray: async () => {
       assert.ok(active, `Unprotected read of ${name}`);
