@@ -47,7 +47,7 @@ werden. Ohne bewusste Nutzeraktion werden keine Fotos exportiert.
   Blob oder mit abweichender Dateigröße führt zum Abbruch.
 - **Transaktionaler Import**: Bestehende Foto-IDs bleiben unangetastet;
   überschneidende Asset-IDs bekommen neue IDs, damit kein fremdes lokales
-  Bild überschrieben wird. Alle Bilder werden vor dem Datenbanktransaction
+  Bild überschrieben wird. Alle Bilder werden vor der Datenbanktransaktion
   dekodiert (Dexie-Transaction-Lifetime).
 - **Keine automatische Synchronisierung**. Der Transfer ist ein manueller,
   lokaler Datei-Workflow.
@@ -63,6 +63,19 @@ Massendatenmigration ohne dieses Feature.
 `src/services/backup/photoBackupService.test.ts` enthält Tests für
 Base64-Roundtrip über Chunk-Grenzen, Erhalt von Metadaten, Import,
 Idempotenz, ID-Kollisionen, beschädigte Dateien und fehlende Blobs.
+
+**Tatsächlich lokal geprüft (Node 22.16, 2026-11-08):**
+
+```bash
+node --experimental-strip-types --test tools/photo-codec.selftest.mjs
+```
+
+Ergebnis: **3/3 bestanden**. Der Test deckt Dateilängen, Chunk-Grenzen
+sowie beschädigtes Base64 ab. Zusätzlich wurde der exakte Codec-Quelltext
+alleinstehend mit `tsc --noEmit --strict` überprüft (bestanden).
+Der getestete lokale Codec-Code wurde per Länge und FNV-Prüfsumme mit dem
+GitHub-Quelltext abgeglichen. Dieser Isolationsnachweis ist **kein**
+vollständiger React-/IndexedDB-Test.
 
 Solange die GitHub-Actions-Runner nicht gestartet werden können, sind
 die Anwendungstests und echte iPhone-/Windows-Importe **noch nicht
