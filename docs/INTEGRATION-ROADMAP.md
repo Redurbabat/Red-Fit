@@ -87,6 +87,11 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   16 unspezifische „Arme“-Übungen nicht mehr dem Bizeps zugeordnet;
   Gymnastikmatte (14 Datensätze) korrekt als Equipment klassifiziert
 - [x] Breite Desktop-Navigation (Windows-freundliche UI) gepusht
+- [x] Standard-Backup-Merge verliert keine unterschiedlichen
+  Mahlzeiten-Snapshots mehr bei identischer Entry-ID: kollidierende
+  Position erhält stabile Recovery-ID; identische Duplikate und
+  wiederholte Imports bleiben idempotent. 11/11 isolierte Prüfungen
+  durchgeführt; sechs echte Dexie-Regressionsfälle eingecheckt, offen
 - [x] Backup-Import bewahrt jetzt die Workout-Versionskontrolle:
   ersetzte IDs und automatisch verworfene doppelt aktive Workouts erhalten
   monotone `saveRevision`; neue IDs und `keepExisting` bleiben unverändert.
