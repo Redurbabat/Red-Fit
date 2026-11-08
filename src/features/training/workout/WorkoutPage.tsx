@@ -108,6 +108,8 @@ export default function WorkoutPage() {
   const [saveConflict, setSaveConflict] = useState(false);
 
   const logRef = useRef<WorkoutLog | null>(null);
+  const routeWorkoutId = useRef(workoutId);
+  routeWorkoutId.current = workoutId;
   const pendingSave = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Use ONE ordered writer for autosave, pagehide and terminal states.
   const orderedSave = useRef(createSerializedWorkoutWriter<WorkoutLog>(saveWorkout));
@@ -176,7 +178,9 @@ export default function WorkoutPage() {
   /** Every mutation flows through here: set state + autosave (§128). */
   const apply = useCallback(
     (next: WorkoutLog, mode: "now" | "debounce") => {
-      if (terminalSaveInFlight.current || conflictNotified.current) return;
+      if (terminalSaveInFlight.current || conflictNotified.current ||
+          !workoutId || next.id !== workoutId ||
+          logRef.current?.id !== workoutId) return;
       logRef.current = next;
       setLogState(next);
       cancelPendingSave();
@@ -189,12 +193,13 @@ export default function WorkoutPage() {
         }, SAVE_DEBOUNCE_MS);
       }
     },
-    [cancelPendingSave, reportSaveError],
+    [cancelPendingSave, reportSaveError, workoutId],
   );
 
   // Initial load — one-time read into local state (this screen owns the log).
   useEffect(() => {
     let cancelled = false;
+    setLogState(undefined);
     if (!workoutId) {
       setLogState(null);
       return;
@@ -212,6 +217,11 @@ export default function WorkoutPage() {
         let savedRevision = found?.saveRevision ?? 0;
         orderedSave.current = createSerializedWorkoutWriter<WorkoutLog>(
           async (snapshot) => {
+            // A pending debounce from another route must not use this
+            // workout's revision token to persist a different workout.
+            if (snapshot.id !== found?.id) {
+              throw new Error("Workout writer received a different session");
+            }
             const saved = await saveWorkout({
               ...snapshot,
               saveRevision: savedRevision,
@@ -226,8 +236,20 @@ export default function WorkoutPage() {
       });
     return () => {
       cancelled = true;
+      // Switching between /training/workout/:id routes reuses this React
+      // component. Flush the old route's pending debounce using its OWN
+      // writer before the new route installs another one.
+      if (pendingSave.current) {
+        clearTimeout(pendingSave.current);
+        pendingSave.current = null;
+        const previous = logRef.current;
+        const previousWriter = orderedSave.current;
+        if (previous?.id === workoutId) {
+          void previousWriter(previous).catch(reportSaveError);
+        }
+      }
     };
-  }, [workoutId]);
+  }, [workoutId, reportSaveError]);
 
   // Plan (for per-exercise rest seconds), if the workout came from one.
   const planId = log?.planId;
@@ -310,7 +332,7 @@ export default function WorkoutPage() {
     };
   }, []);
 
-  if (log === undefined) {
+  if (log === undefined || (log !== null && log.id !== workoutId)) {
     return (
       <div style={{ paddingTop: 20 }}>
         <LoadingState rows={6} />
@@ -495,7 +517,11 @@ export default function WorkoutPage() {
       reportSaveError(error);
       return;
     }
-    navigate(`/training/workout/${finished.id}/summary`, { replace: true });
+    if (routeWorkoutId.current === finished.id) {
+      navigate(`/training/workout/${finished.id}/summary`, { replace: true });
+    } else {
+      terminalSaveInFlight.current = false;
+    }
   };
 
   const handleDiscard = async () => {
@@ -512,7 +538,11 @@ export default function WorkoutPage() {
       reportSaveError(error);
       return;
     }
-    navigate("/training", { replace: true });
+    if (routeWorkoutId.current === discarded.id) {
+      navigate("/training", { replace: true });
+    } else {
+      terminalSaveInFlight.current = false;
+    }
   };
 
   // Big thumb-zone primary action: complete set → next exercise → finish.
