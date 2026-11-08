@@ -58,7 +58,14 @@ export function mergeImportedMealSlot(
         recoveredId = `${base}:${suffix}`;
       }
     }
-    if (log.notes && !notes.includes(log.notes)) notes.push(log.notes);
+    // A previous import may already have joined this note with another
+    // note. Match whole line-delimited blocks, not arbitrary substrings,
+    // so re-import does not keep appending the same note again.
+    if (log.notes && !notes.some((block) =>
+      (`\n${block}\n`).includes(`\n${log.notes}\n`)
+    )) {
+      notes.push(log.notes);
+    }
   }
 
   return {
