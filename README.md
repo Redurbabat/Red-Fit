@@ -1,5 +1,8 @@
 # RED Fit
 
+> **Neue Eigentümerentscheidung (08.11.2026):** openGym ist das eigene Originalprojekt und ab sofort die **direkte Code-/Funktionsbasis** für RED Fit. Der SHA-geprüfte Teilimport liegt unter `vendor/opengym-upstream/`; der vollständige medienbereinigte ZIP-Import ist über `tools/import-opengym.py` reproduzierbar. Details: [openGym-Übernahme](docs/OPENGYM-BASELINE.md). Der bisherige RED-Fit-Build bleibt bis zur validierten Umschaltung aktiv; **noch kein vollständiger GitHub-Import und keine openGym-Live-App bestätigt**.
+
+
 **Training und Ernährung in einer App.**
 
 RED Fit ist eine eigenständige, mobile-first Progressive Web App fürs iPhone:

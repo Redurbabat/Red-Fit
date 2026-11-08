@@ -4,6 +4,13 @@ updated: 2026-11-08
 ---
 # Backlog — nächste sinnvolle Arbeit
 
+## P0 — openGym 1:1 Quellbasis (Owner-Priorität 2026-11-08)
+- [x] Eigentümerfreigabe, Original-Commit und ZIP-Identität prüfen; 8.869 unveränderte Source-Dateien im Medien-bereinigten Artefakt per SHA-256 verifiziert; Lizenznotizen erhalten.
+- [x] Ersten Satz Originaldateien (Lizenz, Frontend-Einstieg, API, Komponenten) bytegleich auf `main` unter `vendor/opengym-upstream/` importiert; sicher fortsetzbaren ZIP-Importer `tools/import-opengym.py` hinzugefügt.
+- [ ] **Alle 8.869 zulässigen Originaldateien** per `python3 tools/import-opengym.py ... --apply` auf einem Checkout ergänzen und auf `main` committen (noch nicht in GitHub abgeschlossen).
+- [ ] Original openGym React-Frontend und Node-API mit passenden Lockfiles bauen, testen und Zugriffs-/Sync-/Datenschutzmodell prüfen.
+- [ ] Nutzerdaten/Backup aus bestehendem RED Fit sicher übernehmen; danach aktive RED-Fit-Startkonfiguration auf geprüfte openGym-Basis umstellen.
+
 ## P0 — Baseline und Datenintegrität
 - [ ] `main`-Stand, Features, Tests und Abhängigkeiten auf frisch geklontem Checkout verifizieren.
 - [ ] `npm ci && npm run typecheck && npm run lint && npm test && npm run build` erfolgreich ausführen; Ergebnis dokumentieren.

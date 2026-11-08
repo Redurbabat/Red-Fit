@@ -7,6 +7,8 @@ status: active
 
 > **Projekt:** [RED Fit](https://github.com/Redurbabat/Red-Fit) (privat). **Ziel:** eine einzige Fitness-App für iPhone, Android, Windows und Web; keine drei parallel laufenden Apps.
 
+**Entscheidung vom 08.11.2026:** openGym ist die eigene Quellcode-Ausgangsbasis von RED Fit, nicht mehr nur Ideenlieferant. [Details](../docs/OPENGYM-BASELINE.md). Quellkopie in `vendor/opengym-upstream/` ist aktuell unvollständig; vollständiger Medien-bereinigter ZIP-Import ist vorbereitet.
+
 ## Für neue Chats und Agenten
 1. Diese Startseite und [[09-CHAT-HANDOFF]] lesen.
 2. [[01-PRODUKT-UND-ZIELE]], [[02-QUELLEN-UND-ARCHIVE]] und [[05-ARCHITEKTUR-PLATTFORMEN]] beachten.

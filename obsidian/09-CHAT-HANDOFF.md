@@ -5,6 +5,9 @@ updated: 2026-11-08
 # Handoff an jeden neuen Chat / AI-Agenten
 
 ## Arbeitsauftrag zum direkten Aufgreifen
+
+**NEUE PRIORITÄT DES EIGENTÜMERS (08.11.2026):** openGym ist sein eigenes Repository. Es soll **1:1 als neue Entwicklungsbasis** übernommen werden, danach RED Fit ab dort weiterentwickeln. Die bisherige Architekturentscheidung „nur Ideen übertragen“ ist dafür überholt. Original-Code unter `vendor/opengym-upstream/` bereits teilweise auf `main`, Quellen-/Importanleitung unter `docs/OPENGYM-BASELINE.md`; die vollständige unveränderte Quellkopie ohne Gym-visual-Medien liegt bislang nur als geprüfter Chat-ZIP-Export vor, NICHT komplett in GitHub. **Jetzt Quellimport vervollständigen, dann aus originalem Frontend/API einen nachgewiesenen Build mit sicherer Migration ableiten.** Bestehenden RED-Fit-Core erst nach erfolgreichem Cutover ersetzen.
+
 Arbeite im privaten GitHub-Repository **Redurbabat/Red-Fit**. Der Nutzer will aus **openGym, wger und Dietry EINE RED Fit App** für **iPhone/iOS, Android, Windows und Web**. RED-Morph (`Redurbabat/RED-Morph`) liefert **nur** Design-/Touch-/Motion-Referenzen; BBT-Bit (`Redurbabat/BBT-Bit`) liefert **nur** iPhone-/SwiftUI-UX-, A11y- und native Testreferenzen. Keine Musikfunktionen oder weitere eigenständige App zusammenführen. RED Fit soll **privat** bleiben.
 
 **Start:** `AGENTS.md`, `CLAUDE.md`, `ARCHITEKTUR.md`, `obsidian/00-START-HERE.md`, `obsidian/07-BACKLOG.md`, `obsidian/08-STATUS-UND-TESTS.md` lesen; danach tatsächlichen `main`-Code prüfen. Der Projektinhaber hat direkte Pushes auf `main` für den aktuellen Auftrag angeordnet; niemals ungetestete/destruktive Änderungen als fertig ausgeben.
