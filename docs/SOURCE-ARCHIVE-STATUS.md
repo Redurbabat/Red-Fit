@@ -45,6 +45,9 @@ review. **Do not** copy the excluded Gym visual assets.
 - Dietry-inspired energy needs calculator: Settings UI and tests committed
 - wger exercise taxonomy: Zod import parser, ExerciseList UI, atomic attributed import and tests committed
 - wger fixture converter: `tools/convert-wger-fixtures.py`; 789 records with licence URLs, 83 uncredited skipped
+- wger taxonomy check: 120/789 have no primary muscle assignment;
+  16 ambiguous Arms-class records no longer claim "biceps";
+  14 mat-equipped exercises no longer claim "no equipment"
 - openGym superset round-robin: plan editor, workout navigation and tests committed
 - Dietry-inspired estimated meal amount uncertainty: logging UI, daily display and tests committed
 - Desktop sidebar: visible from 1024px, mobile nav preserved
