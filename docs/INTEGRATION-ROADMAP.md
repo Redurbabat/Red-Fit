@@ -87,6 +87,11 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   16 unspezifische „Arme“-Übungen nicht mehr dem Bizeps zugeordnet;
   Gymnastikmatte (14 Datensätze) korrekt als Equipment klassifiziert
 - [x] Breite Desktop-Navigation (Windows-freundliche UI) gepusht
+- [x] Backup-Import bewahrt jetzt die Workout-Versionskontrolle:
+  ersetzte IDs und automatisch verworfene doppelt aktive Workouts erhalten
+  monotone `saveRevision`; neue IDs und `keepExisting` bleiben unverändert.
+  9/9 Node-Prüfungen und isolierter TypeScript-Check bestanden;
+  acht echte Dexie-Restore-Tests ergänzt, Ausführung ausstehend
 - [x] Standard-Backup liest nun alle 13 Datentabellen plus Settings in
   einer konsistenten Dexie-`r`-Transaktion; Export mit Schema- und
   tatsächlicher UTF-8-Dateigrößenprüfung (25 MiB Importlimit).
