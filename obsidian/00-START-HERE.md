@@ -24,6 +24,7 @@ status: active
 - [[07-BACKLOG]] — konkrete verbleibende Aufgaben
 - [[08-STATUS-UND-TESTS]] — gesicherter Ist-Stand, Testnachweise und Grenzen
 - [[09-CHAT-HANDOFF]] — kopierbarer Arbeitsauftrag für Folgesitzungen
+- [[10-DOCK-RED-MORPH]] — Dock im Stil von RED Morph/BBT-Bit (React-Adaption, Teststand)
 
 **Obsidian öffnen:** Repository klonen, Obsidian → `Open folder as vault` → Ordner `obsidian/`. Keine Anmeldung bei Obsidian und keine kostenpflichtige Datenbank erforderlich. Git ist die Synchronisationsquelle dieser Markdown-Notizen; Obsidian Sync wird nicht behauptet oder konfiguriert.
 
