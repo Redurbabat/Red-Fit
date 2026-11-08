@@ -2,14 +2,15 @@
 
 ## Warum das erforderlich ist
 
-Auf dem Feature-Branch liegen die Capacitor-Konfiguration für iPhone und das
-Tauri-2-Gerüst für Windows bereits im Quellcode. Das bestehende `package-lock.json`
+Im Repository liegen die Capacitor-Konfiguration für iPhone und Android
+sowie das Tauri-2-Gerüst für Windows bereits im Quellcode. Das bestehende `package-lock.json`
 enthält aber **noch keine nativen CLI-Pakete**. Das bestehende `npm ci` kann
 deshalb weder `npx cap` noch `npx tauri` bereitstellen.
 
 Das Tool `tools/bootstrap-native.mjs` installiert die fehlenden Paketversionen
 bewusst **nur nach ausdrücklichem Aufruf**, prüft Manifest und Lockfile und
-verändert weder `main` noch native Signing-Dateien oder die IndexedDB-Daten.
+ändert ausschließlich die lokalen npm-Manifeste. Das Skript pusht keine
+Git-Commits und verändert weder native Signing-Dateien noch IndexedDB-Daten.
 
 ### Versionen (stabiler Stand 2026-11-08)
 
@@ -32,14 +33,14 @@ Offizielle Referenzen:
 
 ## Einmaliger Bootstrap auf einem Rechner mit Internet
 
-Im lokalen Checkout von
-`feat/unified-iphone-windows-integration`, Node.js **22 oder neuer**:
+Im lokalen Checkout von `main` (oder einem aktuellen Arbeitsbranch),
+Node.js **22 oder neuer**:
 
 ```bash
 # Zeigt ausschließlich die geplanten Installationsbefehle:
 npm run native:plan
 
-# Installiert exakt die oben genannten vier Pakete und erzeugt Lockfile-Einträge:
+# Installiert exakt die oben genannten fünf Pakete und erzeugt Lockfile-Einträge:
 npm run native:bootstrap
 
 # Prüft package.json und package-lock.json ohne Netzwerkanfrage:
@@ -51,7 +52,7 @@ node tools/verify-local.mjs --skip-install
 ```
 
 Nach dem Bootstrap müssen **`package.json` und `package-lock.json`
-zusammen** in einem geprüften Commit auf den Feature-Branch. Beide Dateien
+zusammen** in einem geprüften Commit auf den gewünschten Branch. Beide Dateien
 werden bei einer fehlgeschlagenen npm-Installation automatisch auf den
 ursprünglichen Stand zurückgeschrieben. npm kann dabei bereits Dateien
 unter `node_modules/` verändert haben; nach erfolgreichem Bootstrap daher
@@ -120,15 +121,22 @@ muss für reproduzierbare Builds mitversioniert werden.
 node --test tools/native-deps.selftest.mjs
 ```
 
-**Lokal ausgeführt am 2026-11-08 auf Linux mit Node 22.16: 14/14 Tests
-bestanden.** Die geprüften Dateien wurden mit dem GitHub-Stand über Größe
-und FNV32 verglichen. Der Test umfasst Manifest-/Lockfile-Abgleich,
-korrekte Versionen, Fehlerfälle, Plan-/Prüfmodus und Rücksetzen nach
-absichtlich fehlgeschlagener Installation. Es wurden **keine echten
-npm-Pakete in diesen Tests installiert**.
+**Erneut real ausgeführt am 2026-11-08 mit Node.js 22.16.0: 16/16 Tests
+bestanden.** Die drei aus GitHub-`main` rekonstruierten Originaldateien
+(`nativeDependencies.mjs`, `bootstrap-native.mjs`, `native-deps.selftest.mjs`)
+wurden vor dem Test per `git hash-object` mit ihren GitHub-Blob-SHAs
+bytegenau abgeglichen. Die Tests umfassen auch die Android-Version,
+Android-Lockfile-/Dependency-Gruppenfehler, Plan-/Prüfmodus und Rollback
+nach einem absichtlich fehlgeschlagenen Mock-npm-Aufruf. Alle CLI-Tests
+verwenden temporäre Test-Manifeste; **keine echten nativen npm-Pakete
+installiert, keine Plattform-Binaries erzeugt**.
 
-Die npm-Registry war in der ausführenden Umgebung nicht erreichbar
-(`EAI_AGAIN` / DNS-Auflösung fehlgeschlagen). Deshalb sind die nativen
-Abhängigkeiten **noch nicht im Repository-Lockfile**, und es wurde
-**weder ein iOS- noch ein Windows-Binary** gebaut. Die bestehende GitHub-CI
-scheitert vor der Runner-Zuweisung (siehe `docs/CI-RECOVERY.md`).
+Am selben Tag direkt auf `main` geprüft: `package.json` und
+`package-lock.json` enthalten **keines** der fünf nativen Pakete
+(`@capacitor/core`, `@capacitor/ios`, `@capacitor/android`,
+`@capacitor/cli`, `@tauri-apps/cli`). Erst `native:bootstrap` auf einem
+Rechner mit Registry-Zugriff kann die echten Einträge erzeugen; beide
+npm-Dateien müssen anschließend gemeinsam committed werden.
+Die bestehende GitHub-CI scheitert bislang vor gestarteten Job-Steps
+(siehe `docs/CI-RECOVERY.md`); iOS-, Android- und Windows-Binaries sind
+weiterhin unbestätigt.
