@@ -89,7 +89,9 @@ für `typecheck`, `lint`, Vitest und Build notwendig.
 **Lokal verifiziert:** Nach Ergänzung der zuvor fehlenden
 Originaldateien aus dem privaten Branch wurden zunächst 19 Offline-Suiten
 mit 144/144 bestandenen Tests ausgeführt. **Nach der Route-Switch-Korrektur
-sind es 20/20 Suiten und 154/154 bestandene Tests** auf Node.js 22.16.0.
+waren es 20/20 Suiten und 154/154 Tests; nach der Note-Writer-
+Korrektur sind es 21/21 Suiten und 166/166 bestandene Tests**
+auf Node.js 22.16.0.
 Die relevanten Test- und Quelldateien stimmen per Git-Blob-SHA-1
 mit GitHub überein. Der Lauf erfolgte in einer lokal rekonstruierten
 Prüfumgebung (kein direkter Git-Checkout).
