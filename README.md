@@ -28,6 +28,9 @@ Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
   gespeichert; „Training abschließen“ wartet auf ältere Writes.
   Ein bereits abgeschlossenes oder verworfenes Workout kann auch aus einem
   zweiten Browser-Tab nicht per altem Aktiv-Snapshot wieder aktiviert werden.
+  Bei **zwei gleichzeitig aktiven Tabs** verhindert jetzt eine transaktional
+  geprüfte Workout-Revision, dass ein veralteter Satzstand stillschweigend
+  überschrieben wird. Im Konfliktfall erscheint eine Warnung mit Neuladen.
   [Schreibreihenfolge und Teststatus](docs/WORKOUT-SAVE-INTEGRITY.md).
 - **Dietry**: Kalorienbedarf-/Makro-Rechner, Kennzeichnung geschätzter
   Essensmengen und **optionale Roh-/Gekocht-Umrechnung** für Reis, Nudeln
