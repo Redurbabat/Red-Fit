@@ -139,6 +139,42 @@ describe("opt-in sensitive photo backup", () => {
     }))).ok).toBe(false);
   });
 
+  it("rolls back an earlier insert if a later duplicate has a missing local blob", async () => {
+    const first = await examplePhoto();
+    const second = await examplePhoto();
+    const archive = await collectPhotoBackup();
+
+    await db.progressPhotos.clear();
+    await db.mediaAssets.clear();
+    // The source file contains both photos. The target already has the
+    // second photo's metadata but lacks its media asset.
+    await db.progressPhotos.put(second);
+
+    await expect(importPhotoBackup(archive)).rejects.toThrow(/missing its media asset/);
+    // Even the first photo must not have been partially imported.
+    expect(await db.progressPhotos.count()).toBe(1);
+    expect(await db.progressPhotos.get(first.id as never)).toBeUndefined();
+    expect(await db.mediaAssets.count()).toBe(0);
+  });
+
+  it("rejects checksum corruption before touching any local photos", async () => {
+    const original = await examplePhoto();
+    const archive = await collectPhotoBackup();
+    const assetBefore = await db.mediaAssets.get(original.assetId as never);
+    const altered = {
+      ...archive,
+      photos: [{
+        ...archive.photos[0],
+        dataBase64: encodePhotoBase64(new TextEncoder().encode("b-private-image")),
+      }],
+    };
+
+    await expect(importPhotoBackup(altered)).rejects.toThrow();
+    expect(await db.progressPhotos.count()).toBe(1);
+    const assetAfter = await db.mediaAssets.get(original.assetId as never);
+    expect(await assetAfter?.blob.text()).toBe(await assetBefore?.blob.text());
+  });
+
   it("refuses to silently export a photo with a missing binary", async () => {
     const photo = await examplePhoto();
     await db.mediaAssets.delete(photo.assetId as never);
