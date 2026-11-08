@@ -87,6 +87,17 @@ test("the local container wins and distinct notes are preserved", () => {
   assert.equal(result.keeper.notes, "Local note\nBackup note");
 });
 
+test("repeated restores preserve original multiline notes exactly once", () => {
+  const local = log("local", [entry("same", "rice", 360)], "Local line 1\nLocal line 2");
+  const donor = log("imported", [entry("same", "pasta", 410)], "Backup line 1\nBackup line 2");
+  const first = mergeImportedMealSlot([local, donor], new Set(["local"]));
+  const second = mergeImportedMealSlot([first.keeper, donor], new Set(["local"]));
+  assert.equal(first.keeper.notes,
+    "Local line 1\nLocal line 2\nBackup line 1\nBackup line 2");
+  assert.equal(second.keeper.notes, first.keeper.notes);
+  assert.deepEqual(second.keeper.entries, first.keeper.entries);
+});
+
 test("empty, mixed meal or mixed date groups are rejected before mutation", () => {
   assert.throws(() => mergeImportedMealSlot([], new Set()), /empty/);
   assert.throws(() => mergeImportedMealSlot(
