@@ -113,7 +113,12 @@ export default function AddMealPage() {
     }
     // A cooked amount is converted to the raw/dry label's unit BEFORE
     // applying /100 g. Keep the exact weighed amount for later editing.
-    const amountG = roundTo(rawEquivalentGrams(value, cookingFactor), 1);
+    const weighedAmountG = roundTo(value, 1);
+    if (weighedAmountG <= 0) {
+      setAmountError("Bitte gib mindestens 0,1 g ein.");
+      return;
+    }
+    const amountG = roundTo(rawEquivalentGrams(weighedAmountG, cookingFactor), 1);
     if (amountG <= 0) {
       setAmountError("Die umgerechnete Menge ist zu klein.");
       return;
@@ -130,7 +135,7 @@ export default function AddMealPage() {
         ...(weightBasis === "cooked" && cookingYield
           ? {
               weighedAs: "cooked" as const,
-              weighedAmountG: roundTo(value, 1),
+              weighedAmountG,
               cookingYieldFactor: cookingYield.factor,
             }
           : {}),
@@ -381,7 +386,9 @@ function LiveNutrition({
 }: { food: FoodItem; amountInput: string; cookingFactor: number }) {
   const value = parseDecimalInput(amountInput);
   if (value == null || value <= 0) return null;
-  const amountG = roundTo(rawEquivalentGrams(value, cookingFactor), 1);
+  const weighedAmountG = roundTo(value, 1);
+  if (weighedAmountG <= 0) return null;
+  const amountG = roundTo(rawEquivalentGrams(weighedAmountG, cookingFactor), 1);
   if (amountG <= 0) return null;
   const n = calculateFoodNutrition(food, amountG);
   return (
