@@ -123,6 +123,11 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   Alphakanal** und Xcode-Asset-`Contents.json` konvertiert; Schutz
   vor unbeabsichtigtem Überschreiben eigener Icons;
   11/11 iOS- und 6/6 Windows-Node-Tests bestanden, getestete Skripte bytegleich GitHub
+- [x] Separater, npm-unabhängiger CI-Job für die aktuell 19
+  `tools/*.selftest.mjs`-Suiten erstellt (automatische Erkennung,
+  Fehlerweitergabe, Node 22). Starter 5/5 geprüft;
+  15/19 lokal zusammengestellte Suiten mit 113/113 Tests erfolgreich,
+  vollständiger GitHub-Run mangels Runner noch ausstehend
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [x] Branded Windows/Tauri-Icons aus vorhandenem PWA-Icon automatisch
   vor Dev/Build generieren; 6/6 isolierte PNG-/ICO-Tests bestanden
