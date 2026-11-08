@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MealLog } from "../../models/nutrition";
 import { db } from "../storage/database";
 import { settingsRepository } from "../storage/settingsRepository";
