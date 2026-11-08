@@ -79,8 +79,8 @@ vollständigen Git-Blob-SHA-1 mit dem GitHub-Branch verifiziert:
 `meal-entry-ops.selftest.mjs` → `b9d06d933a6dd7a837d79e66d81f24fc8f4a9eb1`.
 
 **Noch nicht ausgeführt:** die neuen **10 Dexie-Regressionstests** in
-`mealRepository.atomic.test.ts`, darunter parallele UI-Eingaben,
-Rezept-Logging, Rollback und Cooked-Weight-Snapshots.
+`mealRepository.atomic.test.ts`, darunter parallele Eingaben, Rezept-Logging,
+Ablehnung ungültiger Einträge und Cooked-Weight-Snapshots.
 In der aktuellen Ausführungsumgebung sind `dexie`, `fake-indexeddb`
 und `vitest` weiterhin nicht installiert. Ein Registry-Test ergab
 `EAI_AGAIN`; die bereits diagnostizierten GitHub-Actions-Runs erhalten
