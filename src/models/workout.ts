@@ -29,6 +29,10 @@ export const workoutPlanExerciseSchema = z
     repsMax: z.number().int().min(0),
     restSeconds: z.number().int().min(0),
     targetWeightKg: nonNegativeNumber.optional(),
+    /** Consecutive matching IDs (A/B/...) make an alternating superset. */
+    supersetGroup: z.string().trim().max(12).optional(),
+    /** Optional group-level rest after one round. */
+    supersetRestSeconds: z.number().int().min(0).max(3600).optional(),
     notes: z.string().optional(),
   })
   .refine((e) => e.repsMin <= e.repsMax, {
@@ -79,6 +83,8 @@ export const exerciseLogSchema = z.object({
   id: z.string().min(1),
   exerciseId: z.string().min(1),
   name: z.string().min(1), // snapshot so history stays stable
+  supersetGroup: z.string().trim().max(12).optional(),
+  supersetRestSeconds: z.number().int().min(0).max(3600).optional(),
   setLogs: z.array(setLogSchema),
   notes: z.string().optional(),
 });
