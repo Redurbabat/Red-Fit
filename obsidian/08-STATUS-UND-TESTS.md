@@ -73,3 +73,5 @@ Nächster konkreter Schritt:
 - Tatsächlich ausgeführt: `node --experimental-strip-types --test tools/dock-behavior.selftest.mjs` auf Node 22.16.0 in isoliertem lokalem Quelltest (**7/7 erfolgreich**); TypeScript-`transpileModule`-Syntaxanalyse für drei TS/TSX-Dateien erfolgreich.
 - **Nicht verifiziert:** `npm ci`, vollständiger Typecheck, ESLint, Vitest-UI-Test, Vite-Build, Cloudflare-Deployment und echte iOS-/Android-/Windows-UI. Keine native SwiftUI-Parität behaupten.
 - Next: PR nach `main`, danach Cloudflare-Build prüfen und auf iPhone/Android Accessibility, Safe Areas, Scrollrichtung und Quick-Log-Überlagerung abnehmen.
+
+- **Nachtrag:** UI-Änderung wurde über [PR #8](https://github.com/Redurbabat/Red-Fit/pull/8) per Squash nach `main` gemergt (Merge-Commit `42a70bd8e6ee528b42a3e539f06e5cc4eec5c5a8`). GitHub-Dateien auf `main` nach Merge erneut geprüft: Dock, routenbasierter Reset und [[10-DOCK-RED-MORPH]] vorhanden. Tests/Native-Builds bleiben wie oben beschrieben offen.
