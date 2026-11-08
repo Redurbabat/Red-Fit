@@ -22,6 +22,8 @@ export interface WgerExercisePreview {
   name: string;
   muscleGroup: MuscleGroup;
   secondaryMuscles: MuscleGroup[];
+  /** Some upstream exercises lack a precise muscle assignment; do not present the category as verified anatomy. */
+  needsMuscleReview: boolean;
   equipment: EquipmentType;
   difficulty: Difficulty;
   attribution: { author: string; license: string; source: "wger" };
@@ -34,12 +36,15 @@ const muscleMap: Record<number, MuscleGroup> = {
 };
 
 const categoryMap: Record<number, MuscleGroup> = {
-  8: "biceps", 9: "legs", 10: "abs", 11: "chest", 12: "back",
+  // wger category 8 is "Arms", NOT "Biceps". With no explicit muscle
+  // the arm group is ambiguous (biceps / triceps / forearms).
+  9: "legs", 10: "abs", 11: "chest", 12: "back",
   13: "shoulders", 14: "calves", 15: "cardio",
 };
 
 const equipmentMap: Record<number, EquipmentType> = {
-  1: "barbell", 2: "barbell", 3: "dumbbell", 4: "none", 5: "other",
+  // wger #4 = gym mat. This is equipment, never "none".
+  1: "barbell", 2: "barbell", 3: "dumbbell", 4: "other", 5: "other",
   6: "other", 7: "bodyweight", 8: "other", 9: "other",
   10: "kettlebell", 11: "resistanceBand", 12: "cable",
 };
@@ -51,8 +56,9 @@ export function previewWgerExercise(input: WgerExerciseInput): WgerExercisePrevi
   if (!input.name.trim() || !input.sourceLicense.trim() || !input.sourceAuthor.trim()) {
     throw new Error("Exercise name, source license, and author are required");
   }
-  const primary = input.muscleIds.map((id) => muscleMap[id]).find(Boolean) ??
-    categoryMap[input.categoryId] ?? "fullBody";
+  const verifiedMuscle = input.muscleIds.map((id) => muscleMap[id]).find(Boolean);
+  const primary = verifiedMuscle ?? categoryMap[input.categoryId] ?? "fullBody";
+  const needsMuscleReview = verifiedMuscle === undefined;
   const secondary = [...new Set(
     [...input.muscleIds, ...input.secondaryMuscleIds]
       .map((id) => muscleMap[id])
@@ -65,6 +71,7 @@ export function previewWgerExercise(input: WgerExerciseInput): WgerExercisePrevi
     name: input.name.trim(),
     muscleGroup: primary,
     secondaryMuscles: secondary,
+    needsMuscleReview,
     equipment,
     difficulty: "intermediate",
     attribution: {
