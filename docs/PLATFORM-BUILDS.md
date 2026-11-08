@@ -23,6 +23,7 @@ npm run native:check
 npm ci
 npm run typecheck && npm run test && npm run build
 npx cap add ios
+npm run ios:icons
 npx cap sync ios
 npx cap open ios
 ```
@@ -35,6 +36,34 @@ Details: [Nativer Dependency-Bootstrap](NATIVE-DEPENDENCY-BOOTSTRAP.md). Bundle-
 **Platzhalter**, der vor dem Signieren mit einer verfügbaren eigenen ID zu ersetzen ist.
 Native APIs (HealthKit/Notifications/Camera) sind noch **nicht** eingebunden.
 `src/core/platform/platform.ts` meldet Health-Daten ausdrücklich als nicht unterstützt.
+
+## iPhone: vorhandenes RED-Fit-Branding als Xcode-App-Icon (2026-11-08)
+
+Auch die iOS-Asset-Pipeline ist jetzt vorbereitet. Nach
+`npx cap add ios` generiert `npm run ios:icons` aus
+`public/icons/icon-512.png` ein **1024×1024-PNG ohne Alphakanal**
+samt `Contents.json` im Capacitor-Verzeichnis
+`ios/App/App/Assets.xcassets/AppIcon.appiconset/`.
+
+Der Generator prüft das PNG und überschreibt keine individuell
+gestalteten Xcode-App-Icons ohne explizites `--force`. Er erstellt
+**kein** iOS-Projekt künstlich, sondern bricht bei fehlendem
+`cap add ios` mit einer klaren Meldung ab.
+
+```bash
+# Ohne npm-Abhängigkeiten, Simulator oder Xcode (Node 22):
+npm run test:ios-icons
+```
+
+**Tatsächlich ausgeführt:** 10/10 lokale Tests bestanden, und die
+vier getesteten JS-Dateien stimmen bytegenau mit den GitHub-Blobs
+überein. Getestet wurde mit synthetischen PNGs. Eine reale
+Xcode-Asset-Kompilierung und ein signierter iPhone-Build sind
+**weiterhin ausstehend**. Das bisherige 512-px-Logo wird hochskaliert,
+weshalb vor einem Store-Release eine visuelle Prüfung gegen eine
+native 1024-px-Quelle sinnvoll ist.
+
+Siehe [iOS-App-Icon und Testprotokoll](IOS-APPICON.md).
 
 ## Windows
 Voraussetzungen: Windows + Microsoft C++ Build Tools, Rust und WebView2, Node.js,
