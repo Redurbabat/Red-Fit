@@ -166,6 +166,9 @@ function ExerciseRow({ planExercise, exerciseName, onChange, onRemove }: Exercis
   if (planExercise.targetWeightKg != null) {
     summaryParts.push(formatKg(planExercise.targetWeightKg));
   }
+  if (planExercise.supersetGroup) {
+    summaryParts.push(`Supersatz ${planExercise.supersetGroup}`);
+  }
 
   return (
     <div>
@@ -235,6 +238,28 @@ function ExerciseRow({ planExercise, exerciseName, onChange, onRemove }: Exercis
             value={planExercise.targetWeightKg}
             onCommit={(v) => onChange({ ...planExercise, targetWeightKg: v })}
           />
+          <Field label="Supersatz-Gruppe (optional)">
+            {(id) => (
+              <TextInput
+                id={id}
+                maxLength={12}
+                value={planExercise.supersetGroup ?? ""}
+                placeholder="z. B. A (bei zwei aufeinanderfolgenden Übungen)"
+                onChange={(event) => onChange({
+                  ...planExercise,
+                  supersetGroup: event.target.value.trim() || undefined,
+                })}
+              />
+            )}
+          </Field>
+          {planExercise.supersetGroup ? (
+            <IntField
+              label="Gruppenpause nach Runde (Sek., 0 = automatisch)"
+              value={planExercise.supersetRestSeconds ?? 0}
+              min={0}
+              onCommit={(v) => onChange({ ...planExercise, supersetRestSeconds: v })}
+            />
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -470,6 +495,21 @@ export default function PlanEditorPage() {
       if (session.name.trim() === "") {
         return "Jede Einheit braucht einen Namen.";
       }
+      // A valid superset has at least two adjacent exercises, never a
+      // disconnected group with the same name later in the session.
+      const groups = new Map<string, number[]>();
+      session.exercises.forEach((exercise, index) => {
+        const group = exercise.supersetGroup?.trim();
+        if (!group) return;
+        groups.set(group, [...(groups.get(group) ?? []), index]);
+      });
+      for (const [group, indices] of groups) {
+        if (indices.length < 2 || indices.some((index, position) =>
+          index !== indices[0] + position
+        )) {
+          return `Supersatz ${group} benötigt mindestens zwei direkte aufeinanderfolgende Übungen.`;
+        }
+      }
       for (const planExercise of session.exercises) {
         const exerciseName =
           exercisesById.get(planExercise.exerciseId)?.name ?? "einer Übung";
@@ -481,6 +521,9 @@ export default function PlanEditorPage() {
         }
         if (planExercise.restSeconds < 0) {
           return `Bei ${exerciseName} darf die Pause nicht negativ sein.`;
+        }
+        if ((planExercise.supersetRestSeconds ?? 0) > 3600) {
+          return `Bei ${exerciseName} darf die Gruppenpause höchstens 3600 Sekunden betragen.`;
         }
       }
     }
