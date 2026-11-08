@@ -55,6 +55,26 @@ npm run lint       # ESLint
 npm run test       # Vitest (Berechnungen, Backup-Validierung)
 ```
 
+## Native Abhängigkeiten reproduzierbar vorbereiten
+
+Im Integrations-Branch steht jetzt ein versionsfestes Werkzeug für
+**Capacitor 8 (iPhone) und Tauri 2 (Windows)** bereit. Vor dem ersten
+nativen Build ist auf einem Rechner mit Registry-Zugriff auszuführen:
+
+```bash
+npm run native:plan
+npm run native:bootstrap
+npm run native:check
+npm ci
+```
+
+`native:bootstrap` trägt die nativen CLI-Pakete einschließlich der passenden
+Lockfile-Einträge ein. Beide npm-Manifeste müssen anschließend gemeinsam
+committed werden. Bei einem npm-Fehler setzt das Tool die Manifestdateien
+zurück. [Native Bootstrap-Anleitung](docs/NATIVE-DEPENDENCY-BOOTSTRAP.md).
+In der aktuellen Ausführungsumgebung ist die npm-Registry nicht erreichbar;
+ein echter iOS-/Windows-Build ist damit **noch nicht nachgewiesen**.
+
 ## Prüfen ohne GitHub-Actions-Runner
 
 Der GitHub-Actions-Runner wird derzeit nicht zugewiesen; dasselbe Problem
