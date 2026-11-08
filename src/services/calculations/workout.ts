@@ -65,7 +65,8 @@ function accumulateExerciseRecord(
   records: Map<string, ExerciseRecord>,
   exerciseLog: ExerciseLog,
 ): void {
-  const completedSets = exerciseLog.setLogs.filter((s) => s.completed);
+  // A checked set with zero repetitions is not a performed personal record.
+  const completedSets = exerciseLog.setLogs.filter((s) => s.completed && s.reps > 0);
   if (completedSets.length === 0) return;
   const existing = records.get(exerciseLog.exerciseId) ?? {
     exerciseId: exerciseLog.exerciseId,
@@ -119,7 +120,9 @@ export function findExerciseRecords(workoutLogs: WorkoutLog[]): Map<string, Exer
 }
 
 /**
- * Records set by THIS workout compared against all previous completed workouts.
+ * Records set by THIS workout compared against all previous completed workouts:
+ * a heavier set or more repetitions at the heaviest recorded weight (also
+ * handles bodyweight exercises, where weightKg is 0).
  * The workout is first aggregated per exerciseId — the same exercise may appear
  * in several blocks of one workout and must yield at most ONE record entry
  * (WorkoutSummaryPage renders the list keyed by exerciseId).
@@ -138,7 +141,14 @@ export function findNewRecords(
   const fresh: ExerciseRecord[] = [];
   for (const record of current.values()) {
     const old = previous.get(record.exerciseId);
-    if (!old || record.maxWeightKg > old.maxWeightKg) {
+    // A best weight is one kind of record; more reps at the same maximum
+    // weight (including unweighted/bodyweight sets) is another.
+    if (
+      !old ||
+      record.maxWeightKg > old.maxWeightKg ||
+      (record.maxWeightKg === old.maxWeightKg &&
+        record.maxRepsAtMaxWeight > old.maxRepsAtMaxWeight)
+    ) {
       fresh.push(record);
     }
   }
