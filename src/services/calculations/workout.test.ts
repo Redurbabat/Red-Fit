@@ -179,6 +179,42 @@ describe("records", () => {
     expect(findNewRecords(workout({ status: "active", exerciseLogs }), []))
       .toHaveLength(0);
   });
+
+  it("preserves a historical PR when a later workout beats that weight", () => {
+    const earlier = workout({
+      id: "earlier", date: "2026-08-01", startedAt: "2026-08-01T09:00:00.000Z",
+      exerciseLogs: [{ id: "e1", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(60, 8)] }],
+    });
+    const milestone = workout({
+      id: "milestone", date: "2026-08-05", startedAt: "2026-08-05T09:00:00.000Z",
+      exerciseLogs: [{ id: "e2", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(80, 8)] }],
+    });
+    const later = workout({
+      id: "later", date: "2026-08-07", startedAt: "2026-08-07T09:00:00.000Z",
+      exerciseLogs: [{ id: "e3", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(100, 8)] }],
+    });
+    expect(findNewRecords(milestone, [earlier, later, milestone]))
+      .toMatchObject([{ exerciseId: "bench", maxWeightKg: 80 }]);
+  });
+
+  it("compares same-day PRs by startedAt rather than supplied history order", () => {
+    const earlier = workout({
+      id: "earlier", date: "2026-08-08", startedAt: "2026-08-08T08:00:00.000Z",
+      exerciseLogs: [{ id: "e1", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(70, 8)] }],
+    });
+    const milestone = workout({
+      id: "milestone", date: "2026-08-08", startedAt: "2026-08-08T12:00:00.000Z",
+      exerciseLogs: [{ id: "e2", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(80, 8)] }],
+    });
+    const later = workout({
+      id: "later", date: "2026-08-08", startedAt: "2026-08-08T18:00:00.000Z",
+      exerciseLogs: [{ id: "e3", exerciseId: "bench", name: "Bankdrücken", setLogs: [set(100, 8)] }],
+    });
+    expect(findNewRecords(milestone, [later, earlier]))
+      .toMatchObject([{ exerciseId: "bench", maxWeightKg: 80 }]);
+    expect(findNewRecords(later, [milestone, earlier]))
+      .toMatchObject([{ exerciseId: "bench", maxWeightKg: 100 }]);
+  });
 });
 
 describe("estimated 1RM (Epley)", () => {
