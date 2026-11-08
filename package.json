@@ -18,7 +18,8 @@
     "native:plan": "node tools/bootstrap-native.mjs --plan",
     "native:bootstrap": "node tools/bootstrap-native.mjs --install",
     "native:check": "node tools/bootstrap-native.mjs --check",
-    "test:native-deps": "node --test tools/native-deps.selftest.mjs"
+    "test:native-deps": "node --test tools/native-deps.selftest.mjs",
+    "test:wger-catalog": "node --test tools/bundled-wger.selftest.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
