@@ -9,7 +9,7 @@ import { PageHeader, SectionHeader } from "../../../components/layout/PageHeader
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { Chip, Field, NumberInput, TextInput } from "../../../components/ui/inputs";
-import type { FoodItem, MealFoodEntry, MealType } from "../../../models";
+import type { EstimateLevel, FoodItem, MealFoodEntry, MealType } from "../../../models";
 import { MEAL_TYPES } from "../../../models";
 import {
   buildEntryNutrition,
@@ -55,6 +55,7 @@ export default function AddMealPage() {
   const [query, setQuery] = useState(() => searchParams.get("query") ?? "");
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [amountInput, setAmountInput] = useState("100");
+  const [estimateLevel, setEstimateLevel] = useState<EstimateLevel>("none");
   const [amountError, setAmountError] = useState<string | undefined>(undefined);
   const [saving, setSaving] = useState(false);
 
@@ -67,6 +68,7 @@ export default function AddMealPage() {
 
   const selectFood = useCallback((food: FoodItem) => {
     setSelectedFood(food);
+    setEstimateLevel("none");
     setAmountInput(toInputValue(food.servingSizeG && food.servingSizeG > 0 ? food.servingSizeG : 100));
     setAmountError(undefined);
   }, []);
@@ -106,6 +108,7 @@ export default function AddMealPage() {
         foodId: selectedFood.id,
         foodName: selectedFood.name,
         amountG,
+        estimateLevel,
         ...nutrition,
       };
       const existing = await mealRepository.findByDateAndType(date, mealType);
@@ -255,6 +258,23 @@ export default function AddMealPage() {
                 />
               ))}
             </div>
+            <Field label="Wie genau ist die Mengenangabe?">
+              {(id) => (
+                <select
+                  id={id}
+                  className="select"
+                  value={estimateLevel}
+                  onChange={(event) =>
+                    setEstimateLevel(event.target.value as EstimateLevel)
+                  }
+                >
+                  <option value="none">Genau abgewogen</option>
+                  <option value="low">Leicht geschätzt</option>
+                  <option value="medium">Portion grob geschätzt</option>
+                  <option value="high">Sehr ungenau geschätzt</option>
+                </select>
+              )}
+            </Field>
             <LiveNutrition food={selectedFood} amountInput={amountInput} />
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
               <Button disabled={saving} onClick={() => void handleSave()}>
