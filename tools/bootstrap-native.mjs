@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Native dependency bootstrap for RED Fit. Runs on macOS and Windows.
+ * Native dependency bootstrap for RED Fit. Runs on macOS, Linux and Windows.
  *
  * node tools/bootstrap-native.mjs --plan
  * node tools/bootstrap-native.mjs --install
@@ -107,6 +107,7 @@ if (succeeded) {
   console.log("Native dependencies pinned and package-lock.json updated.");
   console.log("Next: npm ci && npm run typecheck && npm run test && npm run build");
   console.log("Then on macOS: npx cap add ios && npx cap sync ios");
+  console.log("Then with Android Studio / SDK: npx cap add android && npx cap sync android");
   console.log("Then on Windows (Rust/MSVC installed): npx tauri build");
   console.log("Commit package.json AND package-lock.json together to the feature branch.");
 }
