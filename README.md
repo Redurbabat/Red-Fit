@@ -29,6 +29,10 @@ Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
   und weitere Zutaten. Das tatsächlich gekochte Gewicht und der Faktor
   bleiben im Tagebuch erhalten; bestehende Rohdaten unverändert.
   [Umrechnung und Grenzen](docs/DIETRY-COOKED-WEIGHT.md).
+  Mahlzeiteneinträge und Rezepte werden jetzt **atomar** gespeichert, damit
+  parallele Speichervorgänge keine anderen Einträge überschreiben. Auch
+  gekochte Mengen bleiben bei späteren Änderungen konsistent.
+  [Datenintegrität](docs/MEAL-LOG-INTEGRITY.md).
 - **wger**: 789 geprüfte und individuell attribuierte Übungen sind als
   **mitgelieferter Offline-Katalog** über Training → Übungen → wger-Katalog
   verfügbar. Die Datenbank wird erst nach Vorschau und ausdrücklicher
