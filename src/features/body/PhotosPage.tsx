@@ -234,9 +234,10 @@ export default function PhotosPage() {
       )}
 
       <p style={{ fontSize: 13, color: "var(--text-soft)", marginTop: 14 }}>
-        Fortschrittsfotos bleiben ausschließlich auf diesem Gerät (IndexedDB) und
-        sind bewusst nicht Teil des JSON-Backups. Ein medienfähiges Backup-Format
-        ist geplant.
+        Fortschrittsfotos bleiben lokal in IndexedDB und gehören nicht zum
+        regulären JSON-Backup. Unter „Mehr → Backup & Import“ kannst du sie
+        separat als private, unverschlüsselte Datei exportieren und auf
+        einem anderen Gerät importieren.
       </p>
 
       <BottomSheet
