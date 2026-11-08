@@ -53,6 +53,18 @@ test('iOS app icon is 1024x1024, fully opaque, and preserves solid colors', () =
   assert.deepEqual([...decoded.rgba.subarray(-4)], [234, 45, 17, 255]);
 });
 
+test('converts the same RGB PNG color type used by the real RED Fit icon', () => {
+  const rgb = Buffer.alloc(512 * 512 * 3);
+  for (let i = 0; i < rgb.length; i += 3) {
+    rgb[i] = 210; rgb[i + 1] = 42; rgb[i + 2] = 48;
+  }
+  const source = encodeRgbPng(512, 512, rgb);
+  assert.equal(source[25], 2);
+  const converted = createIosIcon(source);
+  assert.equal(converted[25], 2);
+  assert.deepEqual([...decodePng(converted).rgba.subarray(0, 4)], [210, 42, 48, 255]);
+});
+
 test('transparent source pixels are composed over RED Fit dark brand background', () => {
   const input = encodeRgbaPng(512, 512, flatRgba(512, [255, 0, 0, 0]));
   const decoded = decodePng(createIosIcon(input));
