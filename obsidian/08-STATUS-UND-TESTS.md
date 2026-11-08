@@ -64,3 +64,12 @@ Nächster konkreter Schritt:
 - Commit: `991c4c1def6960020a9c96276daa3187f50b92d4`.
 - Prüfung: Die GitHub-Datei und ihr tatsächlicher Backup-Transaktionsaufruf (`collectBackupData` über ein Tabellen-Array) wurden abgeglichen. **Kein vollständiger TypeScript-/Vite-Build und kein neuer Cloudflare-Deploy in dieser Sitzung verifiziert.**
 - Nächster Schritt: Cloudflare Worker erneut von `main` bauen; `tsc && vite build`, Asset-Upload und Deployergebnis prüfen. Bei weiteren TS-Fehlern genaue Logs prüfen und gezielt beheben. Eine Worker-URL ist ohne erfolgreiche Deployment-Antwort nicht verifiziert.
+
+
+## 2026-11-08 — RED Morph / BBT-Bit inspiriertes Bottom Dock
+- Neues React-Dock im Branch `feat/red-morph-bottom-dock-20261108`: weiterhin fünf echte Bereiche; nach abwärtsgerichtetem Scrollen minimiert das Dock (Icons bleiben ≥44px erreichbar), beim Aufwärtsscrollen wird es wieder ausgeklappt.
+- Ein-Produkt-Regel beachtet: kein BBT-Bit-Musikplayer und kein SwiftUI-Code. Desktop-Sidebar und Workout-Fullscreen bleiben unverändert.
+- Geänderte Dateien: `src/components/layout/BottomNav.tsx`, `dockBehavior.ts`, `src/app/AppShell.tsx`, `src/styles/mobile.css`, `tokens.css`, `components.css`; Tests `tools/dock-behavior.selftest.mjs` und `BottomNav.test.tsx`; Detaildoku `docs/RED-MORPH-BOTTOM-DOCK.md` und [[10-DOCK-RED-MORPH]].
+- Tatsächlich ausgeführt: `node --experimental-strip-types --test tools/dock-behavior.selftest.mjs` auf Node 22.16.0 in isoliertem lokalem Quelltest (**7/7 erfolgreich**); TypeScript-`transpileModule`-Syntaxanalyse für drei TS/TSX-Dateien erfolgreich.
+- **Nicht verifiziert:** `npm ci`, vollständiger Typecheck, ESLint, Vitest-UI-Test, Vite-Build, Cloudflare-Deployment und echte iOS-/Android-/Windows-UI. Keine native SwiftUI-Parität behaupten.
+- Next: PR nach `main`, danach Cloudflare-Build prüfen und auf iPhone/Android Accessibility, Safe Areas, Scrollrichtung und Quick-Log-Überlagerung abnehmen.
