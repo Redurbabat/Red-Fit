@@ -190,3 +190,6 @@ Nächster konkreter Schritt:
 - `tools/opengym-progression-source.lock.json` hält für jede der 70 Dateien den originalen Git-Blob-Hash fest. Alle **70/70 realen GitHub-Blob-SHAs** gegen dieses Lock erfolgreich geprüft; unveränderlicher Original-Commit `8fb98b1`. **68/68** JS-Dateien mit `node --check` bestanden.
 - `node --test tools/opengym-progression.selftest.mjs`: **10/10 bestanden** (Node 22.16.0, isoliertes Verzeichnis aus bytegleichen ZIP-Dateien), einschließlich sechs Modi, Gewichts-/Deload-Logik, Triple-Start, unvollständigen Sätzen, Importabhängigkeiten und 70 Original-Hashes. Log: `/mnt/data/redfit-opengym-progression-smoke/node-tests-final.log`. Test-Blob `be382958` und Lock-Blob `aa7c615d` mit GitHub abgeglichen.
 - Keine produktive Umschaltung, kein vollständiger npm-/Vitest-/Vite-/API-/Cloudflare-/Native-Build und keine Datenmigration behauptet. Details: `docs/OPENGYM-BASELINE.md`. Als Nächstes fehlen der vollständige Quellenimport und reale Build-/Datenschutz-/Migrationsprüfungen.
+
+
+- **Nachtrag für den neuen Vendor-Baum:** `eslint.config.js` ignoriert nun `vendor/` beim regulären RED-Fit-Lint-Lauf; der gesonderte `tools/opengym-progression.selftest.mjs` bleibt über `tools/offline-regressions.mjs` ausführbar. Änderung `3d6155e` auf `main`; kein vollständiger ESLint-/Vite-Build durchgeführt.
