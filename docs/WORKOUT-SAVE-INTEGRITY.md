@@ -54,13 +54,45 @@ Status geprüft:
 Die Geschäftsregel ist in
 `src/services/workout/workoutStatusGuard.ts` separat testbar.
 
-**Grenzen:** Dies ist kein allgemeines Multi-Tab-Synchronisationssystem.
-Zwei Tabs, die **beide noch einen aktiven** Workout-Log bearbeiten,
-können weiterhin konkurrierende Satzänderungen überschreiben; diese
-Fälle benötigen künftig einen echten Versionsvergleich/Merge.
-Ein `pagehide`-/PWA-Kill-Event garantiert nicht, dass ein asynchroner
-IndexedDB-Flush bis zum Prozessende abgeschlossen ist. Deshalb wird
-kein vollständig verlustfreier OS-Kill-Recovery behauptet.
+### Optimistische Versionierung auch für zwei aktive Tabs (2026-11-08)
+
+Zusätzlich zum terminalen Status erhält jeder `WorkoutLog` jetzt einen
+optionalen `saveRevision`-Zähler. Bestehende Datensätze und alte Backups
+ohne diesen Wert gelten als **Revision 0**, sodass keine destruktive
+Datenmigration notwendig ist. Neue Trainings starten mit Revision 0.
+
+`saveWorkout()` liest den aktuellen Workout-Log in derselben
+Dexie-`rw`-Transaktion, in der er geschrieben wird. Ein Update wird
+**nur dann angenommen, wenn die vom aufrufenden Tab erwartete Revision
+mit der gespeicherten Revision übereinstimmt**. Erfolgreiche Writes
+erhöhen den Zähler um 1. Ungültige/überlaufende Versionsnummern werden
+abgelehnt. Existiert der Workout-Datensatz nach einer parallelen
+Löschung nicht mehr, darf ein später Autosave ihn nicht neu erzeugen.
+
+`WorkoutPage.tsx` hält den erwarteten Zähler in einer pro geladenem
+Workout neu angelegten serialisierten Schreibwarteschlange. Nach jedem
+erfolgreichen Write wird der erwartete Zähler auf das Ergebnis
+aktualisiert. So funktionieren aufeinanderfolgende lokale Autosaves,
+während ein *anderer* Tab mit veraltetem Stand einen expliziten
+`WorkoutRevisionConflictError` erhält.
+
+Bei einem Konflikt erscheint eine **dauerhafte Warnung** in der
+Trainingsansicht: Nicht gespeicherte lokale Eingaben werden nicht als
+erfolgreich dargestellt; neue Mutationen werden blockiert, bis die
+Nutzerin oder der Nutzer den aktuell gespeicherten Stand über
+**„Gespeicherten Stand neu laden“** lädt. Ein automatisches Mischen von
+konkurrierenden Sätzen erfolgt bewusst nicht, um keine Trainingswerte
+zu erfinden.
+
+**Grenzen:** Dies verhindert das **stillschweigende Überschreiben**
+konkurrierender aktiver Trainingseinträge, ist aber kein automatisches
+Cross-Tab-Merge. Nicht gespeicherte Änderungen eines zurückgewiesenen
+Tabs müssen nach dem Neuladen gegebenenfalls erneut erfasst werden.
+Direkte Admin-/Backup-`put`-Operationen außerhalb des Workout-Service
+sind nicht Teil dieses Revisionsprotokolls. Ein `pagehide`-/PWA-Kill-Event
+garantiert nicht, dass ein asynchroner IndexedDB-Flush bis zum
+Prozessende abgeschlossen ist. Deshalb wird kein vollständig
+verlustfreier OS-Kill-Recovery behauptet.
 
 ## Prüfung und Status
 
@@ -69,6 +101,7 @@ Ohne npm-Installation lokal mit Node 22.16+:
 ```bash
 npm run test:workout-save-queue
 npm run test:workout-status
+npm run test:workout-revision
 ```
 
 **Tatsächlich lokal ausgeführt am 2026-11-08: 6/6 Warteschlangen- und
@@ -80,11 +113,23 @@ Schreibvorgang und ein schnelleres terminales Update. Der Status-Test
 prüft verbotene Rückwärtsübergänge und weiterhin mögliche
 Same-Status-Edits.
 
+**Zusätzlich tatsächlich lokal ausgeführt:** 8/8 Node-Tests zur
+neuen Revisionskontrolle auf Node.js 22.16.0 bestanden, isolierter
+`tsc --noEmit --strict`-Check für Revisionsmodul und Queue bestanden.
+Dazu gehören Legacy-Revision 0, aufeinanderfolgende Versionen,
+zwei aktive Tabs, Konflikterkennung, ungültige Werte und Überlauf.
+Die lokal ausgeführten Quellen und Tests stimmen bytegenau mit den
+GitHub-Git-Blobs `ecae6c1723680ca87608b3b5fff3500695806120` und
+`57c0ecdd9789d10f7c25586245286790b9793dae` überein.
+Die bestehenden Dexie-Tests wurden um parallele aktive Tabs,
+veraltete Revisionen, Legacy-Daten und gelöschte Workouts erweitert.
+
 Für die tatsächliche Datenbankintegration sind zusätzliche, noch
 **nicht ausgeführte** Vitest-Tests hinterlegt:
 
 - `src/services/workout/serializedWorkoutWriter.test.ts`;
 - `src/services/workout/workoutPersistence.test.ts`.
+- `src/services/workout/workoutRevision.test.ts` (neue Zod-/Revisionsfälle).
 
 Die vollständige Vitest-/Dexie-/IndexedDB-Suite konnte in der aktuellen
 Umgebung ohne installierte Pakete und Registry-DNS-Zugriff nicht
