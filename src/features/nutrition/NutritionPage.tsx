@@ -27,6 +27,7 @@ import {
   calculateMealTotals,
   type NutrientTotals,
 } from "../../services/calculations/nutrition";
+import { calculateNutritionUncertainty } from "../../services/calculations/nutritionUncertainty";
 import {
   db,
   foodRepository,
@@ -138,6 +139,7 @@ export default function NutritionPage() {
   const [waterError, setWaterError] = useState<string | undefined>(undefined);
 
   const totals = calculateDailyNutrition(mealLogs ?? []);
+  const uncertainty = calculateNutritionUncertainty(mealLogs ?? []);
   const logsByType = new Map<MealType, MealLog>();
   for (const log of mealLogs ?? []) logsByType.set(log.mealType, log);
   const visibleTypes: MealType[] = [
@@ -338,6 +340,13 @@ export default function NutritionPage() {
             action={{ label: "Ziel festlegen", onClick: () => navigate("/settings") }}
           />
         )}
+        {mealLogs !== undefined && uncertainty.uncertainEntries > 0 ? (
+          <p style={{ marginTop: 14, color: "var(--text-muted)", fontSize: 13 }}>
+            {uncertainty.uncertainEntries} geschätzte Mengen:
+            rechnerische Unschärfe von ungefähr ±{Math.round(uncertainty.caloriesSigma)} kcal.
+            Diese Orientierung berücksichtigt keine Fehler der Nährwertangaben.
+          </p>
+        ) : null}
       </Card>
 
       <SectionHeader title="Mahlzeiten" />
