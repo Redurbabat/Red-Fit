@@ -12,6 +12,7 @@ import { db, SETTINGS_ID } from "../storage/database";
 import { settingsRepository } from "../storage/settingsRepository";
 import { APP_VERSION } from "../appVersion";
 import { assertRestorableBackupSize, MAX_STANDARD_BACKUP_BYTES } from "./backupExportPolicy";
+import { nextImportedWorkoutRevision } from "./workoutImportRevision";
 
 /** Import files above this size are rejected outright (§107). */
 export const MAX_IMPORT_BYTES = MAX_STANDARD_BACKUP_BYTES;
@@ -254,6 +255,7 @@ async function normalizeActiveWorkouts(preferIds: Set<string>): Promise<void> {
     if (workout.id === keep.id) continue;
     await db.workoutLogs.update(workout.id, {
       status: "cancelled",
+      saveRevision: nextImportedWorkoutRevision(workout.saveRevision),
       updatedAt: nowIso(),
     });
   }
@@ -318,6 +320,7 @@ export async function importBackup(
   async function mergeTable<T extends { id: string }>(
     table: import("dexie").EntityTable<T, "id">,
     items: T[],
+    onReplace?: (local: T, imported: T) => T,
   ): Promise<void> {
     for (const item of items) {
       const existing = await table.get(item.id as never);
@@ -325,7 +328,8 @@ export async function importBackup(
         await table.put(item as Parameters<typeof table.put>[0]);
         result.added++;
       } else if (strategy === "replaceWithBackup") {
-        await table.put(item as Parameters<typeof table.put>[0]);
+        const replacement = onReplace ? onReplace(existing, item) : item;
+        await table.put(replacement as Parameters<typeof table.put>[0]);
         result.replaced++;
       } else {
         result.skipped++;
@@ -369,7 +373,15 @@ export async function importBackup(
 
       await mergeTable(db.exercises, d.exercises);
       await mergeTable(db.workoutPlans, d.workoutPlans);
-      await mergeTable(db.workoutLogs, d.workoutLogs);
+      await mergeTable(db.workoutLogs, d.workoutLogs, (local, imported) => ({
+        ...imported,
+        // A restored same-ID workout is a NEW mutation, not a rewind of
+        // the local revision. Stale UI views must fail their next save.
+        saveRevision: nextImportedWorkoutRevision(
+          local.saveRevision,
+          imported.saveRevision,
+        ),
+      }));
       await mergeTable(db.foodItems, d.foodItems);
       await mergeTable(db.mealLogs, d.mealLogs);
       await mergeTable(db.nutritionGoals, d.nutritionGoals);
