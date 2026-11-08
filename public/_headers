@@ -1,0 +1,16 @@
+# Applied to Cloudflare Pages and Workers Static Assets.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: microphone=(), geolocation=()
+
+# Keep versioned Vite bundles immutable; HTML/PWA updates remain revalidatable.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/index.html
+  Cache-Control: no-cache
+
+/sw.js
+  Cache-Control: no-cache
