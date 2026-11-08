@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:e2e": "node tools/e2e-smoke.mjs"
+    "test:e2e": "node tools/e2e-smoke.mjs",
+    "desktop:icons": "node tools/prepare-windows-icons.mjs",
+    "test:native-icons": "node --test tools/native-icons.selftest.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.7.0",
