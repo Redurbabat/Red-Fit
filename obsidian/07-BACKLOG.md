@@ -22,6 +22,8 @@ updated: 2026-11-08
 - [ ] wger: Übungstaxonomie/Attributionen, zusätzliche Bibliotheks- und Progressionsfunktionen an aktuelles RED-Fit-Datenmodell anpassen.
 - [ ] Dietry: fehlende Ernährungs-/Aktivitätsfunktionen aus ZIP vergleichen, validierte Logik in RED-Fit-Services umsetzen.
 - [ ] RED-Morph Designreview eines echten Screens (Today/Workout), dann gezielter Touch-Kit-Transfer nach Test.
+- [x] Responsive Bottom Dock nach RED Morph/BBT-Bit (React) inkl. Scroll-Logik und isolierter Unit-Tests implementiert; Vollabnahme offen.
+- [ ] Dock auf echtem iPhone/Android prüfen: Richtungswechsel, Safe Areas, Quick Log, Scrollcontainer, Tastatur, große Schrift, Reduce Motion.
 - [ ] BBT-Bit-Referenzen für iOS UX/Accessibility/Release-Nachweise berücksichtigen, kein Musikcode.
 
 ## P3 — Freigabe
