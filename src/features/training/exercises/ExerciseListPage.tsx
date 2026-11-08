@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { ChevronRight, Dumbbell, Plus, Upload } from "lucide-react";
+import { BookOpen, ChevronRight, Dumbbell, Plus, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "../../../components/feedback/Modal";
@@ -29,6 +29,10 @@ import {
   parseWgerImportJson,
   type WgerExercisePreview,
 } from "../../../services/import/wgerExerciseAdapter";
+import {
+  BUNDLED_WGER_CATALOG_SIZE,
+  loadBundledWgerCatalog,
+} from "../../../services/import/bundledWgerCatalog";
 import {
   difficultyLabels,
   equipmentLabels,
@@ -189,7 +193,7 @@ export default function ExerciseListPage() {
   };
 
   async function readWgerFile(file: File | undefined) {
-    if (!file) return;
+    if (!file || importBusy) return;
     setImportError("");
     setImportPreview([]);
     if (file.size > 5_000_000) {
@@ -201,6 +205,20 @@ export default function ExerciseListPage() {
       setImportPreview(preview);
     } catch {
       setImportError("Ungültige wger-Datei. Prüfe Format, Lizenz und Urheber.");
+    }
+  }
+
+  async function showBundledWgerPreview() {
+    if (importBusy) return;
+    setImportBusy(true);
+    setImportError("");
+    setImportPreview([]);
+    try {
+      setImportPreview(await loadBundledWgerCatalog());
+    } catch {
+      setImportError("Der mitgelieferte wger-Katalog konnte nicht gelesen werden.");
+    } finally {
+      setImportBusy(false);
     }
   }
 
@@ -323,8 +341,22 @@ export default function ExerciseListPage() {
         onClose={() => { if (!importBusy) setImportOpen(false); }}
       >
         <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 14 }}>
-          Importiere eine lokal vorbereitete JSON-Liste mit Quellen-ID, Urheber und Lizenz.
-          Keine Bilder oder fremden Trainingsdaten werden automatisch geladen.
+          Die {BUNDLED_WGER_CATALOG_SIZE} geprüften wger-Übungen sind in RED Fit
+          enthalten und auch offline verfügbar. Du kannst sie zunächst ansehen
+          und anschließend ausdrücklich importieren. Urheber und
+          Creative-Commons-Lizenzen bleiben pro Übung gespeichert;
+          eingeschränkt lizenzierte Bilder sind nicht enthalten.
+        </p>
+        <Button
+          variant="secondary"
+          disabled={importBusy}
+          onClick={() => void showBundledWgerPreview()}
+        >
+          <BookOpen size={17} aria-hidden="true" />
+          {importBusy ? "Katalog wird geladen …" : `Mitgelieferten Katalog ansehen (${BUNDLED_WGER_CATALOG_SIZE})`}
+        </Button>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "16px 0 8px" }}>
+          Alternativ: eigene, lizenzierte wger-JSON-Datei auswählen.
         </p>
         <Field label="JSON-Datei auswählen" error={importError || undefined}>
           {(id) => (
@@ -333,14 +365,15 @@ export default function ExerciseListPage() {
               className="input"
               type="file"
               accept=".json,application/json"
+              disabled={importBusy}
               onChange={(event) => void readWgerFile(event.currentTarget.files?.[0])}
             />
           )}
         </Field>
         {importPreview.length > 0 ? (
           <>
-            <p style={{ fontWeight: 700, marginBottom: 8 }}>
-              Vorschau: {importPreview.length} Übungen
+            <p role="status" style={{ fontWeight: 700, marginBottom: 8 }}>
+              Vorschau: {importPreview.length} Übungen · Urheber und Lizenzen prüfen
             </p>
             <div style={{ maxHeight: 180, overflowY: "auto", marginBottom: 12 }}>
               {importPreview.slice(0, 20).map((entry) => (
