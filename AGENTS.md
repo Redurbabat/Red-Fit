@@ -1,0 +1,9 @@
+# RED Fit — agent entry point
+
+Every AI assistant or developer working in this repository MUST read [obsidian/00-START-HERE.md](obsidian/00-START-HERE.md) and [obsidian/09-CHAT-HANDOFF.md](obsidian/09-CHAT-HANDOFF.md) before changes. Follow the existing [CLAUDE.md](CLAUDE.md) and [ARCHITEKTUR.md](ARCHITEKTUR.md) for runtime/data rules. The Markdown folder `obsidian/` is an Obsidian-compatible, versioned project knowledge base, readable across chats through GitHub.
+
+User-approved project intent (2026-11-08): consolidate functionality from the provided openGym, wger and Dietry archives into ONE RED Fit app, targeting iPhone/iOS, Android, Windows and web. RED-Morph is the design reference, and BBT-Bit is a native Apple interaction/testing reference, NOT an audio subsystem to merge. Keep RED Fit private. User specifically authorized direct pushes to main for this session; this is not a blanket authorization to bypass safety, licensing, review of destructive changes or tests.
+
+Do not blindly copy three app source trees into production. Preserve local data and current RED Fit flows; make incremental, testable features inside one React/TypeScript core and platform shells. Some openGym media are separately licensed and must not be imported into an independent RED Fit app. Record exactly what is implemented versus planned; no claims of verified iOS/Android/Windows builds without actual build evidence. Never commit secrets or user data.
+
+**Agent startup:** review GitHub main branch, `obsidian/08-STATUS-UND-TESTS.md`, current TODO and actual files before selecting the next not-yet-done task. Write back progress, changed files, tests, blockers into the Obsidian status note. New chat contexts must not assume conversation history or ChatGPT memory is shared.
