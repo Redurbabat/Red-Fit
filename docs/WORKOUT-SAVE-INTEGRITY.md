@@ -136,6 +136,52 @@ noch **nicht ausgeführt** (fehlende npm-Abhängigkeiten/Registry `EAI_AGAIN`).
 Außerdem ist `WorkoutSummaryPage` im vollständigen React-Testlauf
 und mit zwei Browser-Tabs zu prüfen.
 
+### Auch der Trainingsstart ist jetzt atomar (2026-11-08)
+
+Beim anschließenden Review wurde eine eigenständige Race Condition entdeckt:
+`TrainingPage` fragte mit `workoutLogRepository.getActive()` nach einem
+bereits aktiven Workout und rief danach – ohne gemeinsame Transaktion –
+`startManualWorkout()` bzw. `startPlannedWorkout()` auf. Zwei offene
+Fenster konnten gleichzeitig **kein aktives Workout sehen** und danach
+zwei unterschiedliche aktive Trainingslogs erzeugen.
+
+Die neue Servicefunktion `createOrResumeWorkout(proposed)` prüft und
+erstellt das aktive Workout nun in **einer Dexie-Read-Write-Transaktion**
+auf `db.workoutLogs`. Findet sich bereits eine aktive Session, wird
+deren bestehende ID einschließlich der gespeicherten Sätze und Revision
+zurückgegeben; ansonsten wird die neue Session per `add()` eingefügt.
+`add()` überschreibt im Gegensatz zu `put()` niemals einen zufällig
+kollidierenden Primärschlüssel. Beide Startwege benutzen die Funktion.
+
+Der vorherige `getActive()`-Check in der UI bleibt als schnelle
+Navigation zur laufenden Session erhalten, ist aber **nicht mehr die
+Sicherheitsgrenze**. Ein neu beginnender Serviceaufruf prüft das noch
+einmal atomar. Abgeschlossene bzw. verworfene Trainings hindern den
+Start eines neuen Workouts nicht; bereits vorhandene doppelte aktive
+Legacy-Datensätze werden **nicht stillschweigend gelöscht**.
+
+**Tatsächlich durchgeführt:** Acht Testfälle mit einem seriellen,
+dependency-freien Transaktionsstub und einem identischen Produktions-
+Funktionskörper aus `workoutService.ts` bestanden; einschließlich
+**32 gleichzeitiger Startversuche**, Wiederaufnahme mit erhaltenen
+Satzdaten, Kollisionen, fehlerhaften Eingaben und Fehlerfortsetzung.
+Der isolierte Funktionskörper stimmt per FNV32 `966b5355`
+(567 Zeichen) mit GitHub überein. Der TypeScript-Teil wurde
+isoliert mit `tsc --noEmit --strict` geprüft.
+
+```bash
+npm run test:workout-start
+# Tatsächliche IndexedDB-Tests, sobald npm ci möglich ist:
+npm run test -- src/services/workout/workoutStart.atomic.test.ts
+```
+
+Die **sieben zusätzlich eingecheckten Dexie-Tests** prüfen darunter die
+Konkurrenz von 16 und drei realen Startaufrufen mit `Promise.all`,
+revisionsgetreue Wiederaufnahme, IDs und abgeschlossene Trainings.
+Sie sind noch **nicht** in einer echten IndexedDB-Umgebung ausgeführt.
+Der isolierte Stub-Test beweist das Verhalten unter serialisierbarer
+Transaktionssemantik, nicht die vollständige Integration mit Dexie.
+
 ## Prüfung und Status
 
 Ohne npm-Installation lokal mit Node 22.16+:
