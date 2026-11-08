@@ -118,6 +118,11 @@ Die elf lokal bereitgestellten `bbt-*`/`swiftui-*`-Skill-Dateien wurden gelesen.
   14/14 unabhängige Node-Tests bestanden (echte npm-Installation offen)
 - [ ] `native:bootstrap` mit Registry-Zugriff ausführen und aktualisiertes
   `package.json` + `package-lock.json` zusammen committen
+- [x] iPhone-AppIcon-Pipeline: vorhandenes RED-Fit-PWA-Logo wird
+  nach `npx cap add ios` in eine einzelne 1024-px-RGB-Datei **ohne
+  Alphakanal** und Xcode-Asset-`Contents.json` konvertiert; Schutz
+  vor unbeabsichtigtem Überschreiben eigener Icons;
+  10/10 Node-Tests bestanden, getestete Skripte bytegleich GitHub
 - [ ] Capacitor-/iOS-Build auf macOS geprüft
 - [x] Branded Windows/Tauri-Icons aus vorhandenem PWA-Icon automatisch
   vor Dev/Build generieren; 6/6 isolierte PNG-/ICO-Tests bestanden
