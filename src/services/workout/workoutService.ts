@@ -12,6 +12,7 @@ import { calculateWorkoutDuration } from "../calculations/workout";
 import { workoutLogRepository } from "../storage/workoutLogRepository";
 import { db } from "../storage/database";
 import { canPersistWorkoutStatus } from "./workoutStatusGuard";
+import { nextWorkoutRevision } from "./workoutRevision";
 
 /**
  * The workout lifecycle. Core rule: an active workout is a persisted
@@ -80,6 +81,7 @@ export async function startPlannedWorkout(
     name: session.name,
     startedAt: now,
     status: "active",
+    saveRevision: 0,
     exerciseLogs,
     currentExerciseIndex: 0,
     createdAt: now,
@@ -98,6 +100,7 @@ export async function startManualWorkout(name = "Freies Training"): Promise<Work
     name,
     startedAt: now,
     status: "active",
+    saveRevision: 0,
     exerciseLogs: [],
     currentExerciseIndex: 0,
     createdAt: now,
@@ -116,10 +119,17 @@ export async function startManualWorkout(name = "Freies Training"): Promise<Work
 export async function saveWorkout(log: WorkoutLog): Promise<WorkoutLog> {
   return db.transaction("rw", db.workoutLogs, async () => {
     const stored = await db.workoutLogs.get(log.id as never);
-    if (!canPersistWorkoutStatus(stored?.status, log.status)) {
+    if (!stored) {
+      // A concurrent deletion or stale screen must not recreate a workout.
+      throw new Error("Workout no longer exists");
+    }
+    if (!canPersistWorkoutStatus(stored.status, log.status)) {
       throw new Error("Workout is already finalized with another status");
     }
-    const updated: WorkoutLog = { ...log, updatedAt: nowIso() };
+    // Compare and increment under one write transaction: two active tabs
+    // cannot both save based on the same historical set snapshot.
+    const saveRevision = nextWorkoutRevision(log.saveRevision, stored.saveRevision);
+    const updated: WorkoutLog = { ...log, saveRevision, updatedAt: nowIso() };
     await db.workoutLogs.put(updated);
     return updated;
   });
