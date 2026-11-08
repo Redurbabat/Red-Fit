@@ -26,6 +26,7 @@ updated: 2026-11-08
 
 ## P2 — fachliche Lücken der drei Quellapps
 - [ ] openGym: zusätzliche Progressionsmodi, Workout-Modi, Timer-/Workout-UX und ggf. Erinnerungen modular integrieren (keine Gym-visual-Medien). Gewicht-/Wiederholungs-PRs inklusive Eigengewicht, Null-Wiederholungen- und Abbruchschutz sind seit 2026-11-08 umgesetzt; Gesamtaufgabe bleibt offen.
+- [x] openGym-Satznotizen (kleiner Funktionstransfer): `SetLog.notes` bereits vorhanden, jetzt 140-Zeichen-Eingabe pro Satz + Anzeige in Historie, ohne DB-Migration/Medien; 3/3 reine Node-Tests und 9/9 Quellabgleiche, voller App-Build offen. Details: `docs/OPENGYM-SET-NOTES.md`.
 - [x] Trainingsrekord-Fix: mehr Wiederholungen bei gleicher Höchstlast, Eigengewichts-PR, keine Rekorde aus abgebrochenen/aktiven Workouts, Zusammenfassungsanzeige angepasst; **historische Rekordreihenfolge korrigiert, vollständigen Node-Selbsttest 9/9 bestanden** (2026-11-08, Node 22.16, Originaldateien per Git-Blob verifiziert); Vitest/Build noch offen.
 - [ ] wger: Übungstaxonomie/Attributionen, zusätzliche Bibliotheks- und Progressionsfunktionen an aktuelles RED-Fit-Datenmodell anpassen.
 - [ ] Dietry: fehlende Ernährungs-/Aktivitätsfunktionen aus ZIP vergleichen, validierte Logik in RED-Fit-Services umsetzen.
