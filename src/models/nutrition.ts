@@ -67,12 +67,20 @@ export const MEAL_TYPES = [
 ] as const;
 export type MealType = (typeof MEAL_TYPES)[number];
 
+/**
+ * Optional uncertainty flag for amounts entered without a scale.
+ * Derived from the Dietry estimate-level model; legacy entries default to exact.
+ */
+export const ESTIMATE_LEVELS = ["none", "low", "medium", "high"] as const;
+export type EstimateLevel = (typeof ESTIMATE_LEVELS)[number];
+
 /** Snapshot principle: name + computed values are frozen so history stays stable. */
 export const mealFoodEntrySchema = z.object({
   id: z.string().min(1),
   foodId: z.string().min(1),
   foodName: z.string().min(1),
   amountG: nonNegativeNumber,
+  estimateLevel: z.enum(ESTIMATE_LEVELS).optional(),
   kcal: nonNegativeNumber,
   protein: nonNegativeNumber,
   carbs: nonNegativeNumber,
