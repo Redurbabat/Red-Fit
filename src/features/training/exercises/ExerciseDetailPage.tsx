@@ -205,6 +205,8 @@ export default function ExerciseDetailPage() {
         muscleGroup: values.muscleGroup,
         equipment: values.equipment,
         difficulty: values.difficulty,
+        // Saving the exercise editor confirms this manual taxonomy review.
+        taxonomyNeedsReview: false,
       });
       setEditOpen(false);
       showToast("Änderungen gespeichert.");
