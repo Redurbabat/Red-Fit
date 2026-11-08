@@ -169,7 +169,7 @@ export default function PhotosPage() {
     <>
       <PageHeader
         title="Fortschrittsfotos"
-        subtitle="Nur lokal · nicht im JSON-Backup"
+        subtitle="Nur lokal · separates Foto-Backup verfügbar"
         back
         backFallback="/body"
       />
