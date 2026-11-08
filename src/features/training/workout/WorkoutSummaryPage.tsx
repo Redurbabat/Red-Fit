@@ -347,7 +347,9 @@ export default function WorkoutSummaryPage() {
         onClick={() => {
           // Do not navigate away if the final unsaved note failed to persist.
           void flushNotes(true).then((saved) => {
-            if (saved) navigate("/training");
+            if (saved && isCurrentWorkoutRoute(routeWorkoutId.current, workoutId)) {
+              navigate("/training");
+            }
           });
         }}
       >
