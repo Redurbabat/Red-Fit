@@ -152,3 +152,31 @@ test("CLI rejects malformed invocations", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("failed npm installation restores both package manifests", () => {
+  const root = fixture();
+  try {
+    const beforeManifest = readFileSync(join(root, "package.json"), "utf8");
+    const beforeLock = readFileSync(join(root, "package-lock.json"), "utf8");
+    const bin = join(root, "mock-bin");
+    mkdirSync(bin);
+    if (process.platform === "win32") {
+      writeFileSync(join(bin, "npm.cmd"),
+        '@echo off\r\necho changed>package.json\r\necho changed>package-lock.json\r\nexit /b 7\r\n');
+    } else {
+      writeFileSync(join(bin, "npm"),
+        '#!/bin/sh\nprintf changed > package.json\nprintf changed > package-lock.json\nexit 7\n',
+        { mode: 0o755 });
+    }
+    const run = spawnSync(process.execPath,
+      [join(root, "tools", "bootstrap-native.mjs"), "--install"],
+      { cwd: root, encoding: "utf8", env: { ...process.env,
+        PATH: bin + (process.platform === "win32" ? ";" : ":") + process.env.PATH } });
+    assert.equal(run.status, 1, run.stderr);
+    assert.match(run.stderr, /manifests restored/);
+    assert.equal(readFileSync(join(root, "package.json"), "utf8"), beforeManifest);
+    assert.equal(readFileSync(join(root, "package-lock.json"), "utf8"), beforeLock);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
