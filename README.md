@@ -37,6 +37,9 @@ Siehe [Integrationsplan](docs/INTEGRATION-ROADMAP.md) und
   Auch die **Notizen der Trainings-Zusammenfassung** werden jetzt mit
   Revisionsvergleich gespeichert; bei einem Konflikt wird das Fenster
   gesperrt und der aktuell gespeicherte Stand angeboten.
+  Beim Wechsel zwischen zwei Workout-Routen bleiben ältere Autosaves
+  fest an das ursprüngliche Training gebunden; die Zusammenfassung
+  verlässt die Seite erst nach erfolgreichem Speichern der Notiz.
   [Schreibreihenfolge und Teststatus](docs/WORKOUT-SAVE-INTEGRITY.md).
 - **Dietry**: Kalorienbedarf-/Makro-Rechner, Kennzeichnung geschätzter
   Essensmengen und **optionale Roh-/Gekocht-Umrechnung** für Reis, Nudeln
@@ -118,7 +121,7 @@ npm run test:offline
 ```
 
 **Der vollständige Offline-Testlauf wurde lokal erfolgreich ausgeführt:
-19/19 Suiten und 144/144 Einzeltests bestanden.** Alle verwendeten
+20/20 Suiten und 154/154 Einzeltests bestanden.** Alle verwendeten
 Testdateien sowie die relevanten Quellmodule wurden bytegenau mit dem
 GitHub-Branch abgeglichen. Der Lauf erfolgte in einer rekonstruierten
 lokalen Prüfumgebung; der echte GitHub-Actions-Run bleibt wegen
