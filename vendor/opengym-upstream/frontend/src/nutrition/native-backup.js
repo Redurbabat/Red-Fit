@@ -26,3 +26,56 @@ export async function writeNutritionDocumentBackup(scope, json, { filesystem, cr
   })
   return { path, foods: data.foods.length, entries: data.entries.length }
 }
+
+
+const NUTRITION_BACKUP_NAME = /^redfit-nutrition-(\d{4}-\d{2}-\d{2})\.json$/
+const MAX_RESTORE_BYTES = 64 * 1024 * 1024
+
+function isCalendarDate(date) {
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return false
+  const value = new Date(date + 'T12:00:00Z')
+  return !Number.isNaN(value.valueOf()) && value.toISOString().slice(0, 10) === date
+}
+
+// Local recovery is additive, not a replacement for externally exporting a backup.
+// Never scan other users' folders: the path is derived exclusively from this account scope.
+// A corrupt newest snapshot does not prevent recovering the previous valid day's copy.
+export async function readLatestNutritionDocumentBackup(scope, { filesystem, cryptoAPI = globalThis.crypto } = {}) {
+  const name = await backupNameForScope(scope, '2000-01-01', cryptoAPI)
+  const folder = name.slice(0, name.lastIndexOf('/'))
+  const fs = filesystem || await import('@capacitor/filesystem')
+  if (!fs.Filesystem?.readdir || !fs.Filesystem?.readFile || !fs.Directory?.Documents || !fs.Encoding?.UTF8)
+    throw new Error('Das iPhone-Dateisystem kann keine Sicherungen lesen.')
+
+  let directory
+  try {
+    directory = await fs.Filesystem.readdir({ path: folder, directory: fs.Directory.Documents })
+  } catch {
+    throw new Error('Keine Gerätesicherung für dieses Konto gefunden.')
+  }
+  const names = (Array.isArray(directory.files) ? directory.files : [])
+    .map(file => typeof file === 'string' ? file : file?.name)
+    .filter(file => {
+      const match = typeof file === 'string' && file.match(NUTRITION_BACKUP_NAME)
+      return !!match && isCalendarDate(match[1])
+    })
+    .sort().reverse()
+
+  for (const filename of names) {
+    try {
+      const path = folder + '/' + filename
+      const read = await fs.Filesystem.readFile({
+        path, directory: fs.Directory.Documents, encoding: fs.Encoding.UTF8,
+      })
+      if (typeof read?.data !== 'string' || read.data.length > MAX_RESTORE_BYTES)
+        continue
+      const backup = validateBackup(JSON.parse(read.data))
+      return { path, day: filename.slice('redfit-nutrition-'.length, -'.json'.length), backup }
+    } catch {
+      // A partial or corrupt newest file must not hide an older healthy copy.
+    }
+  }
+  throw new Error(names.length
+    ? 'Alle gefundenen Gerätesicherungen sind beschädigt oder nicht lesbar.'
+    : 'Keine Gerätesicherung für dieses Konto gefunden.')
+}
