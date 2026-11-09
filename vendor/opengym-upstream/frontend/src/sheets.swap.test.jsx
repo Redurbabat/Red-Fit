@@ -83,6 +83,38 @@ describe('active exercise swap sheet flow', () => {
   })
 })
 
+describe('swap confirmation after the active workout changes', () => {
+  it('keeps a newly edited set and its rest timer rather than applying a stale confirmation', () => {
+    useStore.getState().update(s => { s.active.entries[1].sets[0].done = true }, false)
+    submitSwap(1, EXDB[2], { mode: 'reps', sets: 1, reps: 8, weight: 30 })
+    const confirm = useUI.getState().sheets.at(-1)
+
+    useUI.getState().startRest(90, 1)
+    useStore.getState().update(s => { s.active.entries[1].sets[0].r = 9 }, false)
+    act(() => confirm.render(confirm.close).props.onConfirm())
+
+    const active = useStore.getState().S.active
+    expect(active.entries.map(e => e.id)).toEqual([ids[0], ids[0], ids[1]])
+    expect(active.entries[1].sets[0]).toMatchObject({ r: 9, done: true })
+    expect(useUI.getState().timer).not.toBeNull()
+  })
+
+  it('does not apply an old confirmation to a different workout', () => {
+    useStore.getState().update(s => { s.active.entries[1].sets[0].done = true }, false)
+    submitSwap(1, EXDB[2], { mode: 'reps', sets: 1, reps: 8, weight: 30 })
+    const confirm = useUI.getState().sheets.at(-1)
+
+    useStore.getState().update(s => {
+      s.active = { ...s.active, id: 'new-workout', cur: 0, entries: [entry(ids[1])] }
+    }, false)
+    act(() => confirm.render(confirm.close).props.onConfirm())
+
+    const active = useStore.getState().S.active
+    expect(active.id).toBe('new-workout')
+    expect(active.entries.map(e => e.id)).toEqual([ids[1]])
+  })
+})
+
 // A slot of a routine kept out of progression (rehab, deload) stays out when it is swapped,
 // whether the replacement takes its place or, beside logged sets, goes in after it.
 describe('swapping an exercise kept out of progression', () => {
