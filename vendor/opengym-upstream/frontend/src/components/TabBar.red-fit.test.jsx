@@ -4,6 +4,7 @@ import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import TabBar from './TabBar.jsx'
+import { t } from '../lib/i18n.js'
 import { canCompactRedFitDock } from './red-fit-dock-direction.js'
 import { DEF, useStore } from '../store/useStore.js'
 
@@ -51,7 +52,7 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     expect(nav.querySelectorAll('button')).toHaveLength(5)
     const active = [...nav.querySelectorAll('button[aria-current="page"]')]
     expect(active).toHaveLength(1)
-    expect(active[0].textContent).toContain(selected)
+    expect(active[0].textContent).toContain(t(selected))
   })
 
   it('keeps the raised Start disc but hides decorative material on the workout page', () => {
@@ -72,12 +73,12 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
   it('keeps Muscles under the referring parent in real RED Fit selection state', () => {
     const library = renderRoute('/muscles', { from: '/library' })
     expect(library.style.getPropertyValue('--rf-dock-index')).toBe('4')
-    expect(library.querySelector('button[aria-current="page"]')?.textContent).toContain('Exercises')
+    expect(library.querySelector('button[aria-current="page"]')?.textContent).toContain(t('Exercises'))
 
     const stats = renderRoute('/muscles', { from: '/stats' })
     expect(stats).toBe(library)
     expect(stats.style.getPropertyValue('--rf-dock-index')).toBe('3')
-    expect(stats.querySelector('button[aria-current="page"]')?.textContent).toContain('Stats')
+    expect(stats.querySelector('button[aria-current="page"]')?.textContent).toContain(t('Stats'))
   })
   it.each([
     ['/admin', '0', 'Home'],
@@ -89,7 +90,7 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     expect(nav.style.getPropertyValue('--rf-dock-index')).toBe(index)
     const selected = [...nav.querySelectorAll('button[aria-current="page"]')]
     expect(selected).toHaveLength(1)
-    expect(selected[0].textContent).toContain(label)
+    expect(selected[0].textContent).toContain(t(label))
   })
   it('preserves elapsed time and Resume accessibility during a running workout', () => {
     useStore.setState(({ S }) => ({
@@ -97,7 +98,7 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     }))
     const nav = renderRoute('/home')
     const resume = nav.querySelector('button.start')
-    expect(resume.getAttribute('aria-label')).toBe('Resume')
+    expect(resume.getAttribute('aria-label')).toBe(t('Resume'))
     expect(resume.querySelector('.tab-time')?.textContent).toMatch(/^\d+:\d{2}$/)
     // When CSS sets compact mode, the timer selector still remains visible.
     expect(nav.querySelectorAll('button')).toHaveLength(5)
@@ -107,7 +108,7 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     const nav = renderRoute('/home')
     expect(nav.getAttribute('data-redfit-compact')).toBe('false')
     const labels = [...nav.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))
-    expect(labels).toEqual(['Home', 'Plan', 'Start', 'Stats', 'Exercises'])
+    expect(labels).toEqual(['Home', 'Plan', 'Start', 'Stats', 'Exercises'].map(t))
   })
 
   it('preserves the expanded dock when Reduced Motion is enabled or the device rotates', () => {
