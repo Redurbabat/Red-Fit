@@ -57,3 +57,29 @@ Verbindlicher aktueller Produktpfad: **originale openGym-App in `vendor/opengym-
 - **Neue Tests:** `frontend/src/sheets.swap.test.jsx` enthält zwei zusätzliche Regressionen für (a) verschobene identische Übung bei offenem Picker und (b) dieselbe Situation bei offenem Bestätigungsdialog; vorhandene Tests werden beibehalten.
 - **Tatsächlich ausgeführt:** Frisch aus GitHub geladene Produktionsfunktionen `swapActiveWorkoutExercise` und `commitActiveSwap` wurden in V8 isoliert mit gestubbter UI/Store-Infrastruktur getestet. **11/11 Szenarien bestanden:** zwei reguläre Swap-Pfade, gleiche serialisierte Store-Kopie, geänderte Session, geänderte andere Zeile und der nun abgelehnte Duplicate-Shift in Picker- sowie Bestätigungspfad. Dies ist kein React-/Vitest- oder iPhone-Test.
 - **Offene Abnahme:** Original-Frontend `npm ci && npm test && npm run build`, Echtegerät/Simulator und Background-/Offline-Regressionen. Agent 05 hat bereits eine separate Original-openGym-QA-Workflowdatei auf seinem **eigenen** Branch (PR #14); hier keine zweite CI-Datei erzeugt. Der CI-Run des Agent-01-Branches endete mit beiden Jobs als failure, aber **ohne Runner-Zuordnung und ohne Steps** (`runner_id=0`, `steps=[]`, `total_ms=0`); das belegt kein fehlgeschlagenes Frontend-Testresultat. PR #12 bleibt Draft und ungemergt.
+
+
+## Nachtrag — Timer nach iPhone-Lock/App-Neustart an Workout binden (09.11.2026)
+
+### Reproduzierter Fehler
+Die originale `ownerSet`-Funktion prüfte nur Übungs-ID, Exercise-Index und Set-Index. Ein aus `localStorage` stammender Halte-Timer für Workout A konnte bei einer neuen aktiven Einheit B mit derselben Übung an derselben Position erfolgreich einen Satz von B finden und nach Ablauf falsch als erledigt speichern. **Vorher-Reproduktion mit originalem `ownerSet`: `incorrectlyAccepted=true`.** Der originale `restoreRest` prüfte nur, ob irgendeine aktive Session existiert; ein alter Pausentimer konnte daher auch in einer anderen Einheit wieder auftauchen.
+
+### Implementierung in original-openGym
+- `frontend/src/store/useUI.js`: `startRest` speichert die ID der aktiven Session im Timer. `saveRest` persistiert sie, `restoreRest` validiert die ID beim Neustart; bei Abweichung wird der gespeicherte Timer verworfen. `followNativeRest` übernimmt die bestehende ID, soweit verfügbar.
+- `startWork` erweitert das **kopierte** Owner-Metadatenobjekt um `sessionId`, ohne das Eingabeobjekt zu mutieren. `saveWork` persistiert den Owner unverändert wie zuvor. `ownerSet` verweigert einen Timer-Owner mit nicht passender `sessionId`, auch beim Ablauf während eines App-Neustarts.
+- **Rückwärtskompatibilität:** Bereits gespeicherte Timer ohne das neue Feld werden wie bisher akzeptiert. Kein DB-Schema, keine Migration, keine iOS-/Capacitor-Dateien, keine neue Runtime oder Dependency.
+- Die Zuordnung nativer Timer-Events ohne bereits vorhandenen In-App-Timer und ohne Session-ID im nativen Event bleibt separat geräteabhängig zu überprüfen.
+
+### Ergänzte Original-Regressionstests
+- `frontend/src/store/useUI.rest-reload.test.js`: Session-ID im gespeicherten Rest, erfolgreicher Pausen-Restore in derselben Einheit und Abweisung einer anderen Einheit bei pausiertem/laufendem Rest (drei neue Testfälle).
+- `frontend/src/store/useUI.work-reload.test.js`: Session-ID auf neuem Work-Owner, gültiger Restore sowie Abweisung neuer Einheit bei pausiertem/laufendem Hold ohne fälschliches Ticken des Satzes (drei neue Testfälle).
+
+### Tatsächlich ausgeführte Prüfung
+- V8-Tests der frisch aus GitHub geladenen originalen `ownerSet`, `saveRest`, `restoreRest` und `restoreWork`: **17/17** Tests erfolgreich, u. a. altes/neues Session-Objekt, gültige und veraltete pausierte/laufende Timer, abgelaufener Hold, kompatible Legacy-Timer, persistierter Session-Key.
+- `startRest`/`startWork` als extrahierte **originale** Methoden mit minimalen Store-/UI-Stubs aufgerufen: **2/2** Checks erfolgreich (Session-ID wird beim Start korrekt gesetzt; übergebener Owner wird nicht mutiert).
+- V8-Syntax-Parse nach Entfernen der Import-/Export-Deklarationen für die drei geänderten Dateien: **3/3 Dateien bestanden**. Dies ist eine Syntax- und isolierte Funktionsprüfung, **kein** vollständiger Vitest-/App-Build.
+- **Nicht ausgeführt:** `npm ci && npm test && npm run build` im Originalfrontend, realer Lock/Background-Resume auf iPhone, Native-Notification-Tests, IPA und Sync/E2E. Fehlender GitHub Actions Runner (`steps=[]` im vorherigen PR-Lauf) ist kein bestandener Build.
+- Änderungen verbleiben auf `agent/redfit-01-opengym-training` im vorhandenen **Draft-PR #12**, kein Merge, keine öffentliche Veröffentlichung.
+
+### Nächster Schritt
+Den originalen Frontend-Test mit Node 22 und NPM-Abhängigkeiten über den QA-Gate von Agent 05 (PR #14) auf einem funktionierenden Runner ausführen. Danach iPhone: gleiche/andere Workout-ID mit denselben Set-Indizes nach Sperre/Neustart prüfen, auch mit Pausen- und Halte-Timer.
