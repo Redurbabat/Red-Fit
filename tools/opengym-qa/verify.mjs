@@ -31,7 +31,8 @@ async function runCommand(bin, args, cwd, logFile, env) {
       const child = spawn(bin, args, {
         cwd,
         env: { ...env, CI: '1' },
-        shell: process.platform === 'win32',
+        // Only .cmd/.bat wrappers need a command shell on Windows. Direct Node executables do not.
+        shell: process.platform === 'win32' && /\.(cmd|bat)$/i.test(bin),
         windowsHide: true,
         stdio: ['ignore', 'pipe', 'pipe']
       })
@@ -45,8 +46,8 @@ async function runCommand(bin, args, cwd, logFile, env) {
   return { ...result, durationMs: Date.now() - started }
 }
 
-/** npmBinary and env are injected only to enable dependency-free fixture tests. */
-export async function verify({ repoRoot = defaultRoot, npmBinary = process.platform === 'win32' ? 'npm.cmd' : 'npm', skipInstall = false, env = process.env } = {}) {
+/** npmBinary, npmArgsPrefix and env can be injected for dependency-free, cross-platform fixture tests. */
+export async function verify({ repoRoot = defaultRoot, npmBinary = process.platform === 'win32' ? 'npm.cmd' : 'npm', npmArgsPrefix = [], skipInstall = false, env = process.env } = {}) {
   const root = resolve(repoRoot)
   const frontend = join(root, 'vendor', 'opengym-upstream', 'frontend')
   const output = join(root, 'artifacts', 'opengym-qa')
@@ -95,7 +96,7 @@ export async function verify({ repoRoot = defaultRoot, npmBinary = process.platf
         report.steps.push({ ...current, status: 'skipped', reason: 'npm ci failed' }); save(); continue
       }
       console.log(`[openGym QA] ${current.command} (${report.workingDirectory})`)
-      const result = await runCommand(npmBinary, step.args, frontend, logPath, env)
+      const result = await runCommand(npmBinary, [...npmArgsPrefix, ...step.args], frontend, logPath, env)
       report.steps.push({ ...current, status: result.exitCode === 0 ? 'passed' : 'failed', exitCode: result.exitCode, durationMs: result.durationMs, ...(result.error ? { error: result.error } : {}) })
       if (step.id === 'install' && result.exitCode !== 0) installed = false
       save()
