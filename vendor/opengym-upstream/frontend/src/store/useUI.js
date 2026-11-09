@@ -186,7 +186,11 @@ const stopWorkTicking = () => {
 // The set a hold belongs to, while it still is that one: the same exercise at that place in the
 // running workout, not ticked off yet.
 const ownerSet = o => {
-  const e = useStore.getState().S?.active?.entries?.[o?.idx]
+  const active = useStore.getState().S?.active
+  // A restored hold must never write to a different workout just because it has the
+  // same exercise at the same index. Older saved owners have no sessionId.
+  if (o?.sessionId != null && active?.id !== o.sessionId) return null
+  const e = active?.entries?.[o?.idx]
   const st = e && e.id === o.id ? e.sets?.[o.i] : null
   return st && !st.done ? st : null
 }
@@ -362,7 +366,8 @@ export const useUI = create((set, get) => ({
     // `autoNext`: the hold that counts in once this rest is over (lib/auto-holds.js), for the bar.
     const next = get().countIn ? null : autoPeek()
     get().stopCountIn()
-    set({ timer: { left: sec, total: sec, endsAt, forIdx, ...(forSet != null ? { forSet } : {}), ...(kind === 'switch' ? { kind } : {}), ...(next ? { autoNext: next.label } : {}) } })
+    const sessionId = useStore.getState().S?.active?.id
+    set({ timer: { left: sec, total: sec, endsAt, forIdx, ...(sessionId != null ? { sessionId } : {}), ...(forSet != null ? { forSet } : {}), ...(kind === 'switch' ? { kind } : {}), ...(next ? { autoNext: next.label } : {}) } })
     bookRestEnd(endsAt, sec, kind)
     runRest(set, get)
     // Spoken cues: the next set, said as the rest begins (lib/spoken-cues.js).
@@ -429,7 +434,8 @@ export const useUI = create((set, get) => ({
   followNativeRest({ endsAt, left, total, paused }) {
     const tm = get().timer
     const forIdx = tm?.forIdx
-    const kind = { ...(tm?.kind === 'switch' ? { kind: 'switch' } : {}), ...(tm?.forSet != null ? { forSet: tm.forSet } : {}), ...(tm?.autoNext ? { autoNext: tm.autoNext } : {}) }
+    const sessionId = tm?.sessionId ?? useStore.getState().S?.active?.id
+    const kind = { ...(sessionId != null ? { sessionId } : {}), ...(tm?.kind === 'switch' ? { kind: 'switch' } : {}), ...(tm?.forSet != null ? { forSet: tm.forSet } : {}), ...(tm?.autoNext ? { autoNext: tm.autoNext } : {}) }
     if (paused) {
       stopRestTicking()
       set({ timer: { left, total, endsAt, forIdx, ...kind, paused: true } })
@@ -487,8 +493,10 @@ export const useUI = create((set, get) => ({
     const endsAt = from + total * 1000
     workDone = onDone
     pageHiddenAt = document.hidden ? Date.now() : null   // see startRest: a stale hide is not a catch-up
-    set({ work: { left: total, total, endsAt, label, overtime: useStore.getState().S.timedSetOvertime === true, ...(owner ? { owner } : {}), ...(auto ? { auto: true } : {}) } })
-    if (auto && owner) bookAutoChain('hold', endsAt, { ...owner, label, plan: total })
+    const sessionId = useStore.getState().S?.active?.id
+    const boundOwner = owner && sessionId != null ? { ...owner, sessionId } : owner
+    set({ work: { left: total, total, endsAt, label, overtime: useStore.getState().S.timedSetOvertime === true, ...(boundOwner ? { owner: boundOwner } : {}), ...(auto ? { auto: true } : {}) } })
+    if (auto && boundOwner) bookAutoChain('hold', endsAt, { ...boundOwner, label, plan: total })
     runWork(set, get)
     // Started late (the phone was locked through the count-in): caught up now, not in a second.
     if (from < Date.now() - 1000) workTick?.()
@@ -739,7 +747,7 @@ const saveRest = tm => {
   if (!ss) return
   try {
     if (!tm || tm.ready) { savedRestKey = null; ss.removeItem(REST_KEY); return }
-    const v = { endsAt: tm.endsAt, total: tm.total, forIdx: tm.forIdx ?? null, forSet: tm.forSet ?? null, kind: tm.kind || null, paused: !!tm.paused, left: tm.left }
+    const v = { endsAt: tm.endsAt, total: tm.total, forIdx: tm.forIdx ?? null, forSet: tm.forSet ?? null, kind: tm.kind || null, paused: !!tm.paused, left: tm.left, ...(tm.sessionId != null ? { sessionId: tm.sessionId } : {}) }
     const key = JSON.stringify({ ...v, left: v.paused ? v.left : null })
     if (key === savedRestKey && ss.getItem(REST_KEY) !== null) return
     ss.setItem(REST_KEY, JSON.stringify(v))
@@ -752,9 +760,10 @@ export function restoreRest(now = Date.now()) {
   try { saved = JSON.parse(ss?.getItem(REST_KEY) || 'null') } catch { saved = null }
   if (!saved || useUI.getState().timer) return false
   const total = Math.round(Number(saved.total))
-  const ok = useStore.getState().S?.active && total > 0 && (saved.paused ? saved.left > 0 : saved.endsAt > now)
+  const active = useStore.getState().S?.active
+  const ok = active && (saved.sessionId == null || active.id === saved.sessionId) && total > 0 && (saved.paused ? saved.left > 0 : saved.endsAt > now)
   if (!ok) { try { ss.removeItem(REST_KEY) } catch { /* nothing to drop */ } return false }
-  const base = { total, forIdx: saved.forIdx ?? undefined, ...(saved.forSet != null ? { forSet: saved.forSet } : {}), ...(saved.kind === 'switch' ? { kind: 'switch' } : {}) }
+  const base = { total, forIdx: saved.forIdx ?? undefined, ...(saved.sessionId != null ? { sessionId: saved.sessionId } : {}), ...(saved.forSet != null ? { forSet: saved.forSet } : {}), ...(saved.kind === 'switch' ? { kind: 'switch' } : {}) }
   if (saved.paused) {
     useUI.setState({ timer: { ...base, left: Math.round(saved.left), endsAt: saved.endsAt, paused: true } })
     if (MOBILE) holdRestAlert(Math.round(saved.left), total)
