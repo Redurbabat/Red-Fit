@@ -76,3 +76,11 @@ Der GitHub-Repositorystatus ist **privat**. Root-`.github/workflows/cloudflare-d
 - Lokal auf Linux/Node.js v22.16.0 real ausgeführt: `node --check` für `verify.mjs`, `verify.test.mjs` und `mobile-web.mjs`; `node --test tools/opengym-qa/verify.test.mjs` → **8/8 Fixture-Tests bestanden**. Es wurden Fake-npm-Prozesse und künstlich erzeugte `dist/`-Dateien benutzt; dies beweist nicht, dass die echte Original-App baut.
 - Gezielte Negativtests: falscher Web-Build trotz Exit-Code 0, fehlende JS-Datei, ungefüllter SW-Build-Placeholder und fehlendes `index.html` werden als Fehler erkannt.
 - Noch offen: echtes `npm ci`, Vitest, Web-/Mobile-Vite-Build im gesamten Original-Checkout, `npm run build:mobile` mit Capacitor-Sync, Xcode und iPhone-Test. Automatisierte GitHub-Runs wurden bislang vor Start der Steps als `failure` ausgewiesen.
+
+### Nachtrag — iOS-Integrations-Baseline ohne Xcode
+
+Neu: `node tools/opengym-qa/ios-baseline.mjs` führt eine **read-only** Kontrolle des vorhandenen originalen Xcode-/Capacitor-Quellbaums durch. Es prüft die Präsenz von Xcode-Projekt/Workspace, Podfile, Entitlements, Privacy Manifest, AppleHealthPlugin, PhoneWorkoutPlugin, LiveActivityPlugin, Widgets, AppUITests und Assets sowie `capacitor.config.json` (appId, appName, webDir). Der alte App-Name bzw. die Original-Bundle-ID erzeugen eine Warnung, **kein automatisches Rebranding und keinen harten Fehler**; Agent 04 bleibt Eigentümer dieser Einstellungen.
+
+Ausführung lokal auf Linux/Node v22.16.0: `node --test tools/opengym-qa/*.test.mjs` → **13/13 isolierte QA-Fixture-Tests bestanden** (8 bisherige + 5 neue iOS-Tests). Die neuen Testdateien stimmen SHA-1-Git-Blob-genau mit den hochgeladenen Branchdateien überein. Zusätzlich wurden 14 gezielt ausgewählte originale iOS-Dateien/-Verzeichnisse via verbundenem privaten GitHub-Zugriff auf `main` als vorhanden bestätigt. Die bisherige Originalkonfiguration trägt noch `appName=openGym` und `appId=ch.duartesantos.opengym`, aber `webDir=dist` ist korrekt.
+
+**Grenze:** Dies ist kein Xcode-Typecheck, keine iOS-Testausführung, kein signierter IPA-Build und keine Funktionsgarantie für HealthKit oder Widgets. Der neue Root-Workflow ruft den iOS-Quell-Audit ohne Apple-Zugang auf, sobald GitHub Actions tatsächlich Runner-Jobs ausführt.
