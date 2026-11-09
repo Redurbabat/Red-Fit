@@ -112,6 +112,66 @@ export function makeRecipeFood({ id, name, ingredients, yieldGrams, servings }) 
   })
 }
 
+
+/** Planned meals never count as eaten. Food and recipe ingredient values are snapshotted. */
+export function validatePlannedMeal(raw) {
+  const entry = validateEntry(raw)
+  if (!Array.isArray(raw.ingredients) || raw.ingredients.length === 0 || raw.ingredients.length > 50)
+    throw new Error('Ein Plan braucht 1 bis 50 Zutaten.')
+  const ingredients = raw.ingredients.map(item => {
+    const foodName = typeof item?.foodName === 'string' ? item.foodName.trim() : ''
+    if (!foodName || foodName.length > 120) throw new Error('Ungültiger Zutatenname im Plan.')
+    const grams = number(item.grams, 'Zutatenmenge', 100000)
+    if (grams === 0) throw new Error('Zutatenmenge muss grösser als 0 sein.')
+    return { foodName, grams }
+  })
+  const status = raw.status === undefined ? 'planned' : raw.status
+  if (status !== 'planned' && status !== 'done') throw new Error('Ungültiger Planstatus.')
+  if (status === 'done' && !positiveId(raw.loggedEntryId)) throw new Error('Abgehaktem Plan fehlt der Mahlzeiteneintrag.')
+  if (status === 'planned' && raw.loggedEntryId !== undefined) throw new Error('Offener Plan darf keinen Mahlzeiteneintrag haben.')
+  return {
+    ...entry, ingredients, status,
+    ...(status === 'done' ? { loggedEntryId: raw.loggedEntryId } : {}),
+  }
+}
+
+export function makePlannedMeal(food, grams, mealType, date, id) {
+  const f = validateFood(food)
+  const entry = makeMealEntry(f, grams, mealType, date, id)
+  const factor = grams / (f.recipe?.yieldGrams || grams)
+  const ingredients = f.recipe
+    ? f.recipe.ingredients.map(i => ({ foodName: i.foodName, grams: i.grams * factor }))
+    : [{ foodName: f.name, grams }]
+  return validatePlannedMeal({ ...entry, ingredients, status: 'planned' })
+}
+
+export function planDates(from, days = 7) {
+  if (!validDate(from) || !Number.isInteger(days) || days < 1 || days > 31)
+    throw new Error('Ungültige Planungswoche.')
+  const date = new Date(from + 'T12:00:00')
+  return Array.from({ length: days }, (_, i) => {
+    const day = new Date(date)
+    day.setDate(date.getDate() + i)
+    return localDateKey(day)
+  })
+}
+
+/** Shopping amounts are derived only from pending plans, grouped by normalized ingredient. */
+export function shoppingListOf(plans) {
+  const grouped = new Map()
+  for (const row of plans) {
+    const plan = validatePlannedMeal(row)
+    if (plan.status !== 'planned') continue
+    for (const item of plan.ingredients) {
+      const key = item.foodName.toLocaleLowerCase('de-CH')
+      const current = grouped.get(key)
+      if (current) current.grams += item.grams
+      else grouped.set(key, { foodName: item.foodName, grams: item.grams })
+    }
+  }
+  return [...grouped.values()].sort((a, b) => a.foodName.localeCompare(b.foodName, 'de-CH'))
+}
+
 export function totalsOf(entries) {
   return entries.reduce((sum, e) => ({
     kcal: sum.kcal + e.kcal, protein: sum.protein + e.protein,
@@ -142,8 +202,12 @@ export function mergeRecords(existing, incoming, validate) {
   return [...result.values()]
 }
 export function validateBackup(raw) {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw) || raw.format !== 'redfit-nutrition' || raw.version !== 1 ||
-    !Array.isArray(raw.foods) || !Array.isArray(raw.entries) || raw.foods.length > 10000 || raw.entries.length > 100000)
-    throw new Error('Keine gültige RED-Fit-Ernährungssicherung (v1).')
-  return { format: 'redfit-nutrition', version: 1, foods: raw.foods.map(validateFood), entries: raw.entries.map(validateEntry) }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw) || raw.format !== 'redfit-nutrition' ||
+    (raw.version !== 1 && raw.version !== 2) ||
+    !Array.isArray(raw.foods) || !Array.isArray(raw.entries) || raw.foods.length > 10000 || raw.entries.length > 100000 ||
+    (raw.version === 2 && (!Array.isArray(raw.plans) || raw.plans.length > 20000)))
+    throw new Error('Keine gültige RED-Fit-Ernährungssicherung (v1 oder v2).')
+  const legacy = { format: 'redfit-nutrition', version: raw.version,
+    foods: raw.foods.map(validateFood), entries: raw.entries.map(validateEntry) }
+  return raw.version === 1 ? legacy : { ...legacy, plans: raw.plans.map(validatePlannedMeal) }
 }
