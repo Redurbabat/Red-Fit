@@ -29,8 +29,8 @@ afterEach(() => {
   where.loc = { pathname: '/home' }
 })
 
-const renderRoute = pathname => {
-  where.loc = { pathname }
+const renderRoute = (pathname, state) => {
+  where.loc = { pathname, state }
   act(() => { root.render(<TabBar onStart={() => {}} />) })
   return host.querySelector('#tabbar')
 }
@@ -67,5 +67,15 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     expect(stats).toBe(home)
     expect(stats.style.getPropertyValue('--rf-dock-index')).toBe('3')
     expect([...stats.querySelectorAll('button')]).toEqual(before)
+  })
+  it('keeps Muscles under the referring parent in real RED Fit selection state', () => {
+    const library = renderRoute('/muscles', { from: '/library' })
+    expect(library.style.getPropertyValue('--rf-dock-index')).toBe('4')
+    expect(library.querySelector('button[aria-current="page"]')?.textContent).toContain('Exercises')
+
+    const stats = renderRoute('/muscles', { from: '/stats' })
+    expect(stats).toBe(library)
+    expect(stats.style.getPropertyValue('--rf-dock-index')).toBe('3')
+    expect(stats.querySelector('button[aria-current="page"]')?.textContent).toContain('Stats')
   })
 })

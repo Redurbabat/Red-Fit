@@ -69,3 +69,11 @@ In `frontend/src/views/Home.red-fit-a11y.test.js` wurde ein dritter Vitest-Regre
 ### Regressionstest-Korrektur
 
 Die neu ergänzte Regex in `Home.red-fit-a11y.test.js` hat zunächst `-6` statt `6` als Vergrösserungsbetrag erfasst. Sie wurde so korrigiert, dass das Minuszeichen **ausserhalb der Capture-Gruppe** liegt: `inset: -6px` liefert den Betrag `6`. Die tatsächliche CSS- und React-Quellzeichenfolge wurde per ausführbarer JavaScript-RegEx-Prüfung überprüft: beide Wochepfeile ergeben 32 + 2×6 = 44 CSS-px. Diese Prüfung ist ein lokaler Vertragscheck, **kein ausgeführter Vitest- oder WebKit-Gerätetest**.
+
+## Originales Dock-Routing mit Node geprüft (Fortsetzung)
+
+Die existierende Routen-/Eltern-Tab-Berechnung von `TabBar.jsx` wurde **ohne funktionale Änderung** in `frontend/src/components/red-fit-dock-route.js` ausgelagert. Die Komponente verwendet weiterhin `cur`, `parent`, `activeIndex` und unveränderte Navigation/Start-Handler. Es gibt keine React-, Training-, Backend-, iOS- oder neue Paketabhängigkeit in diesem Helfer.
+
+**Lokal tatsächlich ausgeführt (Node 22):** `node scripts/check-red-fit-dock-route.mjs` – 19/19 echte Quell-Funktionsfälle bestanden, darunter alle fünf Tabs, Unterseiten, Workout-Ausblendung und `/muscles` mit Herkunft aus Stats vs. Library. Ein separater temporärer Vorher-/Nachher-Paritätscheck der alten Originalberechnung und der ausgelagerten Funktion bestand für 160/160 Route/State-Kombinationen. Die mit GitHub abgeglichenen Git-Blob-SHAs bestätigen identischen Test-/Helper-Code. Der temporäre Paritätscheck wurde nicht eingecheckt; das eigenständige Node-Regression-Script hingegen schon.
+
+Der vorhandene Vitest-Integrationstest `TabBar.red-fit.test.jsx` deckt nun auch die tatsächliche React-Auswahl für `/muscles` mit beiden Herkunftszuständen ab. **Vitest selbst, vollständiger Vite-Build und native iPhone-Tests wurden nicht ausgeführt**; deshalb bleibt PR #11 Draft. Das bestehende GitHub Actions-CI schlägt auch auf `main` fehl und enthält keinen Original-openGym-Frontend-Testlauf. Runner-/CI-Konfiguration gehört Agent 05.
