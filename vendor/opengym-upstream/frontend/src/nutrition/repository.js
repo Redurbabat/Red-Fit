@@ -3,10 +3,11 @@
 import { mergeRecords, validateBackup, validateEntry, validateFood } from './model.js'
 
 const DB_NAME = 'redfit-nutrition-v1'
-function openDB() {
+function openDB(scope) {
+  if (typeof scope !== 'string' || !scope || scope.length > 300) throw new Error('Ungültiger Ernährungsspeicher.');
   return new Promise((resolve, reject) => {
     if (!globalThis.indexedDB) { reject(new Error('IndexedDB ist auf diesem Gerät nicht verfügbar.')); return }
-    const req = indexedDB.open(DB_NAME, 1)
+    const req = indexedDB.open(DB_NAME + ':' + scope, 1)
     req.onupgradeneeded = () => {
       const db = req.result
       if (!db.objectStoreNames.contains('foods')) db.createObjectStore('foods', { keyPath: 'id' })
@@ -20,8 +21,8 @@ function openDB() {
     req.onsuccess = () => resolve(req.result)
   })
 }
-async function withTransaction(mode, stores, enqueue) {
-  const db = await openDB()
+async function withTransaction(scope, mode, stores, enqueue) {
+  const db = await openDB(scope)
   try {
     return await new Promise((resolve, reject) => {
       let tx
@@ -35,35 +36,35 @@ async function withTransaction(mode, stores, enqueue) {
     })
   } finally { db.close() }
 }
-export async function loadNutrition() {
-  return withTransaction('readonly', ['foods', 'entries'], (tx, done) => {
+export async function loadNutrition(scope) {
+  return withTransaction(scope, 'readonly', ['foods', 'entries'], (tx, done) => {
     const foods = tx.objectStore('foods').getAll()
     const entries = tx.objectStore('entries').getAll()
     entries.onsuccess = () => { if (foods.readyState === 'done') done({ foods: foods.result, entries: entries.result }) }
     foods.onsuccess = () => { if (entries.readyState === 'done') done({ foods: foods.result, entries: entries.result }) }
   })
 }
-export async function saveFood(raw) {
+export async function saveFood(scope, raw) {
   const food = validateFood(raw)
-  await withTransaction('readwrite', ['foods'], tx => { tx.objectStore('foods').add(food) })
+  await withTransaction(scope, 'readwrite', ['foods'], tx => { tx.objectStore('foods').add(food) })
   return food
 }
-export async function saveMealEntry(raw) {
+export async function saveMealEntry(scope, raw) {
   const entry = validateEntry(raw)
-  await withTransaction('readwrite', ['entries'], tx => { tx.objectStore('entries').add(entry) })
+  await withTransaction(scope, 'readwrite', ['entries'], tx => { tx.objectStore('entries').add(entry) })
   return entry
 }
-export async function removeMealEntry(id) {
+export async function removeMealEntry(scope, id) {
   if (typeof id !== 'string' || !id) throw new Error('Ungültige Eintrags-ID.')
-  await withTransaction('readwrite', ['entries'], tx => { tx.objectStore('entries').delete(id) })
+  await withTransaction(scope, 'readwrite', ['entries'], tx => { tx.objectStore('entries').delete(id) })
 }
-export async function exportNutrition() {
-  const { foods, entries } = await loadNutrition()
+export async function exportNutrition(scope) {
+  const { foods, entries } = await loadNutrition(scope)
   return JSON.stringify(validateBackup({ format: 'redfit-nutrition', version: 1, foods, entries }), null, 2)
 }
-export async function importNutrition(raw) {
+export async function importNutrition(scope, raw) {
   const backup = validateBackup(raw) // validate fully BEFORE opening the write transaction
-  return withTransaction('readwrite', ['foods', 'entries'], (tx, done) => {
+  return withTransaction(scope, 'readwrite', ['foods', 'entries'], (tx, done) => {
     const f = tx.objectStore('foods'), e = tx.objectStore('entries')
     const fr = f.getAll(), er = e.getAll()
     let consumed = false
