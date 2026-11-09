@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { MOBILE, shareExport } from '../lib/mobile.js'
 import { EMPTY, localDateKey, makeMealEntry, MEAL_TYPES, scaleFood, totalsOf } from '../nutrition/model.js'
 import { exportNutrition, importNutrition, loadNutrition, removeMealEntry, saveFood, saveMealEntry } from '../nutrition/repository.js'
 import { nutritionScope } from '../nutrition/scope.js'
+import { writeNutritionDocumentBackup } from '../nutrition/native-backup.js'
 import '../nutrition/nutrition.css'
 
 const numberText = (value, digits = 1) => Number(value || 0).toLocaleString('de-CH', { maximumFractionDigits: digits })
@@ -31,6 +32,7 @@ function NutritionForScope({ scope }) {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const busyRef = useRef(false)
   const [loading, setLoading] = useState(true)
 
   async function refresh() {
@@ -58,13 +60,27 @@ function NutritionForScope({ scope }) {
   }, [chosen, grams])
 
   async function run(action, success) {
-    if (busy) return
+    if (busyRef.current) return
+    busyRef.current = true
     setBusy(true)
     setError('')
     setMessage('')
-    try { await action(); await refresh(); if (success) setMessage(success) }
-    catch (e) { setError(e?.message || 'Die Änderung konnte nicht gespeichert werden.') }
-    finally { setBusy(false) }
+    try {
+      // A database transaction must finish before the UI announces success.
+      const result = await action()
+      const warnings = []
+      try { await refresh() } catch { warnings.push('Anzeige konnte nicht neu geladen werden.') }
+      if (MOBILE) {
+        try {
+          await writeNutritionDocumentBackup(scope, await exportNutrition(scope))
+        } catch (e) {
+          warnings.push('Automatische Dateisicherung fehlgeschlagen (' + (e?.message || 'Dateifehler') + '). Bitte JSON separat exportieren.')
+        }
+      }
+      setMessage(typeof success === 'function' ? success(result) : success || 'Ernährungsdaten gespeichert.')
+      if (warnings.length) setError(warnings.join(' '))
+    } catch (e) { setError(e?.message || 'Die Änderung konnte nicht gespeichert werden.') }
+    finally { busyRef.current = false; setBusy(false) }
   }
   async function onAddFood(event) {
     event.preventDefault()
@@ -79,7 +95,8 @@ function NutritionForScope({ scope }) {
     await run(() => saveMealEntry(scope, makeMealEntry(chosen, Number(grams), mealType, date, newID())), 'Mahlzeit gespeichert.')
   }
   async function onExport() {
-    if (busy) return
+    if (busyRef.current) return
+    busyRef.current = true
     setBusy(true); setMessage(''); setError('')
     try {
       const json = await exportNutrition(scope)
@@ -95,7 +112,7 @@ function NutritionForScope({ scope }) {
       }
       setMessage('Ernährungsbackup zum Speichern bereitgestellt.')
     } catch (e) { setError(e.message || 'Export fehlgeschlagen.') }
-    finally { setBusy(false) }
+    finally { busyRef.current = false; setBusy(false) }
   }
   async function onImport(event) {
     const file = event.target.files?.[0]
@@ -105,10 +122,9 @@ function NutritionForScope({ scope }) {
     let backup
     try { backup = JSON.parse(await file.text()) } catch { setError('Keine gültige JSON-Datei.'); return }
     if (!window.confirm('Ernährungseinträge aus dieser Datei hinzufügen? Bestehende Daten bleiben erhalten.')) return
-    await run(async () => {
-      const added = await importNutrition(scope, backup)
-      setMessage('Importiert: ' + added.foods + ' Lebensmittel und ' + added.entries + ' Einträge.')
-    })
+    await run(() => importNutrition(scope, backup), added =>
+      'Importiert: ' + added.foods + ' Lebensmittel und ' + added.entries + ' Einträge.')
+
   }
   if (loading) return <main className="narrow nutrition-page"><p role="status">Ernährung wird geladen …</p></main>
 
@@ -181,7 +197,8 @@ function NutritionForScope({ scope }) {
 
     <section className="card nutrition-section" aria-labelledby="nutrition-backup">
       <h2 id="nutrition-backup">Ernährung sichern</h2>
-      <p className="nutrition-hint">Wichtig: Ernährung liegt in einer getrennten lokalen IndexedDB. Die ursprünglichen openGym-Workout-Backups und der Server-Sync enthalten diese Daten noch nicht. Jeder openGym-Account hat einen eigenen lokalen Ernährungsspeicher. Vor Gerätewechsel oder App-Löschung separat exportieren.</p>
+      <p className="nutrition-hint">Ernährung liegt in einer eigenen lokalen IndexedDB und wird NICHT vom originalen openGym-Workout-Backup oder Server-Sync erfasst. Der Speicher ist pro openGym-Server und Benutzerkonto getrennt. Vor Gerätewechsel oder App-Löschung immer eine JSON-Datei extern sichern.</p>
+      {MOBILE && <p className="nutrition-hint">Nach jeder Änderung versucht RED Fit zusätzlich eine datierte Kopie unter Dateien → Auf meinem iPhone → RED Fit / Ernaehrung (bzw. Android-Dokumente) anzulegen. Eine fehlgeschlagene Sicherung wird oben angezeigt. Kopiere die Dateien vor einer Deinstallation aus dem App-Ordner heraus; ein Backup im App-Ordner allein schützt NICHT vor App-Löschung.</p>}
       <div className="nutrition-actions">
         <button type="button" disabled={busy} onClick={onExport}>JSON exportieren</button>
         <label className="nutrition-file">JSON importieren<input type="file" accept=".json,application/json" disabled={busy} onChange={onImport} /></label>
