@@ -67,7 +67,7 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
-            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath ios/App/build/dd-device CODE_SIGNING_ALLOWED=NO \
             build | tee ios/App/build/device.log
           app=ios/App/build/dd-device/Build/Products/Debug-iphoneos/App.app
