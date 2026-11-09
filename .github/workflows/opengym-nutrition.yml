@@ -1,0 +1,55 @@
+# Checks the actual ORIGINAL openGym frontend, not the older independent RED Fit root app.
+# This job is independent of the unrelated root ESLint error in workout/setNotes.ts.
+name: Original openGym Nutrition
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/opengym-nutrition.yml'
+      - 'vendor/opengym-upstream/frontend/src/nutrition/**'
+      - 'vendor/opengym-upstream/frontend/src/views/Nutrition.jsx'
+      - 'vendor/opengym-upstream/frontend/src/App.jsx'
+      - 'vendor/opengym-upstream/frontend/src/views/Home.jsx'
+      - 'vendor/opengym-upstream/frontend/package.json'
+      - 'vendor/opengym-upstream/frontend/package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nutrition:
+    name: Nutrition tests and iPhone-flavour web bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: vendor/opengym-upstream/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: vendor/opengym-upstream/frontend/package-lock.json
+
+      - name: Install original openGym dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run nutrition Vitest suite
+        run: npx vitest run src/nutrition
+
+      - name: Build original openGym mobile-flavour frontend
+        run: VITE_MOBILE=1 npm run build
+
+      - name: Verify mobile flavour and nutrition bundle
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            import assert from 'node:assert/strict';
+            const html = fs.readFileSync('dist/index.html', 'utf8');
+            assert.match(html, /name=[\"']opengym-flavor[\"']/);
+            assert.match(html, /content=[\"']mobile[\"']/);
+            assert.ok(fs.readdirSync('dist/assets').some(name => name.endsWith('.js')));
+            console.log('Original openGym mobile-flavour bundle verified');
+          "
