@@ -40,10 +40,13 @@
   z-index: 50;
   border: 1px solid var(--border);
   border-radius: 28px;
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  background: var(--fit-glass-tint);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.30);
+  box-shadow:
+    inset 0 1px 0 var(--fit-glass-highlight),
+    inset 0 -1px 0 var(--fit-glass-lowlight),
+    0 14px 42px var(--fit-glass-shadow);
   transition: height 240ms var(--ease), border-radius 240ms var(--ease);
 }
 
@@ -53,10 +56,35 @@
   gap: 3px;
   width: 100%;
   height: 100%;
+  position: relative;
+  isolation: isolate;
 }
+
+/* RED Morph Touch Kit's moving material, adapted to five real router links.
+   Only transform animates; selected routes remain regular accessible links. */
+.bottom-nav__selection {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc((100% - 12px) / 5);
+  border-radius: 21px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-soft));
+  box-shadow: inset 0 1px 0 var(--fit-glass-highlight);
+  pointer-events: none;
+  transform: translateX(0);
+  transition: transform var(--fit-motion-selection) var(--ease), opacity 140ms var(--ease);
+}
+.bottom-nav[data-active-index="1"] .bottom-nav__selection { transform: translateX(calc(100% + 3px)); }
+.bottom-nav[data-active-index="2"] .bottom-nav__selection { transform: translateX(calc(200% + 6px)); }
+.bottom-nav[data-active-index="3"] .bottom-nav__selection { transform: translateX(calc(300% + 9px)); }
+.bottom-nav[data-active-index="4"] .bottom-nav__selection { transform: translateX(calc(400% + 12px)); }
+.bottom-nav[data-active-index="none"] .bottom-nav__selection { opacity: 0; }
 
 .bottom-nav__item {
   position: relative;
+  z-index: 1;
   min-width: 0;
   min-height: 44px;
   display: flex;
@@ -73,13 +101,13 @@
   transition: background 180ms var(--ease), color 180ms var(--ease), transform 120ms var(--ease);
 }
 
-.bottom-nav__item:active {
+.bottom-nav__item:active,\n.bottom-nav__item[data-pressed="true"] {
   transform: scale(0.96);
 }
 
 .bottom-nav__item[aria-current="page"] {
   color: var(--text);
-  background: color-mix(in srgb, var(--accent) 14%, var(--surface-2));
+  background: transparent;
 }
 
 .bottom-nav__item[aria-current="page"] svg {
@@ -164,7 +192,8 @@
 
 :root[data-reduced-motion="true"] .bottom-nav,
 :root[data-reduced-motion="true"] .bottom-nav__item,
-:root[data-reduced-motion="true"] .bottom-nav__label {
+:root[data-reduced-motion="true"] .bottom-nav__label,
+:root[data-reduced-motion="true"] .bottom-nav__selection {
   transition: none;
 }
 
@@ -326,5 +355,26 @@
 
   .app-shell--fullscreen .app-shell__content {
     max-width: 780px;
+  }
+}
+
+/* Native/software keyboard: preserve visible input and sheet actions. */
+@media (max-width: 1023px) {
+  .app-shell--keyboard-open .bottom-nav,
+  .app-shell--keyboard-open .fab {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@media (prefers-contrast: more), (forced-colors: active) {
+  .bottom-nav {
+    background: var(--surface);
+    border-color: var(--text);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .bottom-nav__selection {
+    border-color: var(--text);
   }
 }
