@@ -1,0 +1,101 @@
+# Temporary read-only integration of Agent01 training + pinned latest Agent04 native/UI.
+name: Agent01 + Agent04 latest iPhone integration (temporary)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/agent01-04-latest-ios-integration-temporary.yml'
+      - 'vendor/opengym-upstream/frontend/**'
+permissions:
+  contents: read
+
+jobs:
+  original-iphone-combined:
+    runs-on: macos-26
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: vendor/opengym-upstream/frontend
+    steps:
+      - name: Checkout exact Agent01 PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Overlay only latest pinned Agent04 frontend and native files
+        working-directory: .
+        run: |
+          set -eu
+          git fetch --no-tags origin ca60a410ba98f960fc2696afcb192c38e47ace38
+          test "$(git rev-parse FETCH_HEAD)" = "ca60a410ba98f960fc2696afcb192c38e47ace38"
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git restore --source=FETCH_HEAD -- \
+            vendor/opengym-upstream/frontend/capacitor.config.json \
+            vendor/opengym-upstream/frontend/ios/App/App/Info.plist \
+            vendor/opengym-upstream/frontend/ios/App/App/MainViewController.swift \
+            vendor/opengym-upstream/frontend/ios/App/OpenGymWidgets/Info.plist \
+            vendor/opengym-upstream/frontend/ios/App/Watch/Info.plist \
+            vendor/opengym-upstream/frontend/ios/App/Watch/de.lproj/InfoPlist.strings \
+            vendor/opengym-upstream/frontend/ios/ci/brand-red-fit.swift \
+            vendor/opengym-upstream/frontend/package.json \
+            vendor/opengym-upstream/frontend/scripts/check-ios-mobile-bundle.mjs \
+            vendor/opengym-upstream/frontend/scripts/check-ios-mobile-bundle.test.mjs \
+            vendor/opengym-upstream/frontend/scripts/verify-ios-identity.mjs \
+            vendor/opengym-upstream/frontend/scripts/verify-ios-identity.test.mjs \
+            vendor/opengym-upstream/frontend/scripts/verify-unsigned-ipa.py \
+            vendor/opengym-upstream/frontend/src/components/TabBar.jsx \
+            vendor/opengym-upstream/frontend/src/components/TabBar.native-dock.test.jsx \
+            vendor/opengym-upstream/frontend/src/index.css \
+            vendor/opengym-upstream/frontend/src/views/Home.jsx
+          echo 'OVERLAY_SOURCE=ca60a410ba98f960fc2696afcb192c38e47ace38'
+          echo 'OVERLAY_17_ORIGINAL_FRONTEND_FILES'
+          git status --short
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: vendor/opengym-upstream/frontend/package-lock.json
+      - name: Install original openGym dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Test Agent04 iOS identity and mobile asset guards
+        run: |
+          npm run test:ios-bundle
+          npm run test:ios-identity-unit
+      - name: Run combined original frontend Vitest
+        run: npm run test
+      - name: Build original RED Fit iOS frontend and sync with Xcode
+        run: npm run build:ios
+      - name: Integrate original Watch, Widgets and Background Assets
+        run: |
+          ruby ios/ci/add-asset-downloader.rb
+          ruby ios/ci/add-watch-app.rb
+          ruby ios/ci/add-widgets.rb
+      - name: Build unsigned iPhone simulator app
+        run: |
+          set -o pipefail
+          mkdir -p ios/App/build
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/App/build/dd-sim CODE_SIGNING_ALLOWED=NO \
+            build | tee ios/App/build/agent01-04-sim.log
+          test -d ios/App/build/dd-sim/Build/Products/Debug-iphonesimulator/App.app
+      - name: Build unsigned iPhone device app
+        run: |
+          set -o pipefail
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath ios/App/build/dd-device CODE_SIGNING_ALLOWED=NO \
+            build | tee ios/App/build/agent01-04-device.log
+          test -d ios/App/build/dd-device/Build/Products/Debug-iphoneos/App.app
+      - name: Retain private native build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent01-04-latest-ios-integration-logs
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            vendor/opengym-upstream/frontend/ios/App/build/agent01-04-sim.log
+            vendor/opengym-upstream/frontend/ios/App/build/agent01-04-device.log
