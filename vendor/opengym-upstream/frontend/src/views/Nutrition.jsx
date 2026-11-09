@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore.js'
 import { MOBILE, shareExport } from '../lib/mobile.js'
 import { EMPTY, localDateKey, makeMealEntry, MEAL_TYPES, scaleFood, totalsOf } from '../nutrition/model.js'
 import { exportNutrition, importNutrition, loadNutrition, removeMealEntry, saveFood, saveMealEntry } from '../nutrition/repository.js'
+import { nutritionScope } from '../nutrition/scope.js'
 import '../nutrition/nutrition.css'
 
 const numberText = (value, digits = 1) => Number(value || 0).toLocaleString('de-CH', { maximumFractionDigits: digits })
@@ -13,7 +14,8 @@ const newID = () => globalThis.crypto?.randomUUID?.() || Array.from(crypto.getRa
 // Unmount this page immediately when openGym changes account. A guest stays local-only.
 export default function Nutrition() {
   const userId = useStore(s => s.user?.id)
-  const scope = userId == null ? 'local' : 'account:' + String(userId)
+  const server = useStore(s => s.sync?.server)
+  const scope = nutritionScope({ userId, server, origin: MOBILE ? null : globalThis.location?.origin })
   return <NutritionForScope key={scope} scope={scope} />
 }
 
