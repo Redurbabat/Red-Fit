@@ -110,12 +110,13 @@ export default function TabBar({ onStart }) {
     send()
     const observer = new MutationObserver(send)
     observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'role'] })
+    const onFocusOut = () => queueMicrotask(send) // activeElement changes after blur dispatch
     document.addEventListener('focusin', send, true)
-    document.addEventListener('focusout', send, true)
+    document.addEventListener('focusout', onFocusOut, true)
     return () => {
       observer.disconnect()
       document.removeEventListener('focusin', send, true)
-      document.removeEventListener('focusout', send, true)
+      document.removeEventListener('focusout', onFocusOut, true)
     }
   }, [nativeDock, canShow, cur, parent, S.active])
 
