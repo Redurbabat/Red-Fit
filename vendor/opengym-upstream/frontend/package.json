@@ -15,7 +15,8 @@
     "ios:brand": "swift ios/ci/brand-red-fit.swift",
     "test:ios-identity": "node scripts/verify-ios-identity.mjs",
     "build:ios": "VITE_MOBILE=1 vite build && node ../scripts/catalogue/stage-media.mjs dist && cap sync ios && node scripts/check-ios-mobile-bundle.mjs && npm run ios:brand && npm run test:ios-identity",
-    "test:ios-bundle": "node --test scripts/check-ios-mobile-bundle.test.mjs"
+    "test:ios-bundle": "node --test scripts/check-ios-mobile-bundle.test.mjs",
+    "test:ios-identity-unit": "node --test scripts/verify-ios-identity.test.mjs"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
