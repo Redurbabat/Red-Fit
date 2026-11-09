@@ -35,6 +35,9 @@ jobs:
           cache: npm
           cache-dependency-path: vendor/opengym-upstream/frontend/package-lock.json
 
+      - name: Test original iOS mobile asset guard (Node only)
+        run: npm run test:ios-bundle
+
       - name: Install original locked dependencies
         run: npm ci
 
