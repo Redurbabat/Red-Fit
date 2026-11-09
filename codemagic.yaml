@@ -17,6 +17,8 @@ workflows:
         script: npm run test:ios-bundle
       - name: Test RED Fit native identity and entitlement guard
         script: npm run test:ios-identity-unit
+      - name: Self-test native IPA payload verifier
+        script: python3 scripts/verify-unsigned-ipa.py --selftest
       - name: Install locked original frontend dependencies
         script: npm ci
       - name: Build original mobile app, sync iOS and apply RED Fit assets
@@ -47,6 +49,8 @@ workflows:
           ditto "$app" ios/App/build/unsigned/Payload/App.app
           (cd ios/App/build/unsigned && zip -qry RED-Fit-UNSIGNED.ipa Payload)
           test -s ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
+      - name: Verify produced IPA includes iPhone, Watch, Widgets and downloader
+        script: python3 scripts/verify-unsigned-ipa.py ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
     artifacts:
       - $CM_BUILD_DIR/vendor/opengym-upstream/frontend/ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
       - $CM_BUILD_DIR/vendor/opengym-upstream/frontend/ios/App/build/device.log
