@@ -91,3 +91,19 @@ Die bestehende Original-App unter `vendor/opengym-upstream/frontend/` ist die RE
 - Korrektur: derselbe ASCII-Control-/DEL-Filter ohne den verbotenen Regex-Ausdruck, `setNotes.test.ts` ergänzt. Auf dem isolierten Node-22-Runner **65’544 Eingabewerte** (inkl. aller 65’536 UTF-16-Code-Units) mit der ursprünglichen Funktion verglichen: **alle Ausgaben identisch**.
 - In neuer Root-CI #42710638645: Typecheck und Lint erfolgreich, Offline-Regressionen erfolgreich, übrige Tests zum letzten Prüfzeitpunkt noch laufend.
 - **Begrenzung:** Noch keine erfolgreiche Geräte-IPA, kein signiertes oder auf echtem iPhone getestetes Paket. Branch bleibt PR #13 (Draft, ungemergt).
+
+## 09.11.2026 – ERSTER ERFOLGREICHER ORIGINAL-iPHONE-BUILD (UNSIGNIERT)
+
+**GitHub Actions #42711457712: `completed/success`, iOS-Job `success`.** Die originale openGym-iOS-App wurde auf dem privaten PR-Branch in beiden Zielumgebungen tatsächlich mit Xcode 26.6 kompiliert: zuerst **iPhone Simulator**, danach **iPhone-Gerät (arm64, Debug, CODE_SIGNING_ALLOWED=NO)**. Watch-App, Watch-Widgets, iPhone-Widgets, Live-Activity-Erweiterung und Background-Assets-Integration wurden davor mit den originalen Upstream-Ruby-Integrationsskripten eingebunden. Der Geräte-Build **`** BUILD SUCCEEDED **`** ist im Buildprotokoll nachweisbar.
+
+Die Pipeline packte aus dem tatsächlich gebauten `Debug-iphoneos/App.app` ein **`RED-Fit-UNSIGNED.ipa`** und prüfte `test -s`. Das GitHub-Artifact-Upload meldete **3 Dateien** und Erfolg; Artifact-ID **`13716626340`**, Grösse des gesamten ZIP-Artefakts **215’738’220 Bytes**. Es enthält den Geräte-/Simulator-Build-Log und das unsigned IPA. Das ist ein **privates Build-Artefakt**, keine App-Store-Veröffentlichung, kein durch Apple signiertes IPA und **noch nicht auf einem echten iPhone installiert oder getestet**.
+
+- Build-Run: https://github.com/Redurbabat/Red-Fit/actions/runs/42711457712
+- ZIP-Artifact: https://github.com/Redurbabat/Red-Fit/actions/runs/42711457712/artifacts/13716626340
+- Erfolgsgrund: `-sdk iphoneos` nicht global erzwingen; `-destination 'generic/platform=iOS'` lässt Watch-Subtargets unter watchOS bauen, wie schon beim Simulator-Erfolg. Das ist jetzt **in GitHub Actions real mit Erfolg bestätigt**.
+- Für installierbares RED Fit sind die **eigenen** Bundle-IDs, App-Groups und Apple-Entitlements für alle integrierten Ziele (App, Widgets, Watch, Watch-Widgets, Background Asset Downloader) sowie die passende Signierung/Provisionierung nötig. Das bisher unverändert erhaltene `ch.opengym.app` schützt Upstream-Architektur, ist aber nicht zwingend für ein neues unabhängiges Red-Fit-Signing geeignet. **Nicht ohne saubere Migration umstellen.**
+
+## Allgemeine Root-CI nach erstmaliger erfolgreicher Xcode-Kompilierung
+
+- Root-CI `42711456012` bestand **Typecheck, Lint und Offline-Regressionsjob**, scheiterte jedoch in `npm run test`. Root-Vitest sammelte ungewollt auch die separaten OpenGym-Upstream-Vitest-Dateien aus `vendor/opengym-upstream`; dadurch traten falsche Root-Pfade und fehlende Upstream-Dependencies (u. a. `@capacitor/core`) auf.
+- **Gezielte Korrektur:** `vite.config.ts` enthält nun `exclude: [...configDefaults.exclude, "vendor/**"]` aus `vitest/config`. So bleibt das Root-RED-Fit-Testset erhalten, während die originalen openGym-Tests weiterhin in ihrer **eigenen** `vendor/opengym-upstream/frontend`-Umgebung ausführbar sind. Noch nicht durch den nächsten CI-Testlauf bestätigt, daher nicht als bestanden melden.
