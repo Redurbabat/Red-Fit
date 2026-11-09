@@ -15,6 +15,8 @@ workflows:
     scripts:
       - name: Test original iPhone bundle guard
         script: npm run test:ios-bundle
+      - name: Test RED Fit native identity and entitlement guard
+        script: npm run test:ios-identity-unit
       - name: Install locked original frontend dependencies
         script: npm ci
       - name: Build original mobile app, sync iOS and apply RED Fit assets
