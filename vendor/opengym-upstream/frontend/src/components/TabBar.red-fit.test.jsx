@@ -90,6 +90,18 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     expect(selected).toHaveLength(1)
     expect(selected[0].textContent).toContain(label)
   })
+  it('preserves elapsed time and Resume accessibility during a running workout', () => {
+    useStore.setState(({ S }) => ({
+      S: { ...S, active: { start: Date.now() - 65000, editingWorkoutId: null, backfill: false } },
+    }))
+    const nav = renderRoute('/home')
+    const resume = nav.querySelector('button.start')
+    expect(resume.getAttribute('aria-label')).toBe('Resume')
+    expect(resume.querySelector('.tab-time')?.textContent).toMatch(/^\d+:\d{2}$/)
+    // When CSS sets compact mode, the timer selector still remains visible.
+    expect(nav.querySelectorAll('button')).toHaveLength(5)
+  })
+
   it('names all five real tabs even if compact mode visually hides labels', () => {
     const nav = renderRoute('/home')
     expect(nav.getAttribute('data-redfit-compact')).toBe('false')

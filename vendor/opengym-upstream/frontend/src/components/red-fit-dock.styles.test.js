@@ -23,6 +23,13 @@ describe('RED Morph dock geometry and accessibility fallbacks', () => {
     expect(css).not.toMatch(/inset-block-start:\s*2px;/)
   })
 
+  it('preserves the running workout elapsed timer in the compact iPhone dock', () => {
+    expect(css).toMatch(/data-redfit-compact='true'[^}]*> button\.start > span:not\(\.cir\):not\(\.tab-time\)/)
+    expect(css).toMatch(/data-redfit-compact='true'[^}]*> button\.start > \.tab-time\s*\{[^}]*display:\s*block;/)
+    expect(css).toMatch(/button\.start > \.tab-time\s*\{[^}]*position:\s*absolute;/)
+    expect(css).toMatch(/button\.start > \.tab-time\s*\{[^}]*white-space:\s*nowrap;/)
+  })
+
   it('keeps the moving material passive and supplies accessible fallback states', () => {
     expect(css).toMatch(/pointer-events:\s*none;/)
     expect(css).toMatch(/:focus-visible/)

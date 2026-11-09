@@ -100,8 +100,25 @@
     padding-block-end: calc(4px + var(--sab));
   }
   #tabbar.redfit-morph-dock[data-redfit-compact='true'] > button:not(.start) > span:last-child,
-  #tabbar.redfit-morph-dock[data-redfit-compact='true'] > button.start > span:not(.cir) {
+  #tabbar.redfit-morph-dock[data-redfit-compact='true'] > button.start > span:not(.cir):not(.tab-time) {
     display: none;
+  }
+  /* A live session must still show elapsed time while the dock is compact.
+   * Overlay a small, readable badge on the play disc without increasing dock height. */
+  #tabbar.redfit-morph-dock[data-redfit-compact='true'] > button.start > .tab-time {
+    display: block;
+    position: absolute;
+    inset-block-end: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 11px;
+    line-height: 1.2;
+    padding: 2px 4px;
+    border-radius: 5px;
+    background: var(--bg-el);
+    box-shadow: 0 0 0 1px var(--sep-op);
+    z-index: 2;
   }
   #tabbar.redfit-morph-dock[data-redfit-compact='true'] > button.start { margin-top: -4px; }
   #tabbar.redfit-morph-dock[data-redfit-compact='true'] > button.start .cir {

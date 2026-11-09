@@ -17,6 +17,10 @@ const rules = [
   /\[data-redfit-selection='hidden'\]::before\s*\{\s*opacity:\s*0;/,
   /@media\s*\(prefers-reduced-motion:\s*reduce\)/,
   /:focus-visible/,
+  /button\.start > span:not\(\.cir\):not\(\.tab-time\)/,
+  /button\.start > \.tab-time\s*\{[^}]*display:\s*block;/,
+  /button\.start > \.tab-time\s*\{[^}]*position:\s*absolute;/,
+  /button\.start > \.tab-time\s*\{[^}]*white-space:\s*nowrap;/,
 ]
 for (const [index, rule] of rules.entries()) assert.match(css, rule, 'CSS contract ' + (index + 1))
 let count = 0
