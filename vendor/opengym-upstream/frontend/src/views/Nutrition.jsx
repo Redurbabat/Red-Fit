@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { MOBILE, shareExport } from '../lib/mobile.js'
-import { EMPTY, localDateKey, makeMealEntry, MEAL_TYPES, scaleFood, totalsOf } from '../nutrition/model.js'
+import { EMPTY, localDateKey, makeMealEntry, makeRecipeFood, MEAL_TYPES, scaleFood, totalsOf } from '../nutrition/model.js'
 import { exportNutrition, importNutrition, loadNutrition, removeMealEntry, saveFood, saveMealEntry } from '../nutrition/repository.js'
 import { nutritionScope } from '../nutrition/scope.js'
 import { readLatestNutritionDocumentBackup, writeNutritionDocumentBackup } from '../nutrition/native-backup.js'
@@ -35,6 +35,12 @@ function NutritionForScope({ scope }) {
   const busyRef = useRef(false)
   const restoringRef = useRef(false)
   const [loading, setLoading] = useState(true)
+  const [recipeName, setRecipeName] = useState('')
+  const [recipeServings, setRecipeServings] = useState('2')
+  const [recipeYield, setRecipeYield] = useState('')
+  const [recipeIngredients, setRecipeIngredients] = useState([])
+  const [recipeSelected, setRecipeSelected] = useState('')
+  const [recipeGrams, setRecipeGrams] = useState('100')
 
   async function refresh() {
     const saved = await loadNutrition(scope)
@@ -94,6 +100,41 @@ function NutritionForScope({ scope }) {
     event.preventDefault()
     if (!chosen) { setError('Bitte ein Lebensmittel wählen.'); return }
     await run(() => saveMealEntry(scope, makeMealEntry(chosen, Number(grams), mealType, date, newID())), 'Mahlzeit gespeichert.')
+  }
+  function onAddRecipeIngredient(event) {
+    event.preventDefault()
+    if (busyRef.current) return
+    const food = foods.find(f => f.id === recipeSelected)
+    if (!food) { setError('Bitte eine Zutat auswählen.'); return }
+    try {
+      const grams = Number(recipeGrams)
+      scaleFood(food, grams) // validates the weight and prevents invalid snapshots
+      setRecipeIngredients(list => [...list, { key: newID(), food, grams }])
+      setRecipeSelected('')
+      setRecipeGrams('100')
+      setError('')
+    } catch (e) { setError(e?.message || 'Ungültige Zutatenmenge.') }
+  }
+  async function onSaveRecipe(event) {
+    event.preventDefault()
+    if (!recipeIngredients.length) { setError('Bitte mindestens eine Zutat hinzufügen.'); return }
+    const rawYield = recipeIngredients.reduce((total, item) => total + item.grams, 0)
+    let recipe
+    try {
+      recipe = makeRecipeFood({
+        id: newID(), name: recipeName, ingredients: recipeIngredients,
+        yieldGrams: recipeYield.trim() ? Number(recipeYield) : rawYield,
+        servings: Number(recipeServings),
+      })
+    } catch (e) { setError(e?.message || 'Rezept konnte nicht berechnet werden.'); return }
+    await run(async () => {
+      await saveFood(scope, recipe)
+      setSelected(recipe.id)
+      setRecipeName('')
+      setRecipeYield('')
+      setRecipeServings('2')
+      setRecipeIngredients([])
+    }, 'Rezept offline gespeichert. Als Lebensmittel auswählbar.')
   }
   async function onExport() {
     if (busyRef.current) return
@@ -197,6 +238,57 @@ function NutritionForScope({ scope }) {
         <label>Barcode (optional)<input inputMode="numeric" value={foodInput.barcode} maxLength="80" onChange={e => setFoodInput(f => ({ ...f, barcode: e.target.value }))} placeholder="z. B. 0012345678" /></label>
         <button type="submit" disabled={busy} className="nutrition-secondary">Lebensmittel speichern</button>
       </form>
+    </section>
+
+    <section className="card nutrition-section nutrition-recipes" aria-label="Rezepte erstellen">
+      <details>
+        <summary>Rezepte erstellen und speichern</summary>
+        <p className="nutrition-hint">Mehrere Lebensmittel kombinieren. Die Werte werden aus den Zutaten berechnet und als Rezept gespeichert. Das zubereitete Gewicht kann vom Rohgewicht abweichen.</p>
+        <form onSubmit={onAddRecipeIngredient}>
+          <div className="nutrition-grid">
+            <label>Zutat
+              <select value={recipeSelected} onChange={e => setRecipeSelected(e.target.value)} required>
+                <option value="">Lebensmittel wählen</option>
+                {foods.map(food => <option key={food.id} value={food.id}>{food.name}</option>)}
+              </select>
+            </label>
+            <label>Zutatenmenge (g)
+              <input type="number" min="0.1" max="100000" step="any" value={recipeGrams} required onChange={e => setRecipeGrams(e.target.value)} />
+            </label>
+          </div>
+          <button type="submit" className="nutrition-secondary" disabled={busy || !foods.length}>Zutat hinzufügen</button>
+        </form>
+        {recipeIngredients.length > 0 && <ul className="nutrition-ingredient-list">
+          {recipeIngredients.map(item => <li key={item.key}>
+            <span>{item.food.name} · {numberText(item.grams)} g</span>
+            <button type="button" disabled={busy} onClick={() => setRecipeIngredients(list => list.filter(row => row.key !== item.key))} aria-label={item.food.name + ' aus Rezept entfernen'}>Entfernen</button>
+          </li>)}
+        </ul>}
+        <form onSubmit={onSaveRecipe}>
+          <label>Rezeptname
+            <input required maxLength="120" value={recipeName} onChange={e => setRecipeName(e.target.value)} placeholder="z. B. Haferbrei" />
+          </label>
+          <div className="nutrition-grid">
+            <label>Portionen
+              <input type="number" min="1" max="1000" step="1" required value={recipeServings} onChange={e => setRecipeServings(e.target.value)} />
+            </label>
+            <label>Zubereitetes Gesamtgewicht (g)
+              <input type="number" min="0.1" max="100000" step="any" value={recipeYield} onChange={e => setRecipeYield(e.target.value)} placeholder="Leer = Summe der Zutaten" />
+            </label>
+          </div>
+          <p className="nutrition-hint">Ohne Angabe des zubereiteten Gewichts wird die Summe der Zutatenmengen verwendet. Makros bleiben unverändert; der Wert pro 100 g passt sich dem fertigen Gewicht an.</p>
+          <button type="submit" className="nutrition-primary" disabled={busy || recipeIngredients.length === 0}>Rezept speichern</button>
+        </form>
+      </details>
+      {foods.some(food => food.recipe) && <div className="nutrition-saved-recipes">
+        <h3>Gespeicherte Rezepte</h3>
+        {foods.filter(food => food.recipe).map(food => <details key={food.id}>
+          <summary>{food.name} · {food.recipe.servings} Portionen</summary>
+          <p className="nutrition-hint">{numberText(food.recipe.yieldGrams)} g zubereitet · {numberText(food.kcal100, 0)} kcal / 100 g</p>
+          <ul>{food.recipe.ingredients.map((item, i) => <li key={i}>{item.foodName}: {numberText(item.grams)} g</li>)}</ul>
+          <button type="button" disabled={busy} onClick={() => { setSelected(food.id); window.scrollTo?.({ top: 0, behavior: 'smooth' }) }}>Für Mahlzeit auswählen</button>
+        </details>)}
+      </div>}
     </section>
 
     <section className="card nutrition-section" aria-labelledby="nutrition-meals">
