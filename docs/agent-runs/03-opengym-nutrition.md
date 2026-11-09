@@ -172,3 +172,11 @@
 - Die ältere Root-`.github/workflows/ci.yml` bleibt durch **vorbestehendes** Root-Workout-ESLint-Problem blockiert: `src/services/workout/setNotes.ts:10:14` `no-control-regex`. Der neue separate openGym-Test ist erfolgreich, aber behebt **nicht** diesen Root-CI-Fehler.
 - Noch offen vor PR-Merge/Release: vollständiges ursprüngliches openGym-Regressionssuite (`npm test` im Original-Frontend, nicht nur `src/nutrition`), nativer `cap sync`/Xcode-iPhone-Build und tatsächlicher Datenbank-v1→v2-/File-Backup-Roundtrip auf iPhone, Cross-Agent-Navigation und gemeinsames Workout-/Nutrition-Backup.
 - Angelegt und nachgeprüft: PR #15 bleibt offen, nicht gemergt; `main` unangetastet. Kein Zugriff auf externe persönliche Ernährungs-/Trainingsdaten nötig.
+
+
+## Fortsetzung — vollständige originale openGym-Testregression (2026-11-09)
+
+- `.github/workflows/opengym-nutrition.yml` wurde erweitert: Nach den gezielten `npx vitest run src/nutrition`-Tests läuft nun die **vollständige** originale openGym-Frontend-Testsuite `npm test` im selben isolierten Unterprojekt, **vor** dem `VITE_MOBILE=1 npm run build`-Schritt. Damit können bestehende openGym-Funktionen bei Regressionen den Build stoppen, ohne vom älteren Root-App-Lint abhängen zu müssen.
+- Neuer GitHub-Actions-Run **`42711524409`**, Job **`129482008371`** wurde tatsächlich gestartet. Verifizierte Steps: Checkout und `npm ci` **success**, gezielte Nutrition-Vitest-Suite erneut **success**. Die neue vollständige `npm test`-Suite war bei der letzten Abfrage **in_progress**; Build und Bundlekontrolle **pending**. Dies ist **noch kein erfolgreich abgeschlossener Volltest**.
+- Der Download von Logs während des laufenden Jobs gab **404 BlobNotFound**; daraus lässt sich keine konkrete Testursache ableiten. Endergebnis, genaue Testanzahl sowie Build-Erfolg müssen anhand der endgültigen GitHub-Actions-Steps und Logs nachgetragen werden.
+- Keine Änderungen an alten Root-Workout-Dateien, originalen Trainingsdaten, API oder nativer iOS-Signierung.
