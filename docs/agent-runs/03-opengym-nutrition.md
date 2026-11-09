@@ -52,3 +52,27 @@
 - Neu: `frontend/src/nutrition/scope.js` + `scope.test.js`; `views/Nutrition.jsx` liest zusätzlich `useStore(s => s.sync?.server)` und erhält eine URL-normalisierte, kontenbezogene IndexedDB. Kein Passwort, Token oder URL-Query im Scope.
 - **Ausgeführt:** Git-Blob-kongruentes `scope.js` mit Node v22.16.0 syntaktisch geprüft; 8/8 eigene Node-Assertions bestanden. Dies ist kein realer Browser-/Native-IndexedDB-Test. Vitest-Testfälle committed, nicht ausgeführt.
 - **Nicht ausgeführt:** npm-/Vite-/Capacitor-Build, integrierte Login-/Logout- und Geräte-Migration. Kein PR-Merge.
+
+## Fortsetzung — native Ernährungssicherung (2026-11-09)
+
+### Implementiert
+- Neue Datei `frontend/src/nutrition/native-backup.js`: vor jedem Schreiben wird ein vollständiges, mit `validateBackup` geprüftes Nutrition-JSON hergestellt. Der Ordner unter `Directory.Documents` ist pro Nutrition-Scope SHA-256-hashbasiert; Pfad enthält keine Konto-ID, Server-URL oder Geheimnisse.
+- Nach erfolgreich abgeschlossener IndexedDB-Änderung (Lebensmittel hinzufügen, Mahlzeit eintragen/löschen, JSON importieren) erstellt `views/Nutrition.jsx` im nativen App-Build **zusätzlich** eine tägliche JSON-Datei `RED-Fit/Ernaehrung/<sha256>/redfit-nutrition-YYYY-MM-DD.json`. Ein anderer Tag bekommt eine andere Datei. Fehlgeschlagene Dateioperationen werden als **Warnung** angezeigt und machen eine bereits erfolgreich gespeicherte IndexedDB-Mahlzeit nicht nachträglich zu einem angeblichen Fehler.
+- Ein synchrones `busyRef` verhindert doppeltes Speichern durch schnelle Mehrfachbetätigung.
+- Die UI weist ausdrücklich darauf hin, dass diese automatisch im **App-Dokumentenordner** erstellten Dateien **keinen Schutz vor App-Deinstallation** garantieren und vor Gerätewechsel/App-Löschung über einen separaten manuellen JSON-Export oder eine externe Kopie gesichert werden müssen. Native Speicherung wurde nicht als erfolgreich auf dem Gerät bezeichnet.
+- Neues Vitest-File `native-backup.test.js` mit 10 weiteren Regressionstests in Branch/PR; **Vitest noch nicht ausgeführt**.
+
+### Tatsächlich durchgeführte Prüfungen
+- Node.js 22.16.0: `node --check native-backup.js` bestanden.
+- Source-Identität überprüft: Der mit Node geprüfte Inhalt hat Git-Blob SHA-1 `8e66bc7e01e6ce8c9abb9febbff0401470ece486`, identisch mit GitHub-Branch.
+- `node --test backup.test.mjs` auf diesem identischen Modul mit lokalem *Test-Doppel* für `model.js` (weil echte Vitest-/Capacitor-Abhängigkeiten nicht installiert sind): **10/10 bestanden**. Geprüft: deterministische SHA-256-Verzeichnisse, Konto-/Serverisolation, Tagesrotation ohne überschreiben älterer Tage, Pfadvalidierung, erfolgreiches Schreiben in mock `Directory.Documents`, JSON-/Schema-Ablehnung vor Schreibversuch, Storage-/Crypto-/Plugin-Fehler. **Kein echter iOS-Filesystem-/IndexedDB-Roundtrip, kein Vitest-Test und kein iPhone-Build.**
+- Die produktiven UI-Integrationspunkte wurden am GitHub-Branch geschrieben. Ein React/JSX-Compilerlauf fehlt weiterhin.
+
+### Offene Risikobedingungen
+- Der native Dateipfad ist noch nicht mit der tatsächlichen iOS-Dateien-App, Android-Gerätespeicherung, den Dateifreigabe-Entitlements oder Geräte-Backup-Einstellungen getestet.
+- Ein daily Snapshot ist **zusätzlich**, aber nicht das bestehende openGym-Workout-Backup: automatische Sicherung nur nach Änderungen über den Nutrition-Screen, nicht nach Aktionen in anderen noch zu bauenden Modulen. Kein automatischer Restore.
+- Das bestehende openGym-Autobackup/JSON-Import/Server-Sync enthält weiterhin keine Ernährung; deshalb keine falschen Versprechen für Gesamt-Backup. Die Funktion muss vor einem Release mit iOS/Android-Dateiberechtigungen und Rückimport geprüft werden.
+- Die Dateisicherungen sind lokal unverschlüsselte JSON-Inhalte. Wer Zugriff auf die Dateien hat, kann die Mahlzeiten lesen. Ein SHA-256-Dateiordner ist **keine Verschlüsselung**.
+- Keine Codeänderungen in fremden Agenten-Branches, originalen iOS-/Capacitor-Dateien, Workout-State, Root-PWA, `api/`, `sync-merge.js` oder bisherigen Backup-Verträgen.
+
+**Nächste Aufgabe:** echten Vitest-/Vite-Build und den Roundtrip auf dem iPhone nachholen; danach gezieltes Import-/Migrationskonzept für das gemeinsame openGym-Backup mit rückwärtskompatibler Validierung vorsehen.
