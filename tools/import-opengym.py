@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Stage the owner's exact openGym ZIP under vendor/opengym-upstream.
 
-Usage: python3 tools/import-opengym.py openGym-main.zip [--apply]
-Default is dry run. Excludes separately licensed Gym visual catalogue/media/
-(except NOTICE.md). Does not replace the existing RED Fit runtime.
+Usage: python3 tools/import-opengym.py openGym-main.zip [--apply] [--include-media]
+Default is dry run; separately licensed Gym visual catalogue/media/ assets are
+excluded unless --include-media is explicitly selected by a rights holder.
+Does not replace the existing RED Fit runtime.
 """
 import argparse
 import hashlib
@@ -20,6 +21,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("archive", type=Path)
     p.add_argument("--apply", action="store_true")
+    p.add_argument("--include-media", action="store_true",
+                   help="Include third-party exercise media ONLY if you have separate reuse rights")
     args = p.parse_args()
     archive = args.archive
     digest = hashlib.sha256(archive.read_bytes()).hexdigest()
@@ -39,7 +42,8 @@ def main():
                 p.error("Unsafe or duplicated archive member: " + name)
             seen.add(name)
             rel = name[len("openGym-main/"):]
-            if rel.startswith("catalogue/media/") and rel != "catalogue/media/NOTICE.md":
+            if (rel.startswith("catalogue/media/") and rel != "catalogue/media/NOTICE.md"
+                    and not args.include_media):
                 skipped += 1
                 continue
             data = z.read(entry)
@@ -59,10 +63,11 @@ def main():
         "mode": "applied" if args.apply else "dry-run",
         "source_sha256": digest, "files": copied,
         "bytes": total, "excluded_media_files": skipped,
+        "included_media": args.include_media,
         "destination": str(DEST)
     }, indent=2))
     if not args.apply:
-        print("Re-run with --apply to copy the complete audited non-media source snapshot.")
+        print("Re-run with --apply to copy this selection. --include-media requires separate reuse rights.")
 
 if __name__ == "__main__":
     main()
