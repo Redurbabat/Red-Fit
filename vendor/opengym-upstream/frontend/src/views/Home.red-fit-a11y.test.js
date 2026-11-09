@@ -59,4 +59,11 @@ describe('RED Fit branding and screen-reader semantics in the original Home view
     expect(source).toContain('ref={weekStripRef} className="week redfit-home-week"')
   })
 
+  it('keeps translated weekday status available for VoiceOver instead of colour alone', () => {
+    expect(source).toContain("import { homeWeekStatus, homeWeekAccessibleLabel } from './home-week-status.js'")
+    expect(source).toContain('const status = homeWeekStatus({ done, noted: !!dayNoteOf(S, iso), overridden: ovr, planned: eff })')
+    expect(source).toContain('aria-label={homeWeekAccessibleLabel(d, dateLocale(), status, t)}')
+    expect(source).toContain('className={\'dot\' + status.dot} aria-hidden="true"')
+  })
+
 })

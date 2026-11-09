@@ -32,6 +32,7 @@ import { ChallengesCard } from '../components/Challenges.jsx'
 import { isOn } from '../lib/modules.js'
 import './red-fit-home.css'
 import { revealHomeToday } from './scroll-home-week.js'
+import { homeWeekStatus, homeWeekAccessibleLabel } from './home-week-status.js'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
 export default function Home() {
@@ -79,12 +80,12 @@ export default function Home() {
     const d = new Date(wkStart); d.setDate(wkStart.getDate() + i)
     const iso = isoOf(d)
     const eff = effectiveRoutineIds(S, iso).length > 0, ovr = S.dayPlan[iso] !== undefined, done = doneDays.has(iso)
-    // A day off with a note (#261) reads as excused, not as a plan that went by.
-    const dot = done ? ' done' : dayNoteOf(S, iso) ? ' noted' : ovr && eff ? ' ovr' : eff ? ' plan' : ''
+    // Keep the original dot priority, but expose its meaning to VoiceOver too.
+    const status = homeWeekStatus({ done, noted: !!dayNoteOf(S, iso), overridden: ovr, planned: eff })
     strip.push(<div key={i} className={'wday' + (iso === todayISO() ? ' today' : '')} {...tappable(() => dayOverrideSheet(iso))}
-      aria-label={d.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+      aria-label={homeWeekAccessibleLabel(d, dateLocale(), status, t)}
       aria-current={iso === todayISO() ? 'date' : undefined}>
-      <div className="lbl">{t(DAYS[d.getDay()])}</div><div className="num">{d.getDate()}</div><div className={'dot' + dot} /></div>)
+      <div className="lbl">{t(DAYS[d.getDay()])}</div><div className="num">{d.getDate()}</div><div className={'dot' + status.dot} aria-hidden="true" /></div>)
   }
   const wkEnd = new Date(wkStart); wkEnd.setDate(wkStart.getDate() + 6)
   const wkLabel = weekOffset === 0 ? t('This week') : `${wkStart.getDate()} ${wkStart.toLocaleDateString(dateLocale(), { month: 'short' })} – ${wkEnd.getDate()} ${wkEnd.toLocaleDateString(dateLocale(), { month: 'short' })}`
