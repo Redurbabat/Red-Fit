@@ -155,3 +155,20 @@
 - Der Root-Workout-Datei-Blob ist auf `main` und `agent/redfit-03-nutrition` identisch: `7217d9cf9736c03bd7d921ba0a33b4b4b7aa1669`. Fehler ist somit **nicht von Agent 03 eingeführt**. Root-`src/` gehört laut Agent-Dateihoheit nicht zu diesem Ernährungsauftrag; bewusst keine Änderung an Workout-Code vorgenommen.
 - Wichtig: Selbst ein später erfolgreicher Root-Build beweist nicht automatisch den **separat installierten original-openGym-Frontend-Build** unter `vendor/opengym-upstream/frontend/`. Für iPhone-Freigabe müssen die Vitest-/Vite-/Capacitor-Tests dort separat laufen.
 - Benötigte Koordination: Root-Workout-Lintfehler im zuständigen Agenten-/Hauptbranch beheben und einen nachweislichen Build des originalen openGym-Frontends ausführen. PR #15 bleibt bis dahin offen.
+
+
+## Fortsetzung — echte Vitest- und Vite-Build-Prüfung im ORIGINAL-openGym (2026-11-09)
+
+### Vorgehen und tatsächliche Ergebnisse
+- Neu: `.github/workflows/opengym-nutrition.yml` im bestehenden Agent-03-Branch/PR #15. Arbeitet **ausschliesslich** unter `vendor/opengym-upstream/frontend/`, wird von PR-Änderungen an Ernährung/UI/Workflow ausgelöst und läuft getrennt vom Root-`ci.yml`. Keine Änderungen an originalem Workout-State oder Root-Workout-Lint.
+- GitHub Actions **Run `42710935902`, Job `129479962784`: completed / success**. Echte Runner-Schritte und Logs abgerufen und geprüft:
+  1. `npm ci --no-audit --no-fund`: **success** im originalen openGym-Frontend.
+  2. `npx vitest run src/nutrition`: **6 Testdateien, 61/61 Tests bestanden** (planning 12, native-backup 15, repository 10, recipes 10, model 7, scope 7). Vitest **v4.1.12** im GitHub-Runner.
+  3. `VITE_MOBILE=1 npm run build`: **success**, Vite **v8.3.5**, **475 transformierte Module**, eigenständige `dist/assets/Nutrition-*.js` und `Nutrition-*.css` erzeugt. Build-Zeit 2.06 s.
+  4. Nachgelagerte Assertion prüft `dist/index.html` auf **`opengym-flavor=mobile`** und existierende JS-Assets: **success**, Log: `Original openGym mobile-flavour bundle verified`.
+- Vite meldete nur **nicht-blockierende Warnungen** zu grossen Chunks und einer dynamischen Capacitor-Import-Aufteilung. Kein tatsächlicher iOS-Binärbuild, Xcode-Signing, `cap sync`, WKWebView-/Geräte-, UI- oder automatisierter Apple-Files-App-Test wurde durchgeführt.
+
+### CI-Einordnung
+- Die ältere Root-`.github/workflows/ci.yml` bleibt durch **vorbestehendes** Root-Workout-ESLint-Problem blockiert: `src/services/workout/setNotes.ts:10:14` `no-control-regex`. Der neue separate openGym-Test ist erfolgreich, aber behebt **nicht** diesen Root-CI-Fehler.
+- Noch offen vor PR-Merge/Release: vollständiges ursprüngliches openGym-Regressionssuite (`npm test` im Original-Frontend, nicht nur `src/nutrition`), nativer `cap sync`/Xcode-iPhone-Build und tatsächlicher Datenbank-v1→v2-/File-Backup-Roundtrip auf iPhone, Cross-Agent-Navigation und gemeinsames Workout-/Nutrition-Backup.
+- Angelegt und nachgeprüft: PR #15 bleibt offen, nicht gemergt; `main` unangetastet. Kein Zugriff auf externe persönliche Ernährungs-/Trainingsdaten nötig.
