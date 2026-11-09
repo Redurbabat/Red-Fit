@@ -41,3 +41,7 @@ Referenzen gelesen: `Redurbabat/RED-Morph` AGENTS/AI_START_HERE, `skills/red-mor
 ## Nächster Schritt
 
 Vollständigen Frontend-Build + Vitest im echten Checkout ausführen und Diff von PR #11 prüfen; anschliessend eine gezielte iPhone-UI-Sichtung mit Agent 04 abstimmen. **Keine Selbst-Merges, kein öffentliches Deploy.**
+
+## CI-Signal (GitHub Actions)
+
+GitHub Actions hat für Commit `4d09068b21b1fc2b7e67ad53b6d9f27f32b9dd4d` den Run [42701986109](https://github.com/Redurbabat/Red-Fit/actions/runs/42701986109) ausgelöst: **failure** (Jobs `verify` und `offline-regressions`). Die Job-API lieferte **keine Step-Einträge** und der Abruf beider Job-Logs scheiterte mit `404 BlobNotFound`; eine konkrete Fehlerursache ist damit **nicht belegt**. Nicht als Testbestehen werten. Wichtig: Das vorhandene `.github/workflows/ci.yml` führt nur die Root-Tests aus und enthält **keinen Schritt für** `vendor/opengym-upstream/frontend/`; Agent 05 soll die Original-openGym-Test-/Buildpipeline ergänzen (separate Dateihoheit).
