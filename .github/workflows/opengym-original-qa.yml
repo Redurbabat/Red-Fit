@@ -30,6 +30,10 @@ jobs:
           cache-dependency-path: vendor/opengym-upstream/frontend/package-lock.json
       - name: Verify original-app QA harness (fixture tests only)
         run: node --test tools/opengym-qa/verify.test.mjs
+      - name: Verify original iOS Xcode integration structure (read-only)
+        run: |
+          node --test tools/opengym-qa/ios-baseline.test.mjs
+          node tools/opengym-qa/ios-baseline.mjs
       - name: Install, test and build original openGym frontend
         run: node tools/opengym-qa/verify.mjs
       - name: Retain QA report and captured command logs (private repository only)
