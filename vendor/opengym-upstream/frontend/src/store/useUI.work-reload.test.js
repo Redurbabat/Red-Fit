@@ -77,6 +77,37 @@ describe('a hold across a reload', () => {
     expect(saved()).toBeNull()
   })
 
+  it('stores a session id on new holds and restores it for the same workout', () => {
+    useUI.getState().startWork(45, 'Plank', vi.fn(), owner)
+    const previous = saved()
+    expect(previous.owner).toMatchObject({ ...owner, sessionId: 'a' })
+    useUI.getState().stopWork()
+    localStorage.setItem(WORK_KEY, JSON.stringify(previous))
+    expect(restoreWork()).toBe(true)
+    expect(useUI.getState().work.owner.sessionId).toBe('a')
+  })
+
+  it.each([false, true])('rejects a hold belonging to another workout after reload (paused=%s)', paused => {
+    useUI.getState().startWork(45, 'Plank', vi.fn(), owner)
+    if (paused) useUI.getState().pauseWork()
+    const previous = saved()
+    expect(previous.owner.sessionId).toBe('a')
+    useUI.getState().stopWork()
+
+    // The new workout uses exactly the same exercise and row indexes.
+    useStore.setState({ S: { ...useStore.getState().S,
+      active: { id: 'b', entries: [
+        { id: 'squat', sets: [{ w: 100, r: 5 }] },
+        { id: 'plank', sets: [{ sec: 45 }, { sec: 45 }] }
+      ] }
+    } })
+    localStorage.setItem(WORK_KEY, JSON.stringify(previous))
+    expect(restoreWork()).toBe(false)
+    expect(useUI.getState().work).toBeNull()
+    expect(useStore.getState().S.active.entries[1].sets[0].done).toBeUndefined()
+    expect(saved()).toBeNull()
+  })
+
   it('is dropped when its set is gone or already ticked', () => {
     localStorage.setItem(WORK_KEY, JSON.stringify({ endsAt: Date.now() + 30_000, total: 45, label: 'Plank', overtime: false, owner: { idx: 0, i: 0, id: 'plank' } }))
     expect(restoreWork()).toBe(false)
