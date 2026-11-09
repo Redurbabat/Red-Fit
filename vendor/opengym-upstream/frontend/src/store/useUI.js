@@ -165,7 +165,7 @@ const runWork = (set, get) => {
         alertBuzz([200, 100, 200]); get().flashTimer()
       }
       if (wk.overtime && left > -MAX_WORK_OVERTIME_SEC) { set({ work: { ...wk, left, alerted: true } }); return }
-      const done = workDone || ownerDone(wk)
+      const done = currentWorkDone(wk)
       get().stopWork()
       // `chimed` tells the set's own tick that this end has already sounded and buzzed — not
       // so when overtime ran out, whose end chime played when the target was reached.
@@ -210,6 +210,10 @@ const ownerDone = wk => !wk?.owner ? null : (elapsed, { abandoned = false } = {}
     st.at = Date.now()
   }, true)
 }
+// A running hold may still carry its original screen callback after another workout was
+// restored or started. Checking only the fallback ownerDone is not enough: workDone wins
+// whenever the old Workout screen registered a closure. Never invoke that stale closure.
+const currentWorkDone = wk => (wk?.owner && !ownerSet(wk.owner)) ? null : (workDone || ownerDone(wk))
 const stopRestTicking = () => {
   if (timerInt) clearInterval(timerInt); timerInt = null
   if (timerTick) document.removeEventListener('visibilitychange', timerTick); timerTick = null
@@ -515,7 +519,7 @@ export const useUI = create((set, get) => ({
     if (!wk) return
     // Paused time is not held time: the end moved out by it, and a paused hold holds its seconds.
     const elapsed = heldSec(wk, Math.min(at, Date.now()), { early: true, overtimeMax: wk.overtime ? MAX_WORK_OVERTIME_SEC : 0 })
-    const done = workDone || ownerDone(wk)
+    const done = currentWorkDone(wk)
     vibrate(30)
     get().stopWork()
     if (done) done(elapsed)
@@ -530,7 +534,7 @@ export const useUI = create((set, get) => ({
     const wk = get().work
     if (!wk) { get().stopWork(); return }
     const elapsed = wk.total - wk.left
-    const done = workDone || ownerDone(wk)
+    const done = currentWorkDone(wk)
     get().stopWork()
     // Under two seconds there is nothing to keep: that is a play button tapped by accident, or
     // tapped and thought better of, and rounding it up to one second the way an early finish does
