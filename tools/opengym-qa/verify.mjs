@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, createW
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { finished } from 'node:stream/promises'
+import { checkMobileWebDist } from './mobile-web.mjs'
 
 const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 
@@ -83,7 +84,9 @@ export async function verify({ repoRoot = defaultRoot, npmBinary = process.platf
     const steps = [
       { id: 'install', args: ['ci', '--ignore-scripts', '--no-audit', '--no-fund'] },
       { id: 'test', args: ['run', 'test'] },
-      { id: 'build', args: ['run', 'build'] }
+      { id: 'build', args: ['run', 'build'] },
+      // Compile the iPhone-flavoured web payload, without cap sync or iOS file writes.
+      { id: 'mobile-web-build', args: ['run', 'build'], stepEnv: { VITE_MOBILE: '1' } }
     ]
     let installed = true
     for (const step of steps) {
@@ -96,8 +99,11 @@ export async function verify({ repoRoot = defaultRoot, npmBinary = process.platf
         report.steps.push({ ...current, status: 'skipped', reason: 'npm ci failed' }); save(); continue
       }
       console.log(`[openGym QA] ${current.command} (${report.workingDirectory})`)
-      const result = await runCommand(npmBinary, [...npmArgsPrefix, ...step.args], frontend, logPath, env)
-      report.steps.push({ ...current, status: result.exitCode === 0 ? 'passed' : 'failed', exitCode: result.exitCode, durationMs: result.durationMs, ...(result.error ? { error: result.error } : {}) })
+      const result = await runCommand(npmBinary, [...npmArgsPrefix, ...step.args], frontend, logPath, { ...env, ...step.stepEnv })
+      const issues = step.id === 'mobile-web-build' && result.exitCode === 0
+        ? checkMobileWebDist(join(frontend, 'dist')) : []
+      const passed = result.exitCode === 0 && issues.length === 0
+      report.steps.push({ ...current, status: passed ? 'passed' : 'failed', exitCode: result.exitCode, durationMs: result.durationMs, ...(step.stepEnv ? { buildMode: 'mobile' } : {}), ...(issues.length ? { validationErrors: issues } : {}), ...(result.error ? { error: result.error } : {}) })
       if (step.id === 'install' && result.exitCode !== 0) installed = false
       save()
     }
