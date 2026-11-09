@@ -191,6 +191,13 @@ export default function Home() {
       <SeasonDeco spot="home-hero" />
     </div>
 
+    {/* RED Fit nutrition module (Agent 03): stays in the original openGym app. */}
+    <div className="card tap-host">
+      <CardHead icon="chart" tint="var(--orange)" eyebrow="RED Fit" title="Ernährung"
+        sub="Lebensmittel, Mahlzeiten und Tagesmakros" open={{ onClick: () => nav('/nutrition') }}
+        action={<Icon name="chevronRight" className="chev" />} />
+    </div>
+
     {/* Monday: Your week; the 1st: Your month (lib/recap.js). Off in Settings → Look & Home. */}
     <RecapHomeCard S={S} />
 
