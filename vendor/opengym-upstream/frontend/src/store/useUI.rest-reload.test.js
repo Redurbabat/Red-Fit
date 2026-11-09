@@ -109,6 +109,32 @@ describe('the rest timer across a reload', () => {
     expect(saved()).toBeNull()
   })
 
+  it('does not resume an in-memory paused rest into another workout', () => {
+    useUI.getState().startRest(90, 0)
+    useUI.getState().pauseRest()
+    expect(useUI.getState().timer).toMatchObject({ sessionId: 'a', paused: true })
+    const pushesBefore = pushes().length
+
+    // A workout can change while the app is still alive, without restoreRest() running.
+    useStore.setState({ S: { ...useStore.getState().S, active: { id: 'b', entries: [] } } })
+    useUI.getState().resumeRest()
+    expect(useUI.getState().timer).toBeNull()
+    expect(saved()).toBeNull()
+    expect(pushes()).toHaveLength(pushesBefore) // no alarm booked for the new workout
+    vi.advanceTimersByTime(91_000)
+    expect(useUI.getState().timer).toBeNull()
+  })
+
+  it('does resume a paused rest after a same-session store replacement', () => {
+    useUI.getState().startRest(90, 0)
+    useUI.getState().pauseRest()
+    useStore.setState({ S: { ...useStore.getState().S, active: { id: 'a', entries: [] } } })
+    useUI.getState().resumeRest()
+    expect(useUI.getState().timer).toMatchObject({ sessionId: 'a', total: 90 })
+    expect(useUI.getState().timer.paused).toBeFalsy()
+    expect(saved()).toMatchObject({ sessionId: 'a', paused: false })
+  })
+
   it('ignores a late native rest action after its rest was dismissed', () => {
     useUI.getState().startRest(90, 0)
     useUI.getState().stopRest()
