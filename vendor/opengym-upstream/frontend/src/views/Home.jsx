@@ -30,6 +30,7 @@ import { WrappedHomeCard } from '../components/WrappedEntry.jsx'
 import RecoveryHint from '../components/RecoveryHint.jsx'
 import { ChallengesCard } from '../components/Challenges.jsx'
 import { isOn } from '../lib/modules.js'
+import './red-fit-home.css'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
 export default function Home() {
@@ -147,7 +148,7 @@ export default function Home() {
           <div className="small muted" style={{ fontWeight: 500 }}>{wkLabel}</div>
           <button className="iconbtn" style={{ width: 32, height: 32, fontSize: 'var(--fs-subhead)' }} onClick={() => setWeekOffset(w => w + 1)} aria-label={t('Next week')}><Icon name="chevronRight" /></button>
         </div>
-        <div className="week">{strip}</div>
+        <div className="week redfit-home-week" role="group" aria-label={wkLabel}>{strip}</div>
       </>}
       {/* The week's plan as a countdown (#753, lib/week-left.js): "2 of 4 left this week". */}
       {left && <div className={'small dim wkleft' + (left.left > 0 ? '' : ' done')}>

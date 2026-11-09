@@ -36,4 +36,14 @@ describe('RED Fit branding and screen-reader semantics in the original Home view
     expect(source).toContain("aria-label={t('Next week')}")
   })
 
+  it('keeps all seven Home calendar targets 44px wide with scrolling only when needed', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/views/red-fit-home.css'), 'utf8')
+    expect(source).toContain("import './red-fit-home.css'")
+    expect(source).toContain('className="week redfit-home-week" role="group" aria-label={wkLabel}')
+    expect(css).toMatch(/\.week\.redfit-home-week\s*\{[^}]*overflow-x:\s*auto;/)
+    expect(css).toMatch(/\.week\.redfit-home-week\s*>\s*\.wday\s*\{[^}]*min-inline-size:\s*44px;/)
+    expect(css).toMatch(/\.week\.redfit-home-week\s*>\s*\.wday\s*\{[^}]*flex:\s*1 0 44px;/)
+    expect(7 * 44 + 6 * 4).toBe(332)
+  })
+
 })
