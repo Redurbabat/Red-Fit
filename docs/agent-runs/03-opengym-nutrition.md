@@ -80,3 +80,23 @@
 ### CI-Kontrolle nach dem neuen Commit
 - GitHub Actions PR-Run `42705252620` für diesen Branch: `completed/failure`. Jobs `offline-regressions` (`129460238743`) und `verify` (`129460239298`) melden beide Fehler.
 - **Diagnose:** Beide Jobs geben per GitHub-API **0 Steps** zurück; beide Logabrufe liefern **HTTP 404 / BlobNotFound**. Ein fehlgeschlagener Node-, Vitest- oder Vite-Befehl lässt sich deshalb nicht nachweisen. CI gilt weiterhin als **nicht bestanden**; vollständige Runner-/Build-Ursache muss separat geklärt werden.
+
+
+## Fortsetzung — lokale Wiederherstellung mit Rückfall auf letzte gültige Sicherung (2026-11-09)
+
+### Produktänderung
+- `frontend/src/nutrition/native-backup.js`: `readLatestNutritionDocumentBackup(scope)` liest nur im SHA-256-Verzeichnis des aktiven Accounts (einschliesslich Server-Basis-URL) in `Directory.Documents`. Filtert ausschliesslich Dateien mit sicheren Namen und korrekten Kalendertagen, überspringt Verzeichnisse. Prüft JSON und `validateBackup` vor jeder Übergabe an den Import, begrenzt gelesene JSON-Strings auf 64 MiB. Bei beschädigter jüngster Datei wird der nächste gültige ältere Tagesstand gesucht; ist kein gültiger Stand vorhanden, erscheint eine nachvollziehbare Fehlermeldung.
+- `views/Nutrition.jsx`: iPhone/Android-Schaltfläche „Letzte Gerätesicherung wiederherstellen“. Bestätigungsdialog mit konkretem Sicherungsdatum; anschliessend ausschliesslich der bestehende **zusammenführende** `importNutrition` (nicht `clear`/Overwrite) über den bekannten UI-Speicherpfad. Das lokale Dokumentenbackup ersetzt keinen externen Export und keinen OpenGym-Server-Sync. Die UI verspricht nicht mehr, der native Ordner sei zwingend in der iOS-Dateien-App sichtbar.
+- `native-backup.test.js`: fünf neue Vitest-Testfälle (nun 15 im File) für neueste gültige Datei, kaputte neueste Datei/ältere gültige, Schemafehler, fehlendes Verzeichnis und Filename-/Pfadfilter. **Vitest nicht ausgeführt.**
+
+### Unabhängiger ausgeführter Test
+- GitHub-Quellstände exakt gegen lokale Dateien mittels `git hash-object` abgeglichen: `model.js` `a7c446de8fc872b568285be2d8a6fe754fef3b98` und `native-backup.js` `45d89b373497f9d360c910da814a69ec68325368`; beide stimmen mit den SHA-1-Blobs auf dem GitHub-Branch überein.
+- `node --check model.js` und `node --check native-backup.js`: bestanden unter Node.js v22.16.0.
+- `node --test restore.test.mjs` auf den **exakten Domänen- und Backup-Modulen** (KEIN Ersatz-Domänenvalidator), mit in-memory Test-Doppel ausschliesslich für die native Filesystem-Plugingrenze: **10/10 Tests bestanden, 0 Fehler**. Belegt unter anderem Schreib-/Lese-Roundtrip, richtiges Datum und korrekte Mahlzeiten, Konto-/Serverisolation, intakte ältere Kopie, Fallback bei beschädigter neuester Datei, Validierung vor Schreibzugriff, Verzeichnis-/Pfadsicherheit, Schutz bestehender Datensätze beim Merge.
+- Lokale Node-Testdatei liegt unter `/mnt/data/nutrition_restore_check/restore.test.mjs`; das Repository enthält die eigenständigen 15 Vitest-Fälle. Die Node-Läufe nutzen **kein** iOS-Capacitor-Plug-in und sind kein echter Geräte- oder React-Render-Test.
+
+### Verbleibende Blocker
+- iPhone/IPA/TestFlight-/Dateifreigabe- und echter WebView-/IndexedDB-Dateisystem-Roundtrip fehlen. Ohne native Umgebung kann die neue `Filesystem.readdir/readFile`-Integration nicht als auf iOS verifiziert gelten.
+- GitHub-Actions-CI weiterhin nicht als bestanden nachgewiesen (letzter geprüfter Run `42705252620` mit Jobfehlern ohne abrufbare Logs).
+- Getrennte lokale Nutrition-Datenbank und originales openGym-Workout-Backup/Server-Sync sind weiterhin **nicht** vollständig integriert.
+- Weitere Rezept-, Wochenplan- und Einkaufslistenfunktionen stehen aus. Ein manuell exportiertes JSON bleibt die sichere Massnahme für Gerätewechsel/Deinstallation.
