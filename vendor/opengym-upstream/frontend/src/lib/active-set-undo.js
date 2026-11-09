@@ -9,7 +9,9 @@ const signaturesOf = active => Array.isArray(active?.entries)
 export function captureUndoSetOccurrence(active, index) {
   const signatures = signaturesOf(active)
   if (!signatures || !Number.isInteger(index) || index < 0 || index >= signatures.length) return null
-  return { index, signatures }
+  // This token only lives in the in-memory Undo toast. The reference distinguishes
+  // a truly unchanged list from a new immutable Store snapshot containing identical duplicates.
+  return { index, signatures, activeRef: active }
 }
 
 export function locateUndoSetOccurrence(active, token) {
@@ -22,7 +24,15 @@ export function locateUndoSetOccurrence(active, token) {
 
   // Nothing about the exercise list changed after removing its set. Duplicate exercises
   // are fine here: the original occurrence is still at the original index.
-  if (before.every((signature, i) => signature === after[i])) return index
+  if (before.every((signature, i) => signature === after[i])) {
+    const selected = before[index]
+    // A store update clones active. If two entries have exactly the same serialized shape,
+    // the cloned state may have swapped them invisibly. No unique target can be proven;
+    // keep the original set safe rather than attaching it to another copy.
+    if (token.occurrence.activeRef !== active
+        && before.filter(signature => signature === selected).length > 1) return -1
+    return index
+  }
 
   // Only a pure reorder is provably safe. A replacement/remove/add or an intervening
   // edit cannot silently make Undo target an unrelated occurrence.
