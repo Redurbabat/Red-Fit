@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>openGym</string>
+	<string>RED Fit</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -119,7 +119,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Used to put a gym on the map where you are standing, for the gym reminder. Your location stays on this iPhone.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Lets the gym reminder notice when you arrive at a gym you added, even with openGym closed. iOS only watches those places, and your location never leaves this iPhone.</string>
+	<string>Lets the gym reminder notice when you arrive at a gym you added, even with RED Fit closed. iOS only watches those places, and your location never leaves this iPhone.</string>
 	<!-- NFC stickers (NfcTagsPlugin.swift): Core NFC's own sheet, only when you write one. -->
 	<key>NFCReaderUsageDescription</key>
 	<string>Used to write openGym links onto your own NFC stickers, so a tap can start your workout or open an exercise.</string>
