@@ -29,3 +29,9 @@ Die bestehende Original-App unter `vendor/opengym-upstream/frontend/` ist die RE
 3. Mit Besitzer/Apple-Signing-Setup die **neue eigene Bundle-ID** und alle Extensions/App Groups für privat signierbares iPhone-Paket festlegen. Nichts signieren oder behaupten, solange Zertifikate/Provisioning fehlen.
 4. Erst nach Installerfolg am echten iPhone Training → Sätze → Pause → sperren → entsperren → Fortsetzen → Verlauf und vollständigen Offline-Neustart prüfen. Bestehende Daten vorher sichern.
 5. Original-Frontend-Branding und optionale Icon-Varianten mit UI-Agent 02 abstimmen; nicht sein globales Stylesystem überschreiben.
+
+## GitHub-Actions-Nachprüfung (09.11.2026, nach PR-Aktualisierung)
+
+- **Original-iPhone-Workflow:** Run [42702410198](https://github.com/Redurbabat/Red-Fit/actions/runs/42702410198), `conclusion: failure`. Der GitHub-Jobeintrag `ios` (Job `129450279735`) enthält **keine ausgeführten Steps** (`steps: null` / Stepabfrage leer); der Log-Abruf lieferte `404 BlobNotFound`. Damit gibt es **keinen Beleg für einen gestarteten npm-, Swift- oder Xcode-Schritt** und insbesondere **keinen Compilerfehlernachweis**.
+- **Allgemeine CI:** Run `42702410066` ebenfalls `failure` ohne Stepaufzeichnungen in den beiden Jobs. Das deutet auf ein übergeordnetes GitHub-Actions-/Runner-Problem hin, ist aber **keine bestätigte Ursache**. In GitHub Actions die konkrete Run-Fehlermeldung und gegebenenfalls private Runner-/Budget-/Billing-Regeln prüfen.
+- Der iPhone-Build und das unsigned IPA bleiben ausdrücklich **NICHT BESTANDEN / NICHT ERZEUGT**.
