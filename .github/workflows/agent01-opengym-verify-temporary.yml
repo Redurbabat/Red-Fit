@@ -1,0 +1,43 @@
+name: Agent 01 original openGym verification (temporary)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/agent01-opengym-verify-temporary.yml'
+      - 'vendor/opengym-upstream/frontend/**'
+
+permissions:
+  contents: read
+
+jobs:
+  original-training-frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: vendor/opengym-upstream/frontend
+    steps:
+      - name: Checkout current Agent 01 PR
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node 22 and original frontend cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: vendor/opengym-upstream/frontend/package-lock.json
+      - name: Install original openGym dependencies
+        id: install
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run original frontend Vitest including Agent 01 regressions
+        if: steps.install.outcome == 'success'
+        run: npm run test
+      - name: Original web build
+        if: always() && steps.install.outcome == 'success'
+        run: npm run build
+      - name: iPhone-flavoured mobile web build
+        if: always() && steps.install.outcome == 'success'
+        env:
+          VITE_MOBILE: '1'
+        run: npm run build
