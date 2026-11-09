@@ -9,7 +9,7 @@ let frontend = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirector
 let source = frontend.appendingPathComponent("../../../public/icons/icon-512.png").standardizedFileURL
 let assetRoot = frontend.appendingPathComponent("ios/App/App/Assets.xcassets", isDirectory: true)
 guard let icon = NSImage(contentsOf: source) else {
-    fputs("RED Fit icon missing at \\(source.path)\\n", stderr)
+    fputs("RED Fit icon missing at \(source.path)\n", stderr)
     exit(1)
 }
 
@@ -45,7 +45,7 @@ func drawAsset(to path: URL, size: Int, imageSize: CGFloat) throws {
                       userInfo: [NSLocalizedDescriptionKey: "Cannot encode PNG"])
     }
     try data.write(to: path, options: .atomic)
-    print("RED Fit asset: \\(path.lastPathComponent) — \\(size)x\\(size) RGB")
+    print("RED Fit asset: \(path.lastPathComponent) — \(size)x\(size) RGB")
 }
 
 do {
@@ -54,12 +54,12 @@ do {
     let splashDir = assetRoot.appendingPathComponent("Splash.imageset")
     for scale in 1...3 {
         for appearance in ["", "-dark"] {
-            let file = "Default@\\(scale)x~universal~anyany\\(appearance).png"
+            let file = "Default@\(scale)x~universal~anyany\(appearance).png"
             try drawAsset(to: splashDir.appendingPathComponent(file),
                           size: 1366, imageSize: 420)
         }
     }
 } catch {
-    fputs("RED Fit asset generation failed: \\(error)\\n", stderr)
+    fputs("RED Fit asset generation failed: \(error)\n", stderr)
     exit(1)
 }
