@@ -1888,7 +1888,8 @@ export function swapActiveWorkoutExercise(index) {
   // The picker/configuration sheet may stay open while a background resume or sync
   // changes the workout. Do not let its old index silently target a new exercise.
   const pickedSessionId = active.id
-  const pickedEntry = JSON.stringify(active.entries[index])
+  // The whole list matters: an identical duplicate may shift into this index after deletion.
+  const pickedEntries = JSON.stringify(active.entries)
 
   // The "+" on a picker row commits with the default config, exactly as it does in the add
   // flows; tapping the row still opens the config sheet first.
@@ -1899,7 +1900,7 @@ export function swapActiveWorkoutExercise(index) {
     // the workout. (The add flow deliberately leaves it open.)
     picker.close()
     const live = S().active
-    if (!live || live.id !== pickedSessionId || JSON.stringify(live.entries?.[index]) !== pickedEntry) {
+    if (!live || live.id !== pickedSessionId || JSON.stringify(live.entries) !== pickedEntries) {
       ui().toast(t('Something went wrong'))
       return
     }
@@ -1946,10 +1947,11 @@ function commitActiveSwap(index, ex, cfg) {
   // workout edit changed the entry at this index. The store clones active on every update, so
   // compare its persisted content (not object identity) before touching timers or logged data.
   const originalSessionId = st.active.id
-  const originalEntry = JSON.stringify(current)
+  // Compare the full list so deleting a selected duplicate cannot masquerade as the same slot.
+  const originalEntries = JSON.stringify(st.active.entries)
   const apply = options => {
     const live = S().active
-    if (!live || live.id !== originalSessionId || JSON.stringify(live.entries?.[index]) !== originalEntry) {
+    if (!live || live.id !== originalSessionId || JSON.stringify(live.entries) !== originalEntries) {
       ui().toast(t('Something went wrong'))
       return
     }
