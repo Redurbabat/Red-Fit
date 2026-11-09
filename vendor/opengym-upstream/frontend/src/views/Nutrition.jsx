@@ -286,7 +286,18 @@ function NutritionForScope({ scope }) {
           <summary>{food.name} · {food.recipe.servings} Portionen</summary>
           <p className="nutrition-hint">{numberText(food.recipe.yieldGrams)} g zubereitet · {numberText(food.kcal100, 0)} kcal / 100 g</p>
           <ul>{food.recipe.ingredients.map((item, i) => <li key={i}>{item.foodName}: {numberText(item.grams)} g</li>)}</ul>
-          <button type="button" disabled={busy} onClick={() => { setSelected(food.id); window.scrollTo?.({ top: 0, behavior: 'smooth' }) }}>Für Mahlzeit auswählen</button>
+          <div className="nutrition-actions">
+            <button type="button" disabled={busy || !date} onClick={() =>
+              run(() => saveMealEntry(scope, makeMealEntry(
+                food, food.recipe.yieldGrams / food.recipe.servings, mealType, date, newID()
+              )), 'Eine Portion ' + food.name + ' erfasst.')
+            }>1 Portion erfassen</button>
+            <button type="button" disabled={busy} onClick={() => {
+              setSelected(food.id)
+              setGrams(String(food.recipe.yieldGrams / food.recipe.servings))
+              window.scrollTo?.({ top: 0, behavior: 'smooth' })
+            }}>Für Mahlzeit auswählen</button>
+          </div>
         </details>)}
       </div>}
     </section>
