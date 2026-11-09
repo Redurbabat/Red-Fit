@@ -289,6 +289,18 @@ describe('timed holds that run themselves', () => {
     expect(useUI.getState().work).toBeNull()
   })
 
+  it('rejects an explicit count-in owner from a previous workout before focusing the exercise', () => {
+    start([hold(30, { done: true }), hold(30)])
+    useUI.getState().startCountIn({
+      idx: 0, i: 1, id: 'plank', plan: 30, label: 'Plank', sessionId: 'previous-workout'
+    })
+    expect(useUI.getState().countIn).toBeNull()
+    expect(useUI.getState().work).toBeNull()
+    expect(hooks.focus).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(5000)
+    expect(useUI.getState().work).toBeNull()
+  })
+
   it('keeps a running count-in when the store clones the same workout ID', () => {
     start([hold(30, { done: true }), hold(30)])
     useUI.getState().startCountIn({ idx: 0, i: 1, id: 'plank', plan: 30, label: 'Plank' })
