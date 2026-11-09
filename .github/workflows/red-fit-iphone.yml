@@ -47,6 +47,9 @@ jobs:
       - name: Install original locked dependencies
         run: npm ci
 
+      - name: Test RED Fit native glass dock routing and keyboard/modal safety
+        run: npx vitest run src/components/TabBar.native-dock.test.jsx
+
       - name: Build and brand existing Capacitor app
         run: npm run build:ios
 
