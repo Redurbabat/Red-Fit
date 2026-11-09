@@ -73,3 +73,21 @@ Die bestehende Original-App unter `vendor/opengym-upstream/frontend/` ist die RE
 - **Durchgeführte statische Source-Checks im GitHub-Branch:** **6/6 bestanden**: Watch-Dateiname entspricht `Watch/Assets.xcassets/AppIcon.appiconset/Contents.json`; Watch-Sollgrösse 1024×1024; iPhone-Icon-Dateiname stimmt weiterhin; alle sechs Splash-Bezeichner decken die originale Manifest-Struktur ab; Generator greift nicht in Entitlements ein; Watch-Pfad ist die vorhandene Assets.xcassets-Struktur. Script-Git-Blob `d7dbb42d83c0ff223da76074b3cfafce77f9c29a`.
 - **CI-Diagnose aktualisiert:** GitHub-Actions-iOS-Run `42706261215` endete mit `failure`, Job `129463740746` mit `cancelled`, **null aufgezeichneten Steps** und **0 ms billable macOS**; Logs über API nicht verfügbar (`404 BlobNotFound`). **Kein** Swift-/Xcode-Fehler bewiesen. Die ausstehende **manuelle Codemagic-Ausführung** ist weiterhin nötig.
 - **Noch nicht verifiziert:** Swift-Generator auf macOS ausführen, tatsächliche PNG-Datei ansehen, Xcode Asset Catalog kompilieren, native iPhone-/Watch-App starten und signieren. Der Source-Check bestätigt nur die vorhandenen Referenzen, nicht das Ergebnis eines macOS-Builds.
+
+## 09.11.2026 – Tatsächliche macOS-GitHub-Builds und gezielte Fehlerbehebung
+
+### Nachweis: Build #42709878389
+- Erfolgreich: Original-Vite-Build, Katalog-Staging (6’554 Übungs-Stills und 6’554 Animationen), `cap sync ios`, `pod install`, exakte iOS-Webbundle-Prüfung.
+- Tatsächlicher Fehler: Swift-Assetgenerator `Cannot create RGB bitmap` im früheren `NSBitmapImageRep`-Initialisierer. Der Generator rendert deshalb jetzt mit einem 32-bit Core-Graphics-RGB-Kontext (`noneSkipLast`, kein Alpha), bestehende Ausgabe-Dateinamen unverändert.
+
+### Nachweis: Build #42710638856
+- Erfolgreich: Beide Vorab-Regressionstests, `npm ci`, vollständiger ursprünglicher Mobile-Build mit den Medien, CocoaPods, **RED-Fit-Branding für iPhone + Apple Watch + Splash**, Einbinden aller Original-Apple-Erweiterungen, **vollständiger Xcode-Simulator-Build**.
+- Noch fehlgeschlagen: Geräteschritt durch globales `xcodebuild -sdk iphoneos` bei eingebetteter `OpenGymWatchWidgets`-Erweiterung. Das global forcierte iOS-SDK bewirkte Watch-Widget-SwiftUI-Fehler `Gauge is only available in iOS 16`, `accessoryCorner is unavailable in iOS` usw., weil Watch-Code unter dem falschen SDK kompiliert wurde.
+- **Korrektur auf diesem Agent-Branch:** `-sdk iphoneos` im iOS-Geräteschritt sowohl aus Root-GitHub-Workflow als auch `codemagic.yaml` entfernt. Die explizite `-destination 'generic/platform=iOS'` bleibt für das Haupt-App-Ziel bestehen. Xcode kann jetzt seine tatsächlichen SDKROOT-Einstellungen für die Watch-Subtargets verwenden. Keine Watch-Swift-API geändert, keine Watch-Features deaktiviert. **Der folgende Geräte-Build muss die Korrektur erst bestätigen.**
+- QA-Artefakt aus dem fehlgeschlagenen Build ist ein ZIP mit Simulator-/Gerätelogdateien, **keine fertige IPA**: https://github.com/Redurbabat/Red-Fit/actions/runs/42710638856/artifacts/13716031712 .
+
+### Allgemeine Root-CI
+- Build #42709878652: Typecheck erfolgreich, Lint-Fehler in `src/services/workout/setNotes.ts` `no-control-regex`.
+- Korrektur: derselbe ASCII-Control-/DEL-Filter ohne den verbotenen Regex-Ausdruck, `setNotes.test.ts` ergänzt. Auf dem isolierten Node-22-Runner **65’544 Eingabewerte** (inkl. aller 65’536 UTF-16-Code-Units) mit der ursprünglichen Funktion verglichen: **alle Ausgaben identisch**.
+- In neuer Root-CI #42710638645: Typecheck und Lint erfolgreich, Offline-Regressionen erfolgreich, übrige Tests zum letzten Prüfzeitpunkt noch laufend.
+- **Begrenzung:** Noch keine erfolgreiche Geräte-IPA, kein signiertes oder auf echtem iPhone getestetes Paket. Branch bleibt PR #13 (Draft, ungemergt).
