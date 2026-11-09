@@ -108,6 +108,51 @@ describe('a hold across a reload', () => {
     expect(saved()).toBeNull()
   })
 
+  it('refuses to resume a paused hold left in memory by a different workout', () => {
+    const done = vi.fn()
+    useUI.getState().startWork(45, 'Plank', done, owner)
+    useUI.getState().pauseWork()
+    expect(useUI.getState().work).toMatchObject({ paused: true, owner: { sessionId: 'a' } })
+
+    useStore.setState({ S: { ...useStore.getState().S, active: { id: 'b', entries: [
+      { id: 'squat', sets: [{ w: 100, r: 5 }] },
+      { id: 'plank', sets: [{ sec: 45 }, { sec: 45 }] },
+    ] } } })
+    useUI.getState().resumeWork()
+    expect(useUI.getState().work).toBeNull()
+    expect(saved()).toBeNull()
+    vi.advanceTimersByTime(50_000)
+    expect(done).not.toHaveBeenCalled()
+    expect(useStore.getState().S.active.entries[1].sets[0]).toEqual({ sec: 45 })
+  })
+
+  it('allows a paused hold to resume after cloning the same workout', () => {
+    const done = vi.fn()
+    useUI.getState().startWork(45, 'Plank', done, owner)
+    useUI.getState().pauseWork()
+    const active = useStore.getState().S.active
+    useStore.setState({ S: { ...useStore.getState().S, active: {
+      ...active, entries: active.entries.map(e => ({ ...e, sets: e.sets.map(s => ({ ...s })) }))
+    } } })
+    useUI.getState().resumeWork()
+    expect(useUI.getState().work).toMatchObject({ owner: { sessionId: 'a' }, total: 45 })
+    expect(useUI.getState().work.paused).toBeFalsy()
+    expect(saved()).toMatchObject({ owner: { sessionId: 'a' } })
+    useUI.getState().finishWorkEarly()
+    expect(done).toHaveBeenCalledTimes(1)
+  })
+
+  it('drops an in-memory paused hold if its set was completed meanwhile', () => {
+    const done = vi.fn()
+    useUI.getState().startWork(45, 'Plank', done, owner)
+    useUI.getState().pauseWork()
+    useStore.getState().update(s => { s.active.entries[1].sets[0].done = true }, false)
+    useUI.getState().resumeWork()
+    expect(useUI.getState().work).toBeNull()
+    expect(saved()).toBeNull()
+    expect(done).not.toHaveBeenCalled()
+  })
+
   it.each(['early', 'abandoned', 'expired'])('does not run an old onDone callback after another workout starts (%s)', mode => {
     const done = vi.fn()
     useUI.getState().startWork(mode === 'expired' ? 5 : 45, 'Plank', done, owner)
