@@ -69,7 +69,7 @@ function NutritionForScope({ scope }) {
   const today = useMemo(() => entries.filter(e => e.date === date), [entries, date])
   const totals = useMemo(() => totalsOf(today), [today])
   const chosen = foods.find(f => f.id === selected)
-  const weekDates = useMemo(() => planDates(planStart), [planStart])
+  const weekDates = useMemo(() => planDates(planStart || localDateKey()), [planStart])
   const weekPlans = useMemo(() => plans
     .filter(p => weekDates.includes(p.date))
     .sort((a, b) => a.date.localeCompare(b.date) || MEAL_TYPES.indexOf(a.mealType) - MEAL_TYPES.indexOf(b.mealType)),
@@ -163,6 +163,30 @@ function NutritionForScope({ scope }) {
       await savePlannedMeal(scope, plan)
       setPlanStart(plan.date)
     }, 'Mahlzeit für ' + plan.date + ' geplant.')
+  }
+  async function onShareShopping() {
+    if (busyRef.current || !shopping.length) return
+    busyRef.current = true
+    setBusy(true); setError(''); setMessage('')
+    try {
+      const text = [
+        'RED Fit · Einkaufsliste',
+        'Zeitraum: ' + weekDates[0] + ' bis ' + weekDates[weekDates.length - 1],
+        '', ...shopping.map(item => item.foodName + ': ' + numberText(item.grams) + ' g'),
+      ].join('\n')
+      const filename = 'redfit-einkauf-' + weekDates[0] + '.txt'
+      if (MOBILE) await shareExport(text, filename)
+      else {
+        const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }))
+        try {
+          const link = document.createElement('a')
+          link.href = url; link.download = filename
+          document.body.appendChild(link); link.click(); link.remove()
+        } finally { setTimeout(() => URL.revokeObjectURL(url), 1000) }
+      }
+      setMessage('Einkaufsliste zum Speichern bereitgestellt.')
+    } catch (e) { setError(e?.message || 'Einkaufsliste konnte nicht exportiert werden.') }
+    finally { busyRef.current = false; setBusy(false) }
   }
   async function onExport() {
     if (busyRef.current) return
@@ -379,7 +403,11 @@ function NutritionForScope({ scope }) {
               </div>
               {plan.status !== 'done' && <div className="nutrition-plan-actions">
                 <button type="button" disabled={busy} onClick={() =>
-                  run(() => completePlannedMeal(scope, plan.id, newID()), 'Mahlzeit als gegessen erfasst.')
+                  run(async () => {
+                    const entry = await completePlannedMeal(scope, plan.id, newID())
+                    setDate(entry.date)
+                    return entry
+                  }, 'Mahlzeit als gegessen erfasst.')
                 }>Als gegessen erfassen</button>
                 <button type="button" disabled={busy} onClick={() => {
                   if (window.confirm('Diese geplante Mahlzeit entfernen?'))
@@ -397,6 +425,7 @@ function NutritionForScope({ scope }) {
               <span>{item.foodName}</span><strong>{numberText(item.grams)} g</strong>
             </li>)}</ul>
           : <p className="nutrition-hint">Keine offenen geplanten Zutaten für diesen Zeitraum.</p>}
+        <button type="button" disabled={busy || !shopping.length} onClick={onShareShopping}>Einkaufsliste als Text teilen</button>
         <p className="nutrition-hint">Die Liste wird aus den geplanten Zutaten berechnet; bereits erfasste Mahlzeiten sind nicht mehr enthalten.</p>
       </details>
     </section>
