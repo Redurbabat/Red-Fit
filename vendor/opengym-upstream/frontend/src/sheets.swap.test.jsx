@@ -83,6 +83,42 @@ describe('active exercise swap sheet flow', () => {
   })
 })
 
+describe('duplicate exercise shift during a pending swap', () => {
+  it('does not replace an identical duplicate shifted into the removed slot while picker is open', () => {
+    useStore.getState().update(s => {
+      s.active.entries = [entry(ids[1]), entry(ids[0]), entry(ids[0])]
+    }, false)
+    swapActiveWorkoutExercise(1)
+    const picker = useUI.getState().sheets.at(-1)
+    act(() => picker.render(picker.close).props.onPick(EXDB[2]))
+    const config = useUI.getState().sheets.at(-1)
+
+    // An identical copy now occupies the same index. Checking only the entry
+    // content at that index used to accept the stale picker and overwrite it.
+    useStore.getState().update(s => { s.active.entries.splice(1, 1) }, false)
+    act(() => config.render(config.close).props.onSave({
+      mode: 'reps', sets: 1, reps: 8, weight: 30
+    }))
+
+    expect(useStore.getState().S.active.entries.map(e => e.id)).toEqual([ids[1], ids[0]])
+  })
+
+  it('does not apply a pending confirmation to a duplicate shifted into the same index', () => {
+    useStore.getState().update(s => {
+      s.active.entries = [entry(ids[1]), entry(ids[0], true), entry(ids[0], true)]
+    }, false)
+    submitSwap(1, EXDB[2], { mode: 'reps', sets: 1, reps: 8, weight: 30 })
+    const confirm = useUI.getState().sheets.at(-1)
+
+    useStore.getState().update(s => { s.active.entries.splice(1, 1) }, false)
+    act(() => confirm.render(confirm.close).props.onConfirm())
+
+    const active = useStore.getState().S.active
+    expect(active.entries.map(e => e.id)).toEqual([ids[1], ids[0]])
+    expect(active.entries[1].sets).toEqual([{ w: 40, r: 5, done: true }])
+  })
+})
+
 describe('swap picker after background changes', () => {
   it('does not overwrite a set edited while the exercise picker stayed open', () => {
     swapActiveWorkoutExercise(1)
