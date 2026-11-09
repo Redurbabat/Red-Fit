@@ -54,3 +54,22 @@ Vor einem Release **echte Original-App-Tests** auf einem vollständigen Checkout
 **Commits:** `28c357953d1f155ae1a17e312112ab019d944e93` (Mobile-Bundle-Gate), `b87e0be37867c4c50fc616d994614490a3581ab8` (QA-Runner), `bc5ede46e9c990be677b4374eb9c5cd379efbdc1` (Tests), `8158cdc1d79187e5f23877b304bb91ddfe2b86e6` (QA-Doku).
 
 **Offen:** echten Original-`npm ci`-, Vitest- und Web-/Mobile-Build durchführen; GitHub-Actions-Runner-Beschränkung separat prüfen. Erst danach native iPhone-IPA-Abnahme durch Agent 04; Android/Windows nachrangig.
+
+## Fortsetzung — read-only iOS-Xcode-Baseline-Gate
+
+**Geprüfte Lücke:** Bisher wurde die für das iPhone gebaute Web-Variante geprüft, aber nicht, ob originale native Workout-/Health-/Widget-Dateien im vollständigen Xcode-Projekt vorhanden bleiben. Die neue Prüfung verändert weder `frontend/ios/**` noch `capacitor.config.json`, die Agent 04 besitzt.
+
+- `tools/opengym-qa/ios-baseline.mjs`: prüft statisch 13 originale iOS-Projektbestandteile (Xcode-Projekt, Workspace, Podfile, Entitlements, Privacy Manifest, AppDelegate, Info.plist, AppleHealthPlugin, PhoneWorkoutPlugin, LiveActivityPlugin, Assets, Widgets und UITests). Dazu `capacitor.config.json`: gültige App-ID/App-Name und `webDir=dist`. Original-Identifier/-Name werden nur als **Warnung** ausgewiesen, nicht eigenmächtig geändert.
+- `tools/opengym-qa/ios-baseline.test.mjs`: fünf neue reine Node-Fixture-Tests für Original-Identität mit Warnungen, RED-Fit-Branding, fehlendes Health-Modul, falsches webDir sowie kaputtes JSON/Bundle-ID.
+- `.github/workflows/opengym-original-qa.yml`: führt die fünf neuen Tests und den statischen Audit vor npm-Install aus, falls ein GitHub-Runner verfügbar wird. Kein Xcode-/Apple-Signing-Aufruf und kein Deploy.
+
+**Tatsächlich lokal ausgeführt (Linux, Node 22.16.0):**
+`node --check tools/opengym-qa/ios-baseline.mjs`, `node --check tools/opengym-qa/ios-baseline.test.mjs`, `node --test tools/opengym-qa/*.test.mjs` → **13/13 Selftests bestanden, 0 Fehler, 0 Skip**. Die iOS-Tests nutzen künstliche Verzeichnis-Fixtures, keine echte Xcode-Kompilierung.
+
+**SHA-/Herkunftsnachweis:** Die zwei neuen lokal ausgeführten iOS-Test-/Quelltextdateien stimmen mit ihren im Agent-05-Branch gespeicherten Git-Blobs überein: `7fab99494b0024436083b9360c5f873a71b9570e` und `0bdd045f396e9ee15404d6f016ea09875b28de6a`. Der alte achtteilige Fixture-Teststand wurde zuvor ebenfalls auf Node 22.16.0 lokal erneut ausgeführt.
+
+**Zusätzlich via privater GitHub-Verzeichnisabfrage auf `main` geprüft:** 14/14 erwartete originale iOS-Projektdateien/-verzeichnisse in `ios/App`, `ios/App/App` und `ios/App/App.xcodeproj` sichtbar, keine in dieser Auswahl fehlend. `capacitor.config.json`: aktuell `appName=openGym`, `appId=ch.duartesantos.opengym`, `webDir=dist`. Das bestätigt die **Quellstruktur**, nicht Gerätefunktion oder signierte IPA.
+
+**Commits:** `c1779122265825f4bb47f77d33fcb6a149bd92bd` (Prüfer), `e3b2c8fe71342e855b2192af80c3f2eaa7bc85ae` (Tests), `0b60722e8f17550bab5328c6f49a3148adcb601e` (CI-Gate).
+
+**Offen:** Echter npm-/Vite-/Vitest-Build, originales `build:mobile` mit Capacitor-Sync, Xcode/iPhone-Tests und IPA. Für Automatisierung muss der GitHub-Actions-Runner tatsächlich mit ausführbaren Job-Schritten starten. Windows/Android bleiben nachrangig.
