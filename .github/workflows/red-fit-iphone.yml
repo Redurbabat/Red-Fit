@@ -87,7 +87,8 @@ jobs:
         run: python3 scripts/verify-unsigned-ipa.py ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
 
       - name: Keep private QA evidence
-        if: always()
+        # Exercise media are separately licensed; never upload a downloadable IPA from a public repository.
+        if: always() && github.event.repository.private
         uses: actions/upload-artifact@v4
         with:
           name: red-fit-ios-unsigned-${{ github.sha }}
