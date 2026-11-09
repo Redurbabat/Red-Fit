@@ -100,3 +100,23 @@
 - GitHub-Actions-CI weiterhin nicht als bestanden nachgewiesen (letzter geprüfter Run `42705252620` mit Jobfehlern ohne abrufbare Logs).
 - Getrennte lokale Nutrition-Datenbank und originales openGym-Workout-Backup/Server-Sync sind weiterhin **nicht** vollständig integriert.
 - Weitere Rezept-, Wochenplan- und Einkaufslistenfunktionen stehen aus. Ein manuell exportiertes JSON bleibt die sichere Massnahme für Gerätewechsel/Deinstallation.
+
+
+## Fortsetzung — Rezeptkomposition und Portionen direkt in original-openGym (2026-11-09)
+
+### Implementiert
+- `frontend/src/nutrition/model.js`: `validateRecipe` und `makeRecipeFood`. Rezepte bestehen aus 1–50 Zutaten mit unveränderlichen Portions-/Mengen- und Nährwert-Snapshots. `yieldGrams` ist das zubereitete Gesamtgewicht; die Makros je 100 g werden korrekt aus den Zutaten plus Zubereitungsverlust/-gewinn errechnet (keine pauschale Gleichsetzung Roh- und Kochgewicht). `validateFood` prüft Rezeptintegrität, Lebensmittel- und Zutatenwerte, und entfernt unbekannte Importfelder.
+- **Keine DB-Migration erforderlich:** Ein Rezept bleibt ein normales `food` mit optionalem, geprüftem `recipe`-Feld. Der ursprüngliche `foods`-IndexedDB-Store und das JSON-Format `redfit-nutrition/version:1` bleiben erhalten; ältere Lebensmittel und Backups weiterhin gültig.
+- `views/Nutrition.jsx`: einklappbarer, iPhone-bedienbarer Rezepteditor. Zutaten aus lokalem Lebensmittelkatalog hinzufügen/entfernen; Rezeptname, Portionen und optionales zubereitetes Gewicht einstellen; Rezept speichern, Zutaten anzeigen, direkt **eine Portion** für aktuellen Mahlzeitentyp/Tag erfassen oder Rezept als Lebensmittel auswählen. Benutzt weiterhin `saveFood`, `saveMealEntry`, `refresh` und den additiven nativen Snapshot-Pfad. Kein Internetkonto, keine Backendänderung.
+- `nutrition/nutrition.css`: ausschliesslich gekapselte Stilregeln für neue Rezeptfelder/Listen, 44px-Touchziele und eingeklappte Standardansicht; keine globale TabBar-/Dock-Änderung.
+- `nutrition/recipes.test.js`: zehn Vitest-Regressionen zu Rezeptsumme, Kochgewicht, Portion/Meal-Eintrag, Legacy-v1-Backup, Rezept-JSON-Roundtrip, manipulierten Nährwerten, ungültigen Zutaten/Mengen/Portionen und Merge-Kollisionen. **Im Branch vorhanden, echtes Vitest nicht ausgeführt.**
+
+### Tatsächlich ausgeführte Prüfung
+- Das `model.js` direkt aus dem GitHub-Branch (Quellblob `b7d121de11f3e7273a425ce53a398155da295d1f`) wurde in der JavaScript-V8-Laufzeit aus dem originalen Source-Text geladen und mit **10 eigenen tatsächlichen Assertions** geprüft: Makros pro 100g, zubereitetes Gewicht, v1-Backup-Roundtrip inkl. Rezeptdetails, Meal-Logging, unverändertes Legacy-Food, Manipulationsschutz, leeres Rezept, fehlerhafte Portionen/Ertrag und importierte ID-Kollisionen. **10/10 bestanden.** Das ist weder Vitest noch ein Vite-/React-/iOS-Build.
+- Den integrierten UI-Quelltext nach Änderung gegen GitHub-Fassung auf sichtbare Funktions- und Layoutanker kontrolliert; kein JSX-Compiler-/Touch-Gerätetest durchgeführt.
+- Die bisherigen 10/10 Node-Tests für native Backup-Wiederherstellung (separate frühere Fortsetzung) wurden **nicht** erneut ausgeführt und nicht als neue Belege gezählt.
+
+### Offen
+- GitHub Actions CI-Runner liefert weiterhin keine nutzbaren Schritte; Lauf des originalen openGym-Frontend `npm ci && npm test && npm run build:mobile` und iPhone-Simulator fehlen.
+- Rezepte speichern bislang Zutaten-Snapshots, nicht eine separate versionierte Rezeptbibliothek mit Bearbeitung/Vervielfältigung. UI-Editor, visuelle Qualitätskontrolle sowie reale 1-Portion-Interaktion auf iPhone prüfen.
+- Wochenplanung, Einkaufslisten, Migration aus altem Root-RED-Fit, vollständiger gemeinsamer Workout-/Nutrition-Backup-/Server-Sync weiterhin offen.
