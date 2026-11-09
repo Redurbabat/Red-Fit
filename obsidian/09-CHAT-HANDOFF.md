@@ -1,4 +1,6 @@
 ---
+
+> **HÖCHSTE PRIORITÄT 09.11.2026:** **Nicht neue RED Fit App entwickeln.** Die bereits vollständige **originale openGym-App** in `vendor/opengym-upstream/` direkt als **RED Fit** weiterentwickeln und umbenennen. **Zuerst die bestehende iOS-/iPhone-App bauen und auf dem Gerät testen.** Root-`src/` ist Legacy/Referenz für Ernährung. Fünf bestehende getrennte Agenten-Branches, keine Selbst-Merges. Verbindlich: [docs/OPEN-GYM-IS-RED-FIT.md](../docs/OPEN-GYM-IS-RED-FIT.md). Der folgende ältere Text über einen unvollständigen Quellimport ist überholt.
 tags: [red-fit, handoff, agent]
 updated: 2026-11-08
 ---

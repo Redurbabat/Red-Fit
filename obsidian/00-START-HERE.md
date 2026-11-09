@@ -1,4 +1,6 @@
 ---
+
+> **NEUE ENTSCHEIDUNG 09.11.2026:** Ab jetzt ist `vendor/opengym-upstream/` die **Original-App**, die direkt in **RED Fit** umbenannt und weiterentwickelt wird. **iPhone zuerst**. Die zuvor selbst neu entwickelte Root-RED-Fit-PWA ist Legacy-/Ernährungsreferenz, nicht Produktionsbasis. Alle 21'977 Originaldateien sind vorhanden. Lies [docs/OPEN-GYM-IS-RED-FIT.md](../docs/OPEN-GYM-IS-RED-FIT.md); widersprechende ältere Einträge sind überholt.
 tags: [red-fit, start, project]
 updated: 2026-11-08
 status: active

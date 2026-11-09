@@ -1,0 +1,71 @@
+// @vitest-environment happy-dom
+// These tests exercise the original openGym TabBar, not the legacy root RED Fit shell.
+import React, { act } from 'react'
+import { createRoot } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import TabBar from './TabBar.jsx'
+import { DEF, useStore } from '../store/useStore.js'
+
+const where = vi.hoisted(() => ({ loc: { pathname: '/home' } }))
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => () => {},
+  useLocation: () => where.loc,
+}))
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
+
+let host, root, previousState, previousUser
+beforeEach(() => {
+  previousState = useStore.getState().S
+  previousUser = useStore.getState().user
+  useStore.setState({ S: JSON.parse(JSON.stringify(DEF)), user: { id: 1, name: 'test' } })
+  host = document.createElement('div')
+  document.body.appendChild(host)
+  root = createRoot(host)
+})
+afterEach(() => {
+  act(() => root.unmount())
+  host.remove()
+  useStore.setState({ S: previousState, user: previousUser })
+  where.loc = { pathname: '/home' }
+})
+
+const renderRoute = pathname => {
+  where.loc = { pathname }
+  act(() => { root.render(<TabBar onStart={() => {}} />) })
+  return host.querySelector('#tabbar')
+}
+
+describe('RED Fit selection material in the existing openGym navigation', () => {
+  it.each([
+    ['/home', '0', 'Home'],
+    ['/plan', '1', 'Plan'],
+    ['/history', '3', 'Stats'],
+    ['/settings', '0', 'Home'],
+    ['/library', '4', 'Exercises'],
+  ])('%s selects the actual parent button without changing route semantics', (route, index, selected) => {
+    const nav = renderRoute(route)
+    expect(nav.classList.contains('redfit-morph-dock')).toBe(true)
+    expect(nav.getAttribute('data-redfit-selection')).toBe('visible')
+    expect(nav.style.getPropertyValue('--rf-dock-index')).toBe(index)
+    expect(nav.querySelectorAll('button')).toHaveLength(5)
+    const active = [...nav.querySelectorAll('button[aria-current="page"]')]
+    expect(active).toHaveLength(1)
+    expect(active[0].textContent).toContain(selected)
+  })
+
+  it('keeps the raised Start disc but hides decorative material on the workout page', () => {
+    const nav = renderRoute('/workout')
+    expect(nav.getAttribute('data-redfit-selection')).toBe('hidden')
+    expect(nav.querySelectorAll('button[aria-current="page"]')).toHaveLength(1)
+    expect(nav.querySelector('button.start').getAttribute('aria-current')).toBe('page')
+  })
+
+  it('moves the decorative index on navigation without remounting the original buttons', () => {
+    const home = renderRoute('/home')
+    const before = [...home.querySelectorAll('button')]
+    const stats = renderRoute('/stats')
+    expect(stats).toBe(home)
+    expect(stats.style.getPropertyValue('--rf-dock-index')).toBe('3')
+    expect([...stats.querySelectorAll('button')]).toEqual(before)
+  })
+})

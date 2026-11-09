@@ -1,5 +1,7 @@
 # ARCHITEKTUR.md — RED Fit
 
+> **NEUER ARCHITEKTURVORRANG 09.11.2026:** Das originale openGym-Frontend + bereits vorhandene Node-API + iOS-Capacitor-App in `vendor/opengym-upstream/` werden als **RED Fit** weiterentwickelt. Das folgende Root-`src/`/Dexie/PWA-Architekturdokument ist **Legacy-Referenz**, keine Vorgabe, einen zweiten Core zu bauen. Priorität 1 ist die iPhone-App. [Details](docs/OPEN-GYM-IS-RED-FIT.md).
+
 > **Neue priorisierte Produktentscheidung (08.11.2026):** Der Eigentümer will openGym **1:1 als Codebasis** übernehmen und RED Fit von dort weiterentwickeln. Die bisherige React/TypeScript-/Dexie-PWA bleibt **vorübergehend** als laufender Bestand erhalten; die folgenden Regeln beschreiben ihren bisherigen Zustand, nicht die endgültige Architektur nach openGym-Übernahme. Der neue Ausgangspunkt enthält ein React/Vite-Frontend und eine separate Node-API (Auth/Sync). Die staged Quellen stehen unter `vendor/opengym-upstream/`; Details und Medienrechte in `docs/OPENGYM-BASELINE.md`. Keine Umstellung des aktiven Entrypoints oder Abkündigung der alten IndexedDB-Daten vor Build-, Privacy-, API- und Migrationstests.
 
 ## Status

@@ -1,0 +1,80 @@
+/* RED Fit / RED Morph: restrained selection material for the ORIGINAL openGym tab bar.
+ * Keeps the existing five real buttons, router actions, running workout disc, safe areas,
+ * and the existing near-opaque bar. Material is decorative and never catches input.
+ * Motion uses only transform/opacity, and stops for Reduce Motion. */
+#tabbar.redfit-morph-dock {
+  isolation: isolate;
+}
+
+#tabbar.redfit-morph-dock::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 6px;
+  box-sizing: border-box;
+  width: calc((100% - 12px) / 5);
+  height: 44px;
+  z-index: 0;
+  border-radius: var(--r-lg);
+  background: var(--acc-soft);
+  box-shadow: inset 0 0 0 var(--hair) var(--acc-line);
+  pointer-events: none;
+  transform: translateX(calc(var(--rf-dock-index, 0) * 100%));
+  opacity: 1;
+  transition: transform var(--med) var(--ease), opacity var(--fast) var(--ease);
+}
+
+#tabbar.redfit-morph-dock[data-redfit-selection='hidden']::before {
+  opacity: 0;
+}
+
+#tabbar.redfit-morph-dock > button {
+  position: relative;
+  z-index: 1;
+  min-height: 44px;
+}
+
+#tabbar.redfit-morph-dock > button:not(.start) .tab-ic {
+  transition: transform var(--fast) var(--ease);
+}
+
+#tabbar.redfit-morph-dock > button:not(.start):active .tab-ic {
+  transform: scale(.94);
+}
+
+#tabbar.redfit-morph-dock > button:focus-visible {
+  outline: 2px solid var(--acc-ink);
+  outline-offset: -2px;
+  border-radius: var(--r);
+}
+
+/* RTL mirrors the physical movement while preserving logical tab order. */
+#tabbar.redfit-morph-dock:dir(rtl)::before {
+  transform: translateX(calc(var(--rf-dock-index, 0) * -100%));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #tabbar.redfit-morph-dock::before,
+  #tabbar.redfit-morph-dock > button:not(.start) .tab-ic {
+    transition: none;
+  }
+  #tabbar.redfit-morph-dock > button:not(.start):active .tab-ic {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  #tabbar.redfit-morph-dock::before {
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--sep);
+  }
+}
+
+@media (forced-colors: active) {
+  #tabbar.redfit-morph-dock::before {
+    background: Canvas;
+    outline: 1px solid Highlight;
+    outline-offset: -2px;
+    box-shadow: none;
+  }
+}

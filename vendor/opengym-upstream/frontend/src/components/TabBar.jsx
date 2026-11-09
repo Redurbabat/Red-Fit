@@ -7,6 +7,7 @@ import Icon from './Icon.jsx'
 import Elapsed from './Elapsed.jsx'
 import { useConnectionTrouble } from './SyncBanner.jsx'
 import { retapTab } from '../lib/scroll-top.js'
+import './red-fit-dock.css'
 
 // Module scope, not TabBar's render body. Declared inside it, `Tab` was a new function on every
 // render, so React saw a different component type each time and threw the button away and built a
@@ -14,7 +15,7 @@ import { retapTab } from '../lib/scroll-top.js'
 // state it took with it is the DOM node itself: focus, the :active tint, any in-flight transition.
 function Tab({ active, icon, label, onClick, dot, tour }) {
   return (
-    <button className={active ? 'on' : ''} onClick={onClick} data-tour={tour} aria-label={dot ? label + ', ' + t('Connection problem') : undefined}>
+    <button className={active ? 'on' : ''} onClick={onClick} data-tour={tour} aria-current={active ? 'page' : undefined} aria-label={dot ? label + ', ' + t('Connection problem') : undefined}>
       <span className="tab-ic"><Icon name={icon} />{dot && <span className="tab-dot" aria-hidden="true" />}</span><span>{label}</span>
     </button>
   )
@@ -35,6 +36,9 @@ export default function TabBar({ onStart }) {
   const PARENT = { history: 'stats', 'structural-balance': 'stats', 'progress-photos': 'stats', measurements: 'stats', settings: 'home', checkin: 'home', muscles: 'library' }
   const parent = cur === 'muscles' && loc.state?.from === '/stats' ? 'stats' : PARENT[cur]
   const on = k => cur === k || parent === k
+  // Four regular destinations share a moving material; Start keeps its original raised disc.
+  // No detached navigation or synthetic route state is introduced.
+  const activeIndex = on('home') ? 0 : on('plan') ? 1 : on('stats') ? 3 : on('library') ? 4 : -1
 
   // Root tabs are peers, not another level to unwind with Android Back. The tab you are already
   // on takes you to the top of its page instead (lib/scroll-top.js).
@@ -54,7 +58,9 @@ export default function TabBar({ onStart }) {
   }
 
   return (
-    <nav id="tabbar">
+    <nav id="tabbar" className="redfit-morph-dock" aria-label={t('Navigation')}
+      data-redfit-selection={activeIndex === -1 ? 'hidden' : 'visible'}
+      style={{ '--rf-dock-index': Math.max(0, activeIndex) }}>
       <Tab active={on('home')} icon="house" label={t('Home')} dot={trouble} onClick={() => switchTab('/home')} tour="tab-home" />
       <Tab active={on('plan')} icon="calendar" label={t('Plan')} onClick={() => switchTab('/plan')} tour="tab-plan" />
       {/* On the workout screen itself there is nothing to resume, so the button reads as the
@@ -65,7 +71,7 @@ export default function TabBar({ onStart }) {
           button still named Resume; a past workout being edited or logged after the fact has no
           clock to run. */}
       <button data-tour="start" className={'start' + (S.active ? ' rec' : '') + (S.active && cur === 'workout' ? ' on' : '')} onClick={startWorkout}
-        aria-label={running ? t('Resume') : undefined}>
+        aria-label={running ? t('Resume') : undefined} aria-current={cur === 'workout' ? 'page' : undefined}>
         <span className="cir"><Icon name="play" /></span>
         {running ? <span className="tab-time"><Elapsed start={S.active.start} /></span>
           : <span>{S.active ? (cur === 'workout' ? t('Workout') : S.active.editingWorkoutId ? t('Edit workout') : t('Resume')) : t('Start')}</span>}
