@@ -54,6 +54,7 @@ export async function readLatestNutritionDocumentBackup(scope, { filesystem, cry
     throw new Error('Keine Gerätesicherung für dieses Konto gefunden.')
   }
   const names = (Array.isArray(directory.files) ? directory.files : [])
+    .filter(file => typeof file === 'string' || (file && file.type !== 'directory'))
     .map(file => typeof file === 'string' ? file : file?.name)
     .filter(file => {
       const match = typeof file === 'string' && file.match(NUTRITION_BACKUP_NAME)
