@@ -125,3 +125,10 @@ Originalen Frontend-Test-Runner inklusive alter und neuer Vitest-Regressionen zu
 **Bewusste Einschränkung:** Wenn die Übungsliste zwischen Delete und Undo anderweitig bearbeitet wurde, wird Undo konservativ abgelehnt, auch wenn die ursprüngliche Übung möglicherweise noch existiert. Priorität ist, niemals automatisch fremde geloggte Sätze zu überschreiben; über eine stabil persistierte Occurrence-ID kann später eine weniger restriktive Lösung geprüft werden.
 
 **Weiter offen:** Original-`frontend`: `npm ci`, `npm test`, `npm run build`; iPhone-Lock/Restore- und Trainingsdaten-/Sync-Tests; originale React-Komponententests. Die bisherige GitHub-Standard-CI endete wiederholt ohne zugewiesenen Runner oder Step-Logs. Agent 05 arbeitet unabhängig an Original-openGym-QA (PR #14). Kein Merge, kein Deploy.
+
+
+### Präzisierter CI-Nachweis — aktueller Agent-01-Commit (Run 42709871511)
+- GitHub Actions hat **tatsächlich einen Runner benutzt und Job-Schritte ausgeführt**; ältere Meldungen über Runner ohne Steps gelten **nicht** für diesen neuen Lauf.
+- `offline-regressions`: **success**.
+- `verify`: Checkout, Node-Setup, `npm ci` im **Legacy-Root**, Typecheck **success**; `npm run lint` **failure**. Der abgerufene GitHub-Job-Log zeigt einen einzelnen ESLint-Fehler in `src/services/workout/setNotes.ts:10:14`: `no-control-regex` für `/[\\u0000-\\u001f\\u007f]/g`. Die Datei hat auf `main` und auf dem Agent-01-Branch **denselben Git-Blob-SHA** `7217d9cf9736c03bd7d921ba0a33b4b4b7aa1669`, ist also unverändert und nicht Teil dieser PR.
+- Nach Lint wurden die Root-Jobs `Tests` und `Build` übersprungen; der Workflow enthält weiterhin **keinen Original-openGym-Vitest-Lauf**. Die reine Root-CI belegt weder ein funktionierendes noch ein fehlerhaftes neues Undo-Verhalten. Der Legacy-Lint-Fehler wird **nicht** im Agent-01-Branch bearbeitet, um Agentengrenzen einzuhalten.
