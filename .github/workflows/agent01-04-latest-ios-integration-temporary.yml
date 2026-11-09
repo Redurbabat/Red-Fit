@@ -63,10 +63,10 @@ jobs:
         run: |
           npm run test:ios-bundle
           npm run test:ios-identity-unit
-      - name: Run combined original frontend Vitest (exclude Node's separate test runner)
-        # Agent04 adds two node:test files under scripts/. They are already executed by
-        # npm run test:ios-bundle and test:ios-identity-unit, never by Vitest itself.
-        run: npm run test -- --exclude 'scripts/*.test.mjs'
+      - name: Run full original Vitest (exclude only two Node-only iOS suites)
+        # Both tests are run above with Node's native test runner. Keep all four
+        # other existing scripts/*.test.mjs suites in Vitest (35 additional tests).
+        run: npm run test -- --exclude 'scripts/check-ios-mobile-bundle.test.mjs' --exclude 'scripts/verify-ios-identity.test.mjs'
       - name: Build original RED Fit iOS frontend and sync with Xcode
         run: npm run build:ios
       - name: Integrate original Watch, Widgets and Background Assets
