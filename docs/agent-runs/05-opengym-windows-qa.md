@@ -26,3 +26,8 @@
 ## Blocker / nächster Schritt
 
 Vor einem Release **echte Original-App-Tests** auf einem vollständigen Checkout mit funktionierendem Node-/npm-Netzzugang sowie ein echter iPhone-Build/IPA-Nachweis durch Agent 04. Der bislang fehlerhafte GitHub-Actions-Runner benötigt eine separate Account-/Actions-Konfigurationsprüfung. Windows-Shell wird erst nach API-/Backup-/Persistenzkompatibilitätsnachweis aufgebaut; Android bleibt nachrangig. Geplante Integration nur über **diesen einen** Agent-PR in `main`; **kein Selbst-Merge**.
+
+## PR und CI-Nachtrag
+
+- PR gegen `main` tatsächlich eröffnet: **#14** — `https://github.com/Redurbabat/Red-Fit/pull/14` (offen, nicht gemergt).
+- Neuer GitHub-Actions-Run **42701819591** für `Original openGym frontend QA` wurde als **failure** zurückgemeldet; der Job `original-frontend` hat **keine abrufbaren Schritte** (`steps: null`). Dies ist **kein** Nachweis, dass der QA-Runner oder die Original-App-Tests begonnen haben. Nach wie vor zuerst Actions-/Runner-Zuteilung prüfen.
