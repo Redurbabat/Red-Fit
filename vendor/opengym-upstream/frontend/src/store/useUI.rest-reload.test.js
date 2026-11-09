@@ -109,6 +109,40 @@ describe('the rest timer across a reload', () => {
     expect(saved()).toBeNull()
   })
 
+  it('ignores a late native rest action after its rest was dismissed', () => {
+    useUI.getState().startRest(90, 0)
+    useUI.getState().stopRest()
+    expect(saved()).toBeNull()
+
+    useUI.getState().followNativeRest({
+      endsAt: Date.now() + 30_000, left: 30, total: 90, paused: false
+    })
+    expect(useUI.getState().timer).toBeNull()
+    expect(saved()).toBeNull()
+  })
+
+  it.each([true, false])('refuses an old native rest action in a new workout (paused=%s)', paused => {
+    useUI.getState().startRest(90, 0)
+    expect(useUI.getState().timer.sessionId).toBe('a')
+    useStore.setState({ S: { ...useStore.getState().S, active: { id: 'b', entries: [] } } })
+
+    useUI.getState().followNativeRest({
+      endsAt: Date.now() + 30_000, left: 30, total: 90, paused
+    })
+    expect(useUI.getState().timer).toBeNull()
+    expect(saved()).toBeNull()
+  })
+
+  it('still follows native rest pause and resume in the original workout', () => {
+    useUI.getState().startRest(90, 0)
+    const endsAt = Date.now() + 45_000
+    useUI.getState().followNativeRest({ endsAt, left: 45, total: 90, paused: true })
+    expect(useUI.getState().timer).toMatchObject({ sessionId: 'a', forIdx: 0, paused: true, left: 45 })
+    useUI.getState().followNativeRest({ endsAt, left: 45, total: 90, paused: false })
+    expect(useUI.getState().timer).toMatchObject({ sessionId: 'a', forIdx: 0, endsAt, left: 45 })
+    expect(useUI.getState().timer.paused).toBeFalsy()
+  })
+
   it('a rest that ended meanwhile, or one with no session running, is dropped', () => {
     localStorage.setItem(REST_KEY, JSON.stringify({ endsAt: Date.now() - 1, total: 90, forIdx: 0, paused: false, left: 3 }))
     expect(restoreRest()).toBe(false)
