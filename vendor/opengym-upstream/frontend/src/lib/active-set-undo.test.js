@@ -39,6 +39,25 @@ describe('Undo a deleted set in the exact active-workout occurrence', () => {
     expect(locateUndoSetOccurrence(active, token)).toBe(-1)
   })
 
+  it('rejects a copied active session when two indistinguishable entries could have swapped', () => {
+    // Both entries have the exact same post-delete content. A sync/restore replaces
+    // active with an immutable copy; comparing only JSON would accept a stale index.
+    const active = session([entry('bench', 'same'), entry('bench', 'same')])
+    const token = tokenAfterDelete(active, 0)
+    const copied = JSON.parse(JSON.stringify(active))
+    copied.entries.reverse()
+    expect(locateUndoSetOccurrence(copied, token)).toBe(-1)
+    // The original unmodified in-memory list is still safe to undo.
+    expect(locateUndoSetOccurrence(active, token)).toBe(0)
+  })
+
+  it('accepts a copied active session when the selected entry is uniquely identifiable', () => {
+    const active = session([entry('bench', 'first'), entry('bench', 'second')])
+    const token = tokenAfterDelete(active, 0)
+    const copied = JSON.parse(JSON.stringify(active))
+    expect(locateUndoSetOccurrence(copied, token)).toBe(0)
+  })
+
   it('refuses an intervening edit, even when the original exercise id still matches', () => {
     const active = session([entry('bench', 'one'), entry('bench', 'two')])
     const token = tokenAfterDelete(active, 0)
