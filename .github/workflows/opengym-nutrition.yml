@@ -101,3 +101,86 @@ jobs:
             console.log('Nutrition chunk present in iOS Capacitor web assets');
           "
 
+# Temporary cross-agent QA: combine PR #15 nutrition with the exact tested
+  # Agent 04 iPhone commit in CI only. No branch is merged or published.
+  # This generates an UNSIGNED iPhone binary, not an installable signed app.
+  ios-integration:
+    name: Unsigned Xcode build with Agent 04 + Nutrition
+    runs-on: macos-26
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: vendor/opengym-upstream/frontend
+    steps:
+      - name: Checkout nutrition PR and repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Combine tested Agent 04 iPhone branch with nutrition (CI only)
+        working-directory: .
+        run: |
+          git fetch --no-tags origin cb12e7439dca0041e0901fe6ea403015e9205ec4
+          git merge --no-commit --no-ff cb12e7439dca0041e0901fe6ea403015e9205ec4
+          test -f vendor/opengym-upstream/frontend/src/views/Nutrition.jsx
+          grep -q 'Mahlzeitenplanung' vendor/opengym-upstream/frontend/src/views/Nutrition.jsx
+          node -e "const p=require('./vendor/opengym-upstream/frontend/package.json');if(!p.scripts['build:ios'])process.exit(1)"
+          echo "Temporary original-openGym + RED Fit nutrition + Agent 04 working tree prepared"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: vendor/opengym-upstream/frontend/package-lock.json
+
+      - name: Install original openGym dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Assemble mobile app with Agent 04 Xcode preparation
+        run: npm run build:ios
+
+      - name: Attach original watch and widget integrations
+        run: |
+          ruby ios/ci/add-asset-downloader.rb
+          ruby ios/ci/add-watch-app.rb
+          ruby ios/ci/add-widgets.rb
+
+      - name: Build unsigned iPhone Simulator app
+        run: |
+          set -o pipefail
+          mkdir -p ios/App/build
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/App/build/dd-sim CODE_SIGNING_ALLOWED=NO \
+            build > ios/App/build/simulator.log 2>&1 || { tail -n 100 ios/App/build/simulator.log; exit 1; }
+          test -d ios/App/build/dd-sim/Build/Products/Debug-iphonesimulator/App.app
+          echo "Combined iOS Simulator BUILD SUCCEEDED"
+
+      - name: Build unsigned physical-device IPA with Nutrition included
+        run: |
+          set -o pipefail
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath ios/App/build/dd-device CODE_SIGNING_ALLOWED=NO \
+            build > ios/App/build/device.log 2>&1 || { tail -n 100 ios/App/build/device.log; exit 1; }
+          app=ios/App/build/dd-device/Build/Products/Debug-iphoneos/App.app
+          test -d "$app"
+          test -f "$app/public/index.html"
+          test -n "$(find "$app/public/assets" -maxdepth 1 -name 'Nutrition-*.js' -print -quit)"
+          mkdir -p ios/App/build/unsigned/Payload
+          ditto "$app" ios/App/build/unsigned/Payload/App.app
+          (cd ios/App/build/unsigned && zip -qry RED-Fit-Nutrition-UNSIGNED.ipa Payload)
+          test -s ios/App/build/unsigned/RED-Fit-Nutrition-UNSIGNED.ipa
+          echo "Combined original-openGym iPhone device binary with Nutrition BUILD SUCCEEDED (unsigned)"
+
+      - name: Keep private combined iOS QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: red-fit-nutrition-agent04-unsigned-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 5
+          path: |
+            vendor/opengym-upstream/frontend/ios/App/build/simulator.log
+            vendor/opengym-upstream/frontend/ios/App/build/device.log
+            vendor/opengym-upstream/frontend/ios/App/build/unsigned/RED-Fit-Nutrition-UNSIGNED.ipa
