@@ -1,8 +1,16 @@
 ---
 tags: [red-fit, status, verification]
-updated: 2026-11-08
+updated: 2026-11-09
 ---
 # Gesicherter Projektstand / Testprotokoll
+
+## 2026-11-09 — Agent 03: original-openGym Ernährung auf echter CI geprüft (nur PR #15)
+
+- **Neu eingerichtete Original-Frontend-CI**: `.github/workflows/opengym-nutrition.yml` führt ausschliesslich unter `vendor/opengym-upstream/frontend` `npm ci`, `npx vitest run src/nutrition` und `VITE_MOBILE=1 npm run build` aus; eigene Prüfung des mobilen `dist/index.html`.
+- **Tatsächlich erfolgreicher GitHub-Actions-Run `42710935902`**: Vitest **61/61 Tests (6 Dateien) bestanden**, Vite v8.3.5 **475 Module**, mobile Browser-/WebView-Bundle erfolgreich erzeugt und Mobile-Flavour bestätigt. Logs und einzelne Steps eingesehen. Keine erfolgreiche iOS-IPA-/Xcode-/Capacitor-Sync-/Geräte-QA behauptet.
+- Nutrition enthält Lebensmittel, Rezepte mit gekochtem Gesamtgewicht, Ernährungstagebuch, v2-IDB-Mahlzeitenplanung, daraus abgeleitete 7-Tage-Einkaufsliste, native Dokumentensicherungen und additive v1/v2-JSON-Wiederherstellung. Details und verbleibende Risiken: `docs/agent-runs/03-opengym-nutrition.md`.
+- **Weiter offen:** Root-`.github/workflows/ci.yml` blockiert durch vorhandenes Lint-`no-control-regex` in `src/services/workout/setNotes.ts` (auf main und Agent-03-Branch identisch); getrennte originale openGym-Gesamttests, nativer iPhone-/Dateisystem-/IndexedDB-Roundtrip und gemeinsames Workout-/Nutrition-Backup.
+- PR #15 gegen `main` bleibt **offen**. Kein eigener Merge/kein direkter Push auf `main`.
 
 ## Bereits im vorhandenen RED-Fit-Code dokumentiert
 - React/TypeScript-PWA mit Navigation, Training, Ernährung, Körper, Plänen, Backup und Einstellungen.
