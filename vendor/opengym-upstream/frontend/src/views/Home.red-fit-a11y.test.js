@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { syncHomeWeekScroll } from './scroll-home-week.js'
+import { homeWeekAccessibleLabel } from './home-week-status.js'
 
 const source = readFileSync(resolve(process.cwd(), 'src/views/Home.jsx'), 'utf8')
 
@@ -19,7 +20,13 @@ describe('RED Fit branding and screen-reader semantics in the original Home view
     expect(start).toBeGreaterThan(-1)
     const row = source.slice(start, start + 420)
     expect(row).toContain('...tappable(() => dayOverrideSheet(iso))')
-    expect(row).toContain("aria-label={d.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}")
+    expect(row).toContain("aria-label={homeWeekAccessibleLabel(d, dateLocale(), status, t)}")
+    // Date formatting and the translated training status are delegated to the pure helper.
+    const date = new Date(2026, 10, 9, 12)
+    expect(homeWeekAccessibleLabel(date, 'de-CH', { label: 'Planned' }, k => k === 'Planned' ? 'Geplant' : k))
+      .toBe('Montag, 9. November 2026, Geplant')
+    expect(homeWeekAccessibleLabel(date, 'de-CH', { label: null }, k => k))
+      .toBe('Montag, 9. November 2026')
     expect(row).toContain("aria-current={iso === todayISO() ? 'date' : undefined}")
   })
   it('keeps both week navigation arrows at a 44px minimum touch area', () => {
