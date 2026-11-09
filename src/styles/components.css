@@ -668,6 +668,8 @@ textarea.input {
     filter: none;
   }
 }
-:root[data-reduced-motion="true"] .btn[data-pressed="true"] {
+:root[data-reduced-motion="true"] .btn[data-pressed="true"],
+:root[data-reduced-motion="true"] .icon-btn[data-pressed="true"] {
   transform: none;
+  filter: none;
 }
