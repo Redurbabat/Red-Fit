@@ -24,6 +24,10 @@
 - Zusätzlich Syntax von `model.js` und `repository.js` in V8 geprüft; Routing-, Home-Button-, per-Account-Scope- und Backup-Import/Export-Integrationsanker gegen den Branch-Quelltext geprüft: alle vorhandenen Anker bestätigt.
 - **Nicht ausgeführt:** `npm ci`, `npm test`/echtes Vitest, Vite-Build, React/JSX-Compiler, realer IndexedDB-Transaktionstest, iOS-Simulator, physisches iPhone, Capacitor-/IPA-Build. Kein erfolgreiches Geräte-Backup/Restore oder Server-Sync behauptet.
 
+## CI-Status beim PR-Öffnen (zusätzlicher Prüfversuch)
+- GitHub-Actions-Run `42703051887` für den Branch: **completed / failure**. Jobs `verify` (`129452578493`) und `offline-regressions` (`129452579085`) meldeten jeweils `failure`.
+- Beide Jobs gaben über die Job-Steps-Schnittstelle **0 Schritte** zurück; Job-Logs waren mit HTTP 404/`BlobNotFound` nicht abrufbar. Aus diesem Ergebnis lässt sich **kein App-Test-Fehler und kein ausgeführter npm-Test beweisen**; CI bleibt rot, Ursache (Runner/Workflow/Plattform) muss anhand GitHub Actions untersucht werden. Vor PR-Merge vollständige Test- und Buildbelege nachreichen.
+
 ## Offene Risiken / Freigabeblocker
 - **Wichtig für Nutzer:** Die originalen openGym-Backups, Auto-Backups, der native State-Mirror und der Server-Sync beinhalten die neue Ernährungsdatenbank **noch nicht**. Ernährung muss vor Gerätewechsel, App-Löschung oder Neuinstallation **separat über den Ernährungsscreen exportiert** werden. Kein unbemerkter Cutover ohne getestete Migration/Backup-Integration.
 - Account-Scope trennt Gäste und IDs. Bei verschiedenen selbst gehosteten Servern mit *identischer* Konto-ID reicht die Scope-Definition noch nicht für eine garantiert eindeutige Server-Namespace-Zuordnung: vor Mehrserverbetrieb erweitern und migrieren.
