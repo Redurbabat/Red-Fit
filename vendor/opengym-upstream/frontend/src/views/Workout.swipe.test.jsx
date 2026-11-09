@@ -7,6 +7,7 @@ import Workout, { deleteActiveSet, undoDeleteSet, copyActiveSet, removeActiveExe
 import { DEF, useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { closeOpenRow } from '../lib/use-swipe-row.js'
+import { captureUndoSetOccurrence } from '../lib/active-set-undo.js'
 
 // Swipe on sets (v1.3.11): swipe toward the start removes a set with an Undo, toward the end
 // copies it. These cover the store paths the swipe, the set menu and the Undo share, the guards
@@ -148,7 +149,8 @@ describe('removing a set, and Undo', () => {
   it('is too late once the exercise is gone, and finds an exercise that moved', () => {
     setActive([entry('1001', [row(80), row(80)]), entry('1002', [row(50), row(50)])])
     deleteActiveSet(1, 0)
-    const token = { activeId: 'swipe-test', idx: 1, entryId: '1002', i: 0, row: row(50, true) }
+    const token = { activeId: 'swipe-test', idx: 1, entryId: '1002', i: 0, row: row(50, true),
+      occurrence: captureUndoSetOccurrence(useStore.getState().S.active, 1) }
     removeActiveExercise(0)   // 1002 is now at 0
     expect(undoDeleteSet(token)).toBe(true)
     expect(sets(0)).toEqual([row(50, true), row(50)])
