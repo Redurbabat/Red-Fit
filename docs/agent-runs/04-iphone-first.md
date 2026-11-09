@@ -139,3 +139,18 @@ Die gemeinsame App Group ist aktuell `group.ch.opengym.app`. Diese fünf IDs sin
 - **Exakte fünf eingebettete Apple-Ziele per realer `Info.plist`-Inspektion:** iPhone `ch.opengym.app` (Anzeigename `RED Fit`); Watch `ch.opengym.app.watchkitapp` (`RED Fit`, Companion-ID `ch.opengym.app`); iPhone-Widgets `ch.opengym.app.widgets` (`RED Fit`); Watch-Widgets `ch.opengym.app.watchkitapp.widgets` (`RED Fit`); Background-Assets `ch.opengym.app.AnimationPacksDownloader` (`RED Fit animations`). Branding-Lücke der früheren IPA ist somit **im neuen Paket behoben**, nicht bloss auf Quellcode-Ebene.
 - **Grenze der Abnahme:** Es handelt sich um eine **unsignierte Debug-Geräte-IPA**, nicht um ein signiertes, provisioniertes und auf dem iPhone installiertes Build. Native Features (Health, Watch, Widgets, Offline-Satzspeichern, Sperre/Resume) wurden **nicht auf echtem Gerät** geprüft. Eigene Apple-Signing-Identität, nötige App-Group-/Extension-Profile und tatsächliche Gerätesignierung/-installation bleiben offen. Keine Profile, Apple-ID-Zugangsdaten oder Secret Keys im Repository speichern.
 - **PR-Zustand:** Bestehende PR #13 bleibt Draft/unmerged, keine Änderung an `main`.
+
+
+## 2026-11-10 – Fünf-Target-Signing-Vorabprüfung erweitert
+
+**Ausgangslage:** Der tatsächliche GitHub-Actions-iOS-Run 42718097186 hatte die originale iPhone-App und vier eingebettete Ziele bereits erfolgreich als **unsignierte** IPA gebaut und das Paket kontrolliert. Offen ist die Installation unter einer eigenen, autorisierten Apple-Signing-Identität. Eine Änderung ausschliesslich der Haupt-App-ID würde die separaten Extensions brechen.
+
+**Konkret auf diesem Agent-Branch geändert:**
+- `vendor/opengym-upstream/frontend/scripts/verify-ios-identity.mjs` kontrolliert jetzt zusätzlich zu Haupt-App/Watch/iPhone-Widgets **alle fünf Anzeigenamen**, die in drei Original-Ruby-Integrationsskripten definierten Ziel-Bundle-IDs, die vom Watch-Target abgeleitete Watch-Widget-ID, die App-Group-Entitlements der Watch-Widgets und des Background-Asset-Downloaders sowie dessen `BAAppGroupID`. Die bestehenden HealthKit-/Workout-/Widget-Swift-Plugins und Xcode-Konfiguration wurden nicht verändert.
+- `vendor/opengym-upstream/frontend/scripts/verify-ios-identity.test.mjs` erweitert die realistische temporäre Fixture um beide zusätzlichen Ziele und die drei Ruby-Skripte; **vier neue Regressionstests** für inkonsistente IDs, Gruppen und Anzeigenamen (11 Tests insgesamt).
+
+**Prüfstatus:** Neue Dateien unmittelbar von GitHub zurückgelesen und auf die neuen Validierungsstellen kontrolliert. Beim letzten Abruf liefen die neuen GitHub-Workflows `42724559732` (original iPhone) und `42724559568` (Root CI) noch; **ihr Testergebnis wird ausdrücklich nicht vorweggenommen**. Ohne erfolgreichen aktuellen CI-Nachweis sind die vier neuen Tests nur implementiert. Keine signierte IPA oder Echtgerätabnahme.
+
+**Sicherheit:** Die GitHub-Repositories-API meldete zum Prüfzeitpunkt für `Redurbabat/Red-Fit` **`visibility: public`**, obwohl die Projektdokumente ein privates Repository voraussetzen. Das ist ein Zugriffs-/Lizenzrisiko, insbesondere mit separat lizenzierten Übungsmedien. Repo-Sichtbarkeit und Medienrechte vor jeder weiteren Verteilung mit dem Besitzer klären; keine Veröffentlichung wurde ausgelöst.
+
+**Weiter offen:** eigene Haupt-/Widget-/Watch-/Watch-Widget-/Downloader-IDs, App Group, Entitlements und dazu passende Apple-Provisioning-Profile festlegen, Migration/Backups planen, Codesigning, private Installation und reale iPhone-Offline-/Workout-/Sperrtests. Branch liegt gegenüber `main` zurück; keine fremden Änderungen per Force-Push überschreiben.
