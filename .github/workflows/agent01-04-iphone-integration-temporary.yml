@@ -22,6 +22,7 @@ jobs:
       - name: Checkout Agent 01 openGym training source
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - name: Overlay only Agent 04 original iOS app files at pinned commit
         working-directory: .
