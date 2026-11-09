@@ -76,3 +76,7 @@
 - Keine Codeänderungen in fremden Agenten-Branches, originalen iOS-/Capacitor-Dateien, Workout-State, Root-PWA, `api/`, `sync-merge.js` oder bisherigen Backup-Verträgen.
 
 **Nächste Aufgabe:** echten Vitest-/Vite-Build und den Roundtrip auf dem iPhone nachholen; danach gezieltes Import-/Migrationskonzept für das gemeinsame openGym-Backup mit rückwärtskompatibler Validierung vorsehen.
+
+### CI-Kontrolle nach dem neuen Commit
+- GitHub Actions PR-Run `42705252620` für diesen Branch: `completed/failure`. Jobs `offline-regressions` (`129460238743`) und `verify` (`129460239298`) melden beide Fehler.
+- **Diagnose:** Beide Jobs geben per GitHub-API **0 Steps** zurück; beide Logabrufe liefern **HTTP 404 / BlobNotFound**. Ein fehlgeschlagener Node-, Vitest- oder Vite-Befehl lässt sich deshalb nicht nachweisen. CI gilt weiterhin als **nicht bestanden**; vollständige Runner-/Build-Ursache muss separat geklärt werden.
