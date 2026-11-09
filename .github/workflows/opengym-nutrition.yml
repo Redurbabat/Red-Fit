@@ -39,6 +39,11 @@ jobs:
       - name: Run nutrition Vitest suite
         run: npx vitest run src/nutrition
 
+      # Regression gate for original openGym features (workouts, sessions, sync, etc.).
+      # Run independently of the unrelated RED Fit root ESLint job.
+      - name: Run full original openGym Vitest suite
+        run: npm test
+
       - name: Build original openGym mobile-flavour frontend
         run: VITE_MOBILE=1 npm run build
 
