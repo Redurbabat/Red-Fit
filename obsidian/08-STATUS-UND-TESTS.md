@@ -4,6 +4,13 @@ updated: 2026-11-09
 ---
 # Gesicherter Projektstand / Testprotokoll
 
+## 2026-11-09 — Agent 03: volle original-openGym-Tests bestanden
+
+- GitHub Actions `42711524409` **completed/success**: `npm test` im vollständigen originalen openGym-Frontend `vendor/opengym-upstream/frontend/` ergibt **657/657 Testdateien mit 7'893/7'893 bestandenen Tests**. Zusätzlich isolierte Ernährungs-Vitest-Suite **61/61**, mobiler Vite-Build und Bundle-Flavour-Kontrolle **success**. Alle Angaben gegen den tatsächlichen Runner-Log und Job-Steps überprüft.
+- Neue getrennte CI-Nachprüfung auf dem Agent-03-Branch: alter Kompatibilitätstester `scripts/check-bundle-syntax.mjs` für Safari 15.5, `npx cap copy ios` (nur Webdateien in das bestehende iOS-Capacitor-Verzeichnis auf dem CI-Runner kopieren, **kein iOS-Build**) und `scripts/check-mobile-bundle.mjs` plus Prüfung des kopierten Nutrition-JS. Neue Schritte bei Dokumentation **noch in progress**, nicht als erfolgreich markieren.
+- **Offen:** echte iPhone-IPA/Xcode-Signierung, Betrieb auf iPhone, WKWebView-IndexedDB-v1→v2-Migration und Datenbackup-Roundtrip, zusammengeführtes Workout-/Nutrition-Backup sowie separater alter Root-App-Lintfehler. Kein Merge in `main`.
+- Detailprotokoll: `docs/agent-runs/03-opengym-nutrition.md`. PR #15.
+
 ## 2026-11-09 — Agent 03: original-openGym Ernährung auf echter CI geprüft (nur PR #15)
 
 - **Neu eingerichtete Original-Frontend-CI**: `.github/workflows/opengym-nutrition.yml` führt ausschliesslich unter `vendor/opengym-upstream/frontend` `npm ci`, `npx vitest run src/nutrition` und `VITE_MOBILE=1 npm run build` aus; eigene Prüfung des mobilen `dist/index.html`.
