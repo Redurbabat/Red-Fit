@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useStore } from '../store/useStore.js'
 import { MOBILE, shareExport } from '../lib/mobile.js'
 import { EMPTY, localDateKey, makeMealEntry, MEAL_TYPES, scaleFood, totalsOf } from '../nutrition/model.js'
 import { exportNutrition, importNutrition, loadNutrition, removeMealEntry, saveFood, saveMealEntry } from '../nutrition/repository.js'
@@ -9,7 +10,14 @@ const numberText = (value, digits = 1) => Number(value || 0).toLocaleString('de-
 const freshFood = { name: '', kcal100: '', protein100: '', carbs100: '', fat100: '', barcode: '' }
 const newID = () => globalThis.crypto?.randomUUID?.() || Array.from(crypto.getRandomValues(new Uint8Array(16)), n => n.toString(16).padStart(2, '0')).join('')
 
+// Unmount this page immediately when openGym changes account. A guest stays local-only.
 export default function Nutrition() {
+  const userId = useStore(s => s.user?.id)
+  const scope = userId == null ? 'local' : 'account:' + String(userId)
+  return <NutritionForScope key={scope} scope={scope} />
+}
+
+function NutritionForScope({ scope }) {
   const nav = useNavigate()
   const [date, setDate] = useState(localDateKey)
   const [foods, setFoods] = useState([])
@@ -24,21 +32,21 @@ export default function Nutrition() {
   const [loading, setLoading] = useState(true)
 
   async function refresh() {
-    const saved = await loadNutrition()
+    const saved = await loadNutrition(scope)
     setFoods(saved.foods.sort((a, b) => a.name.localeCompare(b.name, 'de')))
     setEntries(saved.entries)
     return saved
   }
   useEffect(() => {
     let alive = true
-    loadNutrition().then(data => {
+    loadNutrition(scope).then(data => {
       if (!alive) return
       setFoods(data.foods.sort((a, b) => a.name.localeCompare(b.name, 'de')))
       setEntries(data.entries)
       setLoading(false)
     }).catch(e => { if (alive) { setError(e.message); setLoading(false) } })
     return () => { alive = false }
-  }, [])
+  }, [scope])
   const today = useMemo(() => entries.filter(e => e.date === date), [entries, date])
   const totals = useMemo(() => totalsOf(today), [today])
   const chosen = foods.find(f => f.id === selected)
@@ -61,18 +69,18 @@ export default function Nutrition() {
     const food = { ...foodInput, id: newID(),
       kcal100: Number(foodInput.kcal100), protein100: Number(foodInput.protein100),
       carbs100: Number(foodInput.carbs100), fat100: Number(foodInput.fat100) }
-    await run(async () => { await saveFood(food); setSelected(food.id); setFoodInput(freshFood) }, 'Lebensmittel lokal gespeichert.')
+    await run(async () => { await saveFood(scope, food); setSelected(food.id); setFoodInput(freshFood) }, 'Lebensmittel lokal gespeichert.')
   }
   async function onAddEntry(event) {
     event.preventDefault()
     if (!chosen) { setError('Bitte ein Lebensmittel wählen.'); return }
-    await run(() => saveMealEntry(makeMealEntry(chosen, Number(grams), mealType, date, newID())), 'Mahlzeit gespeichert.')
+    await run(() => saveMealEntry(scope, makeMealEntry(chosen, Number(grams), mealType, date, newID())), 'Mahlzeit gespeichert.')
   }
   async function onExport() {
     if (busy) return
     setBusy(true); setMessage(''); setError('')
     try {
-      const json = await exportNutrition()
+      const json = await exportNutrition(scope)
       const filename = 'redfit-ernaehrung-' + localDateKey() + '.json'
       if (MOBILE) await shareExport(json, filename)
       else {
@@ -96,7 +104,7 @@ export default function Nutrition() {
     try { backup = JSON.parse(await file.text()) } catch { setError('Keine gültige JSON-Datei.'); return }
     if (!window.confirm('Ernährungseinträge aus dieser Datei hinzufügen? Bestehende Daten bleiben erhalten.')) return
     await run(async () => {
-      const added = await importNutrition(backup)
+      const added = await importNutrition(scope, backup)
       setMessage('Importiert: ' + added.foods + ' Lebensmittel und ' + added.entries + ' Einträge.')
     })
   }
@@ -163,7 +171,7 @@ export default function Nutrition() {
           <div className="nutrition-entry" key={e.id}>
             <div><strong>{e.foodName}</strong><div className="nutrition-hint">{numberText(e.grams)} g · {numberText(e.kcal, 0)} kcal · P {numberText(e.protein)} · KH {numberText(e.carbs)} · F {numberText(e.fat)}</div></div>
             <button type="button" disabled={busy} aria-label={e.foodName + ' löschen'} onClick={() => {
-              if (window.confirm('Diesen Eintrag wirklich löschen?')) run(() => removeMealEntry(e.id), 'Eintrag gelöscht.')
+              if (window.confirm('Diesen Eintrag wirklich löschen?')) run(() => removeMealEntry(scope, e.id), 'Eintrag gelöscht.')
             }}>Löschen</button>
           </div>)}</div>
       })}
@@ -171,7 +179,7 @@ export default function Nutrition() {
 
     <section className="card nutrition-section" aria-labelledby="nutrition-backup">
       <h2 id="nutrition-backup">Ernährung sichern</h2>
-      <p className="nutrition-hint">Wichtig: Ernährung liegt in einer getrennten lokalen IndexedDB. Die ursprünglichen openGym-Workout-Backups und der Server-Sync enthalten diese Daten noch nicht. Vor Gerätewechsel oder App-Löschung separat exportieren.</p>
+      <p className="nutrition-hint">Wichtig: Ernährung liegt in einer getrennten lokalen IndexedDB. Die ursprünglichen openGym-Workout-Backups und der Server-Sync enthalten diese Daten noch nicht. Jeder openGym-Account hat einen eigenen lokalen Ernährungsspeicher. Vor Gerätewechsel oder App-Löschung separat exportieren.</p>
       <div className="nutrition-actions">
         <button type="button" disabled={busy} onClick={onExport}>JSON exportieren</button>
         <label className="nutrition-file">JSON importieren<input type="file" accept=".json,application/json" disabled={busy} onChange={onImport} /></label>
