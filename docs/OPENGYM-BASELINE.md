@@ -67,3 +67,25 @@ Die zuerst übernommenen 34 Dateien umfassen unter anderem `frontend/package-loc
 - Commit `7ac465315d27c54329b759c383946b5620691b5d` importiert acht weitere unveränderte Dateien aus dem fixierten openGym-Commit (Claude-/Codex-/Spawn-Adapter, Cadence, Cohort, Konfiguration, HTTP-Adapter, Library).
 - Der Git-Baum von `main` wurde nach dem Commit abgerufen: **128** Dateien unter `vendor/opengym-upstream/`; die acht neuen Blob-SHAs entsprechen dem Quellstand.
 - **8.741** zulässige Originaldateien stehen noch aus. Kein nativer Build und kein vollständiger openGym-Serverstart nachgewiesen. RED Morph ist Designreferenz, nicht Trainings-Quellbasis.
+
+## Optionaler Komplettimport inklusive Medien (2026-11-09)
+
+Auf ausdrücklichen Wunsch des Repository-Betreibers ist das Importwerkzeug um die **optionale** Flag `--include-media` erweitert (Commit `196d59df0982dcea49e4d7fe91876cac28ff9485`). Sie nimmt zusätzlich die **13.108** Dateien unter `catalogue/media/` auf, wenn die entsprechenden eigenständigen Nutzungsrechte vorliegen. Der Standardimport ohne Flag schliesst sie weiterhin aus.
+
+Die ursprüngliche `NOTICE.md` benennt Gym visual als Rechteinhaber der Übungsmedien und begrenzt deren Nutzung in anderen Anwendungen. Weder Besitz eines ZIP-Archivs noch Inhaberschaft eines Forks ist ein Nachweis für diese Nutzungsrechte. Vor Veröffentlichung, Cloudflare-Deployment oder Veröffentlichung nativer Installationspakete mit diesen Medien die Rechte gesondert klären.
+
+Auf Windows im geklonten RED-Fit-Repository (PowerShell mit installiertem Python-Launcher):
+
+```powershell
+git switch main
+git pull --ff-only origin main
+py -3 .\tools\import-opengym.py "C:\PFAD\openGym-main(1).zip" --include-media
+py -3 .\tools\import-opengym.py "C:\PFAD\openGym-main(1).zip" --include-media --apply
+git add -- vendor/opengym-upstream
+git commit -m "vendor(opengym): import verified full source with licensed exercise media"
+git push origin main
+```
+
+Die beiden ZIP-Durchläufe prüfen die bekannte SHA-256 des Originalarchivs, beugen gefährlichen ZIP-Pfaden vor, überspringen byteidentisch bereits importierte Dateien und verweigern abweichende Bestandsdateien. Der Dry-Run ändert nichts. Ohne die originalgetreue ZIP-Prüfsumme wird nichts importiert.
+
+**Stand beim Einführen des Flags:** erst 128 Dateien sind auf `main` importiert. Mit optionalen Medien beträgt der geplante Gesamtumfang **21.977 Dateien** (8.869 Quell-/sonstige Dateien und 13.108 Übungsmedien). Ein vollständiger Upload oder Gerätebuild ist hiermit nicht nachgewiesen.
