@@ -41,3 +41,16 @@ Vor einem Release **echte Original-App-Tests** auf einem vollständigen Checkout
 - **Nächster Test-Gate:** Diese sechs Fixture-Tests auf echtem Windows ausführen und danach original `vendor/opengym-upstream/frontend` via `node tools/opengym-qa/verify.mjs` bauen, sobald kompletter Checkout / npm und Actions-Runner verfügbar sind. iPhone-Priorität und Agent-04-Dateihoheit bleiben unberührt.
 
 - **Remote-Nachprüfung nach den Änderungen:** GitHub-Actions-Run `42702745097` (Original-Frontend-QA) und Root-CI-Run `42702745076` meldeten weiterhin `failure`. Der ursprüngliche QA-Job `original-frontend` und beide Root-Jobs hatten `steps: null`; das neue Skript wurde dadurch **nicht nachweisbar auf einem GitHub-Runner ausgeführt**. Erforderlich ist die Prüfung der Actions-/Runner-Konfiguration oder die lokale Ausführung auf einem vollständigen Rechner-Checkout.
+
+## Fortsetzung — Mobile-Vite-Build als iPhone-Qualitäts-Gate
+
+**Neu geprüft und umgesetzt:**
+- `tools/opengym-qa/mobile-web.mjs`: prüft erzeugtes Original-`frontend/dist` auf den mobilen `opengym-flavor`-Marker, Vite-JS/CSS-Referenzen und einen vorhandenen ungestempelten Service Worker.
+- `tools/opengym-qa/verify.mjs`: führt nach Original-`npm ci`, Vitest und normalem Vite-Build einen zusätzlichen, unabhängigen **`VITE_MOBILE=1 npm run build`** aus. Dieser Build führt bewusst **kein `cap sync`** und kein Media-Staging aus: Agent 04 behält iOS-/Capacitor-Dateihoheit. Fehlender Marker trotz `npm`-Exitcode 0 wird im JSON-Report ausdrücklich als Fehler dokumentiert.
+- `tools/opengym-qa/verify.test.mjs`: zwei zusätzliche Tests für falsche mobile Web-Variante und kaputte Bundle-Assets; bestehende Tests an vier originale QA-Stufen angepasst.
+
+**Tatsächlich ausgeführte Prüfung im lokalen isolierten Node-22.16.0-Linux-Verzeichnis:** `node --check` für alle drei QA-Dateien und `node --test tools/opengym-qa/verify.test.mjs` → **8/8 Tests bestanden, 0 fehlgeschlagen, 0 übersprungen**. Es handelt sich um synthetische `frontend`-Fixtures und Fake-npm; weder echte Vite-/Vitest-Pakete noch Native-Builds wurden hier ausgeführt. `mobile-web-build.log` und der Schrittstatus werden in `artifacts/opengym-qa/report.json` erfasst.
+
+**Commits:** `28c357953d1f155ae1a17e312112ab019d944e93` (Mobile-Bundle-Gate), `b87e0be37867c4c50fc616d994614490a3581ab8` (QA-Runner), `bc5ede46e9c990be677b4374eb9c5cd379efbdc1` (Tests), `8158cdc1d79187e5f23877b304bb91ddfe2b86e6` (QA-Doku).
+
+**Offen:** echten Original-`npm ci`-, Vitest- und Web-/Mobile-Build durchführen; GitHub-Actions-Runner-Beschränkung separat prüfen. Erst danach native iPhone-IPA-Abnahme durch Agent 04; Android/Windows nachrangig.
