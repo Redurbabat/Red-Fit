@@ -47,6 +47,38 @@ jobs:
       - name: Build original openGym mobile-flavour frontend
         run: VITE_MOBILE=1 npm run build
 
+      - name: Verify mobile flavour and nutrition bundle
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            import assert from 'node:assert/strict';
+            const html = fs.readFileSync('dist/index.html', 'utf8');
+            assert.match(html, /name=[\"']opengym-flavor[\"']/);
+            assert.match(html, /content=[\"']mobile[\"']/);
+            assert.ok(fs.readdirSync('dist/assets').some(name => name.endsWith('.js')));
+            console.log('Original openGym mobile-flavour bundle verified');
+          "
+
+  # Native staging runs independently of the long (~5 min) full regression suite.
+  # It deliberately does NOT edit the original iOS project in git, sign or create an IPA.
+  ios-assets:
+    name: iOS assets / Safari 15.5 compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: vendor/opengym-upstream/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: vendor/opengym-upstream/frontend/package-lock.json
+      - name: Install original openGym dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build original openGym mobile-flavour frontend for native staging
+        run: VITE_MOBILE=1 npm run build
       # The original app targets Safari 15.5. Verify that every generated JS
       # chunk can be parsed on this floor before copying it into the iOS shell.
       - name: Check minimum iOS WebView JS compatibility
@@ -69,14 +101,3 @@ jobs:
             console.log('Nutrition chunk present in iOS Capacitor web assets');
           "
 
-      - name: Verify mobile flavour and nutrition bundle
-        run: |
-          node --input-type=module -e "
-            import fs from 'node:fs';
-            import assert from 'node:assert/strict';
-            const html = fs.readFileSync('dist/index.html', 'utf8');
-            assert.match(html, /name=[\"']opengym-flavor[\"']/);
-            assert.match(html, /content=[\"']mobile[\"']/);
-            assert.ok(fs.readdirSync('dist/assets').some(name => name.endsWith('.js')));
-            console.log('Original openGym mobile-flavour bundle verified');
-          "
