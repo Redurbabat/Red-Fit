@@ -45,3 +45,11 @@ Vollständigen Frontend-Build + Vitest im echten Checkout ausführen und Diff vo
 ## CI-Signal (GitHub Actions)
 
 GitHub Actions hat für Commit `4d09068b21b1fc2b7e67ad53b6d9f27f32b9dd4d` den Run [42701986109](https://github.com/Redurbabat/Red-Fit/actions/runs/42701986109) ausgelöst: **failure** (Jobs `verify` und `offline-regressions`). Die Job-API lieferte **keine Step-Einträge** und der Abruf beider Job-Logs scheiterte mit `404 BlobNotFound`; eine konkrete Fehlerursache ist damit **nicht belegt**. Nicht als Testbestehen werten. Wichtig: Das vorhandene `.github/workflows/ci.yml` führt nur die Root-Tests aus und enthält **keinen Schritt für** `vendor/opengym-upstream/frontend/`; Agent 05 soll die Original-openGym-Test-/Buildpipeline ergänzen (separate Dateihoheit).
+
+## Korrektur des Desktop-Dock-Gitters (Fortsetzung)
+
+Das originale `index.css` setzt das Full-Width-Dock auf iPhone/Tablet mit **6px** Inline-Padding, ab `min-width: 1000px` jedoch als **520px**-Kapsel mit **10px** Inline-Padding um. Die erste RED-Morph-Auswahlfläche hatte fest 6px / `calc((100% - 12px) / 5)` und konnte deshalb im Desktop-Dock seitlich vom zugehörigen Button abweichen.
+
+**Behoben:** `red-fit-dock.css` nutzt jetzt `--rf-dock-gutter` mit 6px bzw. 10px am Original-Breakpoint; `inset-inline-start` und `width` verwenden dieselbe Variable. `red-fit-dock.styles.test.js` enthält zwei zusätzliche Vitest-Vertragstests (noch nicht ausgeführt).
+
+**Tatsächlich lokal geprüft:** Der alte CSS-Blob wurde bytegleich zum GitHub-Blob verifiziert (`a75bd2ddf34f2d107d31be21251c0b0721b116cc`). Das korrigierte Stylesheet wurde mit **PostCSS** erfolgreich geparst. Ein mit Node 22.16 ausgeführter statischer Geometrie-Check prüfte 320, 360, 390, 430, 999, 1000 und 1280px und die Positionen 0, 1, 3, 4 (alle OK). **Keine** Pixel-/Screenshot-, Browser-/WebKit-, vollständigen Vitest- oder iPhone-Buildtests; die Geometrieprüfung arbeitet mit der im Original vorgesehenen Fünf-Spalten-Annahme. Relevanter CI-Befund: auch frühere `main`-Runs scheitern, nicht nur der Agenten-Branch; ohne Joblogs keine Ursachenbehauptung.

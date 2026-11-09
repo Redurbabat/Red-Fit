@@ -3,6 +3,8 @@
  * and the existing near-opaque bar. Material is decorative and never catches input.
  * Motion uses only transform/opacity, and stops for Reduce Motion. */
 #tabbar.redfit-morph-dock {
+  /* Matches the stock bar padding: 6px on phones, 10px at 1000px+. */
+  --rf-dock-gutter: 6px;
   isolation: isolate;
 }
 
@@ -10,9 +12,9 @@
   content: '';
   position: absolute;
   inset-block-start: 2px;
-  inset-inline-start: 6px;
+  inset-inline-start: var(--rf-dock-gutter);
   box-sizing: border-box;
-  width: calc((100% - 12px) / 5);
+  width: calc((100% - var(--rf-dock-gutter) - var(--rf-dock-gutter)) / 5);
   height: 44px;
   z-index: 0;
   border-radius: var(--r-lg);
@@ -76,5 +78,12 @@
     outline: 1px solid Highlight;
     outline-offset: -2px;
     box-shadow: none;
+  }
+}
+
+/* The original openGym desktop dock switches from 6px to 10px inline padding. */
+@media (min-width: 1000px) {
+  #tabbar.redfit-morph-dock {
+    --rf-dock-gutter: 10px;
   }
 }
