@@ -83,6 +83,49 @@ describe('active exercise swap sheet flow', () => {
   })
 })
 
+describe('swap picker after background changes', () => {
+  it('does not overwrite a set edited while the exercise picker stayed open', () => {
+    swapActiveWorkoutExercise(1)
+    const picker = useUI.getState().sheets.at(-1)
+    const pickerView = picker.render(picker.close)
+
+    // A background sync, reload or another device can change the chosen occurrence
+    // before the user picks a replacement. The existing index is no longer safe.
+    useStore.getState().update(s => { s.active.entries[1].sets[0].r = 11 }, false)
+    act(() => pickerView.props.onPick(EXDB[2]))
+    const config = useUI.getState().sheets.at(-1)
+    useUI.getState().startRest(90, 1)
+    act(() => config.render(config.close).props.onSave({
+      mode: 'reps', sets: 1, reps: 8, weight: 30
+    }))
+
+    const active = useStore.getState().S.active
+    expect(active.entries.map(e => e.id)).toEqual([ids[0], ids[0], ids[1]])
+    expect(active.entries[1].sets[0].r).toBe(11)
+    expect(useUI.getState().timer).not.toBeNull()
+  })
+
+  it('does not swap a different session after the configuration sheet was opened', () => {
+    swapActiveWorkoutExercise(1)
+    const picker = useUI.getState().sheets.at(-1)
+    act(() => picker.render(picker.close).props.onPick(EXDB[2]))
+    const config = useUI.getState().sheets.at(-1)
+
+    useStore.getState().update(s => {
+      s.active = { ...s.active, id: 'restored-session', cur: 1,
+        entries: [entry(ids[1]), entry(ids[1])] }
+    }, false)
+    act(() => config.render(config.close).props.onSave({
+      mode: 'reps', sets: 1, reps: 8, weight: 30
+    }))
+
+    const active = useStore.getState().S.active
+    expect(active.id).toBe('restored-session')
+    expect(active.entries.map(e => e.id)).toEqual([ids[1], ids[1]])
+    expect(active.cur).toBe(1)
+  })
+})
+
 describe('swap confirmation after the active workout changes', () => {
   it('keeps a newly edited set and its rest timer rather than applying a stale confirmation', () => {
     useStore.getState().update(s => { s.active.entries[1].sets[0].done = true }, false)
