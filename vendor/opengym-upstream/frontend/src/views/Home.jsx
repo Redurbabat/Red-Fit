@@ -31,7 +31,7 @@ import RecoveryHint from '../components/RecoveryHint.jsx'
 import { ChallengesCard } from '../components/Challenges.jsx'
 import { isOn } from '../lib/modules.js'
 import './red-fit-home.css'
-import { revealHomeToday } from './scroll-home-week.js'
+import { syncHomeWeekScroll } from './scroll-home-week.js'
 import { homeWeekStatus, homeWeekAccessibleLabel } from './home-week-status.js'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
@@ -122,11 +122,11 @@ export default function Home() {
   const on = id => isOn(S, id)
   const bwPoints = S.bodyweight.slice(-30).map(b => ({ t: weighInAt(b), y: b.w, d: b.d }))
 
-  // Seven 44px weekday targets overflow narrow phones. Only on the current week,
-  // reveal today's existing cell horizontally without scrolling the Home page.
-  // Re-run when returning from another week or switching out of rotation mode.
+  // Seven 44px weekday targets overflow narrow phones. Reveal today in the current
+  // week; reset to the logical start when a different week is selected. In RTL,
+  // scrollLeft=0 means the first day too. The Home page itself does not scroll.
   useEffect(() => {
-    if (weekOffset === 0 && !rotating) revealHomeToday(weekStripRef.current)
+    if (!rotating) syncHomeWeekScroll(weekStripRef.current, weekOffset === 0)
   }, [weekOffset, rotating, todayKey])
 
   // today's session shown right under the week strip

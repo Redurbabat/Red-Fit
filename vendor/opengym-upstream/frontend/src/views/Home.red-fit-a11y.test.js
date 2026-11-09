@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { syncHomeWeekScroll } from './scroll-home-week.js'
 
 const source = readFileSync(resolve(process.cwd(), 'src/views/Home.jsx'), 'utf8')
 
@@ -51,12 +52,18 @@ describe('RED Fit branding and screen-reader semantics in the original Home view
     expect(css).toMatch(/\.week\.redfit-home-week\s*>\s*\.wday:focus-visible\s*\{[^}]*outline-offset:\s*-3px;/)
   })
 
-  it('auto-reveals today only while the fixed current week is displayed', () => {
-    expect(source).toContain("import { revealHomeToday } from './scroll-home-week.js'")
+  it('shows today on the current week but resets the logical start of any other week', () => {
+    expect(source).toContain("import { syncHomeWeekScroll } from './scroll-home-week.js'")
     expect(source).toContain('const weekStripRef = useRef(null)')
-    expect(source).toContain('if (weekOffset === 0 && !rotating) revealHomeToday(weekStripRef.current)')
+    expect(source).toContain('if (!rotating) syncHomeWeekScroll(weekStripRef.current, weekOffset === 0)')
     expect(source).toContain('[weekOffset, rotating, todayKey]')
     expect(source).toContain('ref={weekStripRef} className="week redfit-home-week"')
+    // RTL uses a negative scrollLeft for the end of the week.
+    for (const offset of [76, -76]) {
+      const week = { scrollLeft: offset }
+      expect(syncHomeWeekScroll(week, false)).toBe(true)
+      expect(week.scrollLeft).toBe(0)
+    }
   })
 
   it('keeps translated weekday status available for VoiceOver instead of colour alone', () => {
