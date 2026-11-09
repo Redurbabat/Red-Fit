@@ -62,6 +62,7 @@ describe('RED Fit iOS 26 native SwiftUI glass dock handoff', () => {
   })
 
   it('native Start keeps the existing workout picker / session path', async () => {
+    act(() => useStore.setState({ S: { ...useStore.getState().S, routines: [] } }))
     await nativeTap('start')
     expect(router.state.location.pathname).toBe('/workout')
     expect(onStart).not.toHaveBeenCalled()
@@ -71,8 +72,7 @@ describe('RED Fit iOS 26 native SwiftUI glass dock handoff', () => {
     const portal = document.createElement('div')
     portal.id = 'modal-root'
     document.body.appendChild(portal)
-    // The mount observer is attached to the existing modal-root, not arbitrary DOM.
-    await act(async () => router.navigate('/plan'))
+    // Modals.jsx creates the portal after the page has already mounted.
     const sheet = document.createElement('div')
     sheet.className = 'sheet'
     await act(async () => {
@@ -86,5 +86,15 @@ describe('RED Fit iOS 26 native SwiftUI glass dock handoff', () => {
     })
     expect(nativeMessages.at(-1).visible).toBe(true)
     portal.remove()
+  })
+
+  it('leaves keyboard input unobstructed and restores the dock on blur', async () => {
+    const field = document.createElement('input')
+    document.body.appendChild(field)
+    await act(async () => { field.focus(); await Promise.resolve() })
+    expect(nativeMessages.at(-1).visible).toBe(false)
+    await act(async () => { field.blur(); await Promise.resolve() })
+    expect(nativeMessages.at(-1).visible).toBe(true)
+    field.remove()
   })
 })
