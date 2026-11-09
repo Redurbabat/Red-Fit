@@ -46,4 +46,9 @@ describe('RED Fit branding and screen-reader semantics in the original Home view
     expect(7 * 44 + 6 * 4).toBe(332)
   })
 
+  it('keeps the keyboard focus outline inside the clipped scrollable week strip', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/views/red-fit-home.css'), 'utf8')
+    expect(css).toMatch(/\.week\.redfit-home-week\s*>\s*\.wday:focus-visible\s*\{[^}]*outline-offset:\s*-3px;/)
+  })
+
 })

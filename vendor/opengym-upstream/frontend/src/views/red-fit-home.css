@@ -14,3 +14,9 @@
   min-inline-size: 44px;
   scroll-snap-align: start;
 }
+
+/* The strip clips horizontal overflow: keep the keyboard focus ring inside each day,
+ * including the first and last visible cell in LTR and RTL. */
+.week.redfit-home-week > .wday:focus-visible {
+  outline-offset: -3px;
+}
