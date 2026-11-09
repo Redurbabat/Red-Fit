@@ -106,3 +106,22 @@ Den originalen Frontend-Test mit Node 22 und NPM-Abhängigkeiten über den QA-Ga
 
 ### Weiter offen
 Originalen Frontend-Test-Runner inklusive alter und neuer Vitest-Regressionen zum Laufen bringen; danach iPhone-Lock/Resume mit zeitgesteuertem Auto-Hold, Sessionwechsel und ausstehender nativer Benachrichtigung auf einem echten Gerät testen.
+
+
+## Nachtrag — Undo gelöschter Sets bei mehrfach vorkommenden Übungen (09.11.2026)
+
+**Vorher wirklich reproduziert:** Die originale `undoDeleteSet`-Logik suchte ihren Ziel-Eintrag über `A.entries[token.idx]?.id === token.entryId` und ersatzweise `findIndex(en => en.id === token.entryId)`. In einer Session `[Bankdrücken A, Bankdrücken B, Bankdrücken C]` konnte nach dem Set-Delete in B und dem Löschen von B das identische Übungs-`id` von C an Index 1 die Prüfung bestehen. Der alte Undo-Callback fügte die Sets von B in **C** ein. Direkte V8-Ausführung der unveränderten originalen `undoDeleteSet`-Funktion: `wrongExerciseReceivedDeletedSet=true`.
+
+**Implementierung auf Original-openGym (nur Agent 01):**
+- Neues reines `frontend/src/lib/active-set-undo.js`: `captureUndoSetOccurrence` merkt sich nach dem Delete den indexierten, serialisierten Eintragszustand; `locateUndoSetOccurrence` akzeptiert den ursprünglichen Index, wenn die Entry-Liste unverändert ist, oder einen eindeutigen neuen Index bei einer nachweislich reinen Umordnung. Bei geänderter Listenlänge, Ersetzung, Bearbeitung während des geöffneten Undo-Toast oder ununterscheidbaren Duplikaten wird defensiv `-1` geliefert, statt fremde Trainingsdaten zu überschreiben.
+- `frontend/src/views/Workout.jsx`: `deleteActiveSet` speichert den Occurrence-Snapshot im **flüchtigen Toast-Token** nach der ursprünglichen Mutation; `undoDeleteSet` löst damit den Zielindex auf. Keine neuen persistenten Store-Felder und keine Änderung am Backup-Schema. Die bestehende lokalisierte Fehlermeldung `Too late, that one’s gone` bleibt erhalten.
+- `frontend/src/lib/active-set-undo.test.js`: **acht neue Regressionstests** (Sofort-Undo, reine Umordnung, verschobene Duplikate, ununterscheidbare Duplikate, zwischenzeitliche Bearbeitung, Ersatz, andere Session, reine Auswertung).
+- `frontend/src/views/Workout.remove.test.jsx`: **zwei neue React/Vitest-Integrationsfälle**, die den tatsächlichen Aufruf über `deleteActiveSet`, `removeActiveExercise` und den Toast-Undo-Button betreffen. Diese Fälle sind noch **nicht mit React/Vitest ausgeführt**.
+
+**Tatsächlich ausgeführte Prüfungen:**
+- Original-`deleteActiveSet` und Original-`undoDeleteSet` frisch aus dem GitHub-Branch als JavaScript-Quellfunktionen in V8 mit gestubbtem Store, UI, Toast und Row-Operationen getestet: **13 Laufzeit-Assertions**, plus **2 Syntaxprüfungen** für Hilfsdatei und deren Tests, zusammen **15/15 bestanden**. Dazu zählen erfolgreiches sofortiges Undo und erfolgreiches Undo nach reiner Umordnung sowie defensives Abweisen bei entfernter Übung, geänderter Session und Zwischenbearbeitung.
+- Die **acht** neu gespeicherten reinen Vitest-Testfunktionen wurden zusätzlich in V8 mit minimalem `describe/it/expect.toBe`-Kompatibilitätsshimm **8/8 erfolgreich ausgeführt**. Das ersetzt weder den echten Vitest-Test-Runner noch den Vite-/mobile Build.
+
+**Bewusste Einschränkung:** Wenn die Übungsliste zwischen Delete und Undo anderweitig bearbeitet wurde, wird Undo konservativ abgelehnt, auch wenn die ursprüngliche Übung möglicherweise noch existiert. Priorität ist, niemals automatisch fremde geloggte Sätze zu überschreiben; über eine stabil persistierte Occurrence-ID kann später eine weniger restriktive Lösung geprüft werden.
+
+**Weiter offen:** Original-`frontend`: `npm ci`, `npm test`, `npm run build`; iPhone-Lock/Restore- und Trainingsdaten-/Sync-Tests; originale React-Komponententests. Die bisherige GitHub-Standard-CI endete wiederholt ohne zugewiesenen Runner oder Step-Logs. Agent 05 arbeitet unabhängig an Original-openGym-QA (PR #14). Kein Merge, kein Deploy.
