@@ -120,3 +120,30 @@
 - GitHub Actions CI-Runner liefert weiterhin keine nutzbaren Schritte; Lauf des originalen openGym-Frontend `npm ci && npm test && npm run build:mobile` und iPhone-Simulator fehlen.
 - Rezepte speichern bislang Zutaten-Snapshots, nicht eine separate versionierte Rezeptbibliothek mit Bearbeitung/Vervielfältigung. UI-Editor, visuelle Qualitätskontrolle sowie reale 1-Portion-Interaktion auf iPhone prüfen.
 - Wochenplanung, Einkaufslisten, Migration aus altem Root-RED-Fit, vollständiger gemeinsamer Workout-/Nutrition-Backup-/Server-Sync weiterhin offen.
+
+
+## Fortsetzung — 7-Tage-Planung, Einkaufslisten und sichere Datenmigration (2026-11-09)
+
+### Codeänderungen im ORIGINAL-openGym
+- `frontend/src/nutrition/model.js`: `makePlannedMeal` erstellt unabhängige, validierte Nährwert-Snapshots; bei Rezepten werden Zutaten nach Portionen relativ zum zubereiteten Gesamtgewicht korrekt umgerechnet. `planDates` liefert sieben lokale Kalendertage (auch Monats-/Jahreswechsel), `shoppingListOf` addiert offene Zutaten je Lebensmittel. `validatePlannedMeal` trennt `planned`/`done` und hält verknüpfte Tagebuch-ID fest.
+- `frontend/src/nutrition/repository.js`: **additives** IndexedDB-Schema-Upgrade **v1 → v2** unter *demselben* DB-Namen `redfit-nutrition-v1:<scope>`, ohne existierende `foods`/`entries` zu löschen. Neues Store `plans` mit Tagesindex. `completePlannedMeal` erstellt Tagebucheintrag und markiert Plan als erledigt innerhalb derselben `readwrite`-Transaktion. Zweite Bestätigung darf keine zweite Kalorienbuchung auslösen; Rollback bei Fehlern.
+- `exportNutrition` schreibt jetzt `redfit-nutrition/version:2` mit `foods, entries, plans`. `validateBackup` und `importNutrition` akzeptieren weiterhin **alte v1-Dateien** ohne Pläne, bewahren beim v1-Import bereits vorhandene v2-Pläne und führen v2-Datensätze ohne globale Löschung zusammen. Native Tagesdatei-Sicherung/Restore benutzt denselben generischen Validierungspfad und kann daher v1/v2 JSON lesen.
+- `frontend/src/views/Nutrition.jsx`: Wochenansicht, Plan anlegen/entfernen, Tagebuch-Übernahme, Anzeigen erledigter Pläne, Shoppingliste nur aus offenen geplanten Mahlzeiten. Einkaufsliste offline als Textdatei über native Share-Sheet / Browserdownload exportierbar; nach Tagebuch-Übernahme springt die Eintragsübersicht auf den gebuchten Tag. Datumsfeld-Reset wird abgefangen. Manueller Datei-Import bleibt bewusst grössenbegrenzt, Limit an den Snapshot-Reader auf **64 MB** angepasst.
+- `nutrition.css`: gekapselte kompakte iPhone-/Responsive-Stile, weder original-TabBar noch Workout-Views verändert.
+
+### Geprüfte Ergebnisse — tatsächliche Ausführung
+- **21/21** eigenständige JavaScript-V8-Prüfungen der originalen GitHub-`model.js`-Fassung (Git-Blob `b12ec4b3ccc2135990f547727673f27773fac7bd`): v1/v2, Wochendaten, Rezepte, Einkaufsmengen, Planstatus, Manipulationsschutz, ID-Kollision.
+- **11/11** eigenständige V8-Prüfungen der originalen GitHub-`repository.js`-Fassung (Git-Blob `37283d08191ed01c8431e19ce98ef8f3b05b06d7`) unter *simulierter IndexedDB*, einschliesslich v1→v2 Upgrade, unveränderten Trainings-/Tagebuchdaten, atomarem Abschluss, doppeltem Abschluss, v1-Import und v2-Idempotenz, isoliertem Konto, Fehler-/Transaktionsrollback und Löschung offener Planung. **Simulierte IndexedDB ist kein echter WKWebView-/Safari-Roundtrip.**
+- Neu im Branch eingecheckt, aber **nicht als Vitest ausgeführt**: `nutrition/planning.test.js` mit 12 Testfällen und `nutrition/repository.test.js` mit 10 Testfällen auf eigenständigem IndexedDB-Test-Doppel ohne neue npm-Abhängigkeiten.
+- Danach Test-Quellen sowie `model.js`/`repository.js` von GitHub erneut gelesen; JavaScript-Syntax aller vier Dateien mit `new Function` nach Entfernen von Import-/Export-Zeilen erfolgreich geprüft. Dabei einen fehlerhaften Vitest-Assertion-Ausdruck tatsächlich entdeckt und im Branch korrigiert.
+- **Nicht nachgewiesen:** CI, echtes Vitest (`npm test`), Vite-Build/JSX-Compiler, iOS/Android-Dateisystem, tatsächlicher IndexedDB-Upgrade im WKWebView, reale Einkaufsliste-Sharing-Aktion.
+
+### Versions- und Wiederherstellungsrisiken
+- **Downgrade nicht automatisch:** Ältere Agent-Testbuilds, die dieselbe IndexedDB nur als Version 1 öffnen, können eine auf v2 aktualisierte DB nicht ohne Migration öffnen (`VersionError`). Der Upgradepfad darf daher nicht unbedacht zurückgerollt werden.
+- **Backup-Vorwärtskompatibilität begrenzt:** Ein neuer v2-JSON-Export lässt sich mit älteren v1-only-Importer-Builds nicht einlesen. Dies ist kein Datenverlust, aber für Downgrades ist ein expliziter Migrationspfad nötig. Alte v1-Backups bleiben unter der neuen Version lesbar.
+- Shopping ist derzeit ein **abgeleiteter** Einkaufszettel aus offenen Planungen, kein separater synchronisierter Checklisten-Speicher mit bereits-gekauft-Markierung; beim Abschliessen einer Mahlzeit verschwindet ihre Zutatenmenge aus der offenen Einkaufsliste.
+- Originale openGym-Workout-Backups, Server-Sync und Workout-State enthalten Ernährung/Planung **noch nicht**. Manuelle externe Sicherung bleibt vor Gerätewechsel/App-Löschung notwendig.
+- Keine Änderung an fremden Agenten-Branches, Root-PWA, originaler iOS-Projektarchitektur oder den originalen openGym-Workout-Backup-Verträgen.
+
+### Nächster Verifikationsschritt
+`npm ci && npm test && npm run build:mobile` im originalen openGym-Frontend unter funktionierendem CI/iOS-Runner, danach reales iPhone-Szenario: altes v1-Ernährungstagebuch → v2-Migration → Rezept/Plan → Einkaufsliste → als gegessen eintragen → native Backup-Datei exportieren/neu importieren. Erst mit echtem Roundtrip freigeben.
