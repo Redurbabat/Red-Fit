@@ -177,3 +177,25 @@ Originalen Frontend-Test-Runner inklusive alter und neuer Vitest-Regressionen zu
 - Abgleich mit Agent 04 Native-/Signierungsänderungen; mit Agent 05 separatem Original-QA-PR #14 und den übrigen Agenten-Branches koordinieren, bevor PR #12 gemergt wird.
 - Das verbleibende Known Limit für Android-Native-Events ohne Event-Session-ID bei einem gleichzeitig laufenden neuen Rest kann nur mit Native-Event-Korrelation sicher behoben werden.
 - PR #12 verbleibt **Draft**, kein Merge, kein Deployment.
+
+
+## 09.11.2026 — Agent 01 + Agent 04: tatsächlicher gemeinsamer Xcode-iPhone-Integrationsbuild
+
+### Ausgangslage und prüfbare Grenzen
+- PR #12 `agent/redfit-01-opengym-training` (Head vor Test `747629de109c855658fc5e07073404f532db0ea7`): originale openGym-Trainingstimer, Swap- und Undo-Regressionskorrekturen; originale Vitest-Suite **7877/7877** und Vite-/VITE_MOBILE-Build bereits auf `856b6bb3d7bfeefca21d44efae053da1a012af91` bestanden. Produktions- und Testdateien sind seither unverändert.
+- PR #13 `agent/redfit-04-ios-android` (geprüfter nativer Commit `321da769a9f49873bdc29e2bbe9631dd48c4f23e`): RED-Fit-Branding, `build:ios`, iOS-Identitäts-/Bundle-Skripte und originale Watch-/Widget-Targets. `compare_commits` bestätigte: **keine gemeinsame geänderte Datei** von Agent 01 und Agent 04.
+- Für den Integrationstest wurde **nur** auf dem Agent-01-Branch eine temporäre GitHub-Actions-Workflow-Datei hinzugefügt. Diese checkte den exakten Agent-01-PR-Head auf einem privaten `macos-26`-Runner aus, fetche den **gepinnten** Agent-04-Commit und überlagerte **ausschliesslich elf Agent-04-Dateien** im originalen openGym-Frontend. **Keiner** der bestehenden Agenten-Branches wurde gemergt oder geändert; `main` blieb unverändert.
+- Erster temporärer Run `42715590316`: nur die Test-Konfiguration schlug vor dem iOS-Build fehl, weil `actions/checkout` standardmässig den PR-Merge-Commit statt der echten Head-SHA auscheckte. Dieser Fehler wurde ausschliesslich durch `ref: ${{ github.event.pull_request.head.sha }}` in der temporären Workflow-Datei behoben.
+
+### Tatsächlich erfolgreicher gemeinsamer Build
+- **GitHub Actions Run: 42715734428**, Job **129496643963**, **completed/success** (Stand 09.11.2026); Testcodebasis der Agent-01-Branch auf SHA `0d996f9d9e78aed3c27ee9f1bca7fd70fb6c8db5` mit den elf iOS-Dateien aus dem **gepinnten** Agent-04-Commit `321da769a9f49873bdc29e2bbe9631dd48c4f23e`.
+- **Alle Workflow-Stufen erfolgreich:** Checkout des Agent-01-Head; `git fetch` + `git restore` für elf Dateien aus Agent 04; Node.js 22; originales `npm ci --ignore-scripts --no-audit --no-fund`; `npm run test:ios-bundle`; `npm run test:ios-identity-unit`; `npm run build:ios` inklusive `VITE_MOBILE=1 vite build`, Medienstaging und `cap sync ios`; Ruby-Integration `add-asset-downloader.rb`, `add-watch-app.rb` und `add-widgets.rb`; **`xcodebuild` Debug ohne Signierung für iOS Simulator** und danach **`xcodebuild` Debug ohne Signierung für iPhone-Gerät (arm64)**, jeweils `CODE_SIGNING_ALLOWED=NO`.
+- Die generierte `Debug-iphonesimulator/App.app` und `Debug-iphoneos/App.app` wurden in der Pipeline durch `test -d` geprüft; **beide Xcode-Schritte success**. Damit wurde die neue Trainingsruntime mit dem nativen RED-Fit-iPhone-Projekt **tatsächlich zusammen kompiliert**, nicht nur per Source-Assertion oder Vite-Build untersucht.
+- Beleg: https://github.com/Redurbabat/Red-Fit/actions/runs/42715734428 ; privates 7-Tage-Artifact **`agent01-04-ios-integration-logs`**, Artifact-ID **13719066135**, 304065 ZIP-Bytes, erstellt 09.11.2026 und laut API bis 16.11.2026 vorhanden. Es enthält Simulator- und Geräte-Xcode-Buildlogs; bewusst **keine IPA/Signierungsdateien**.
+- **Nach erfolgreichem Run** wurde der temporäre Workflow wieder gelöscht: Commit `6512fa2aeb6310d264b859e68a630f3502afe5f5`. Keine dauerhafte `.github/workflows`-Änderung auf PR #12; Agent 04 und Agent 05 untouched.
+
+### Weiter offen
+- **Kein iPhone-Gerätetest:** Die App wurde für iPhone-Gerät **kompiliert**, aber weder signiert noch physisch installiert. Die einzelnen Trainingsfunktionen auf dem Gerät (Lock/Background/Restore, Auto-Holds, Timer, gespeicherte Historie und Offline-Sync) sind weiter abnahmebedürftig.
+- **Keine kombinierte IPA:** Der gemeinsame Integrationslauf archivierte nur Buildlogs. Das bereits von Agent 04 separat gebaute `RED-Fit-UNSIGNED.ipa` enthält nicht automatisch den neueren Agent-01-Code und ist ausserdem **nicht installierbar** ohne gültige Apple-Signatur/Provisionierung.
+- App-/Extension-Bundle-IDs, App Group, Watch-Companion, Signing-Profile und mögliche Datenmigration gehören in die Abstimmung mit Agent 04. Keine Apple-Zugangsdaten in Chat/Repository; keine eigenmächtige Änderung der IDs/Entitlements.
+- PR #12 bleibt Draft, kein Merge/Release; danach Integrationsänderungen nach abgestimmter PR-Reihenfolge übernehmen und auf einem **gemeinsamen** Ziel-SHA erneut testen.
