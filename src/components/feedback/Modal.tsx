@@ -142,7 +142,7 @@ export function BottomSheet({ open, title, onClose, children, material = "solid"
   );
   const props = {
     tabIndex: -1,
-    role: "dialog",
+    role: "dialog" as const,
     "aria-modal": "true" as const,
     "aria-labelledby": title ? titleId : undefined,
     "aria-label": title ? undefined : "Auswahl",
