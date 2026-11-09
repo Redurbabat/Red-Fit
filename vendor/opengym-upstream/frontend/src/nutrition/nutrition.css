@@ -36,3 +36,14 @@
 .nutrition-error { color:var(--red); } .nutrition-success { color:var(--green); }
 @media (max-width:360px) { .nutrition-grid { grid-template-columns:1fr; } }
 @media (prefers-reduced-motion:reduce) { .nutrition-page * { scroll-behavior:auto; transition:none!important; } }
+
+/* Recipe composer is collapsed by default, keeping the iPhone food → meal flow prominent. */
+.nutrition-recipes summary { cursor:pointer; color:var(--label); font-weight:650; min-height:44px; display:flex; align-items:center; }
+.nutrition-recipes > details[open] > summary { margin-bottom:8px; }
+.nutrition-recipes form + form { margin-top:16px; }
+.nutrition-ingredient-list { list-style:none; margin:14px 0; padding:0; }
+.nutrition-ingredient-list li { display:flex; align-items:center; gap:12px; justify-content:space-between; border-bottom:1px solid var(--sep-op); padding:8px 0; }
+.nutrition-ingredient-list li span { min-width:0; overflow-wrap:anywhere; }
+.nutrition-saved-recipes { margin-top:16px; border-top:1px solid var(--sep-op); padding-top:3px; }
+.nutrition-saved-recipes > details { border-top:1px solid var(--sep-op); }
+.nutrition-saved-recipes > details ul { padding-left:20px; line-height:1.7; color:var(--label-2); }
