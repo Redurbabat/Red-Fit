@@ -108,6 +108,29 @@ describe('a hold across a reload', () => {
     expect(saved()).toBeNull()
   })
 
+  it.each(['early', 'abandoned', 'expired'])('does not run an old onDone callback after another workout starts (%s)', mode => {
+    const done = vi.fn()
+    useUI.getState().startWork(mode === 'expired' ? 5 : 45, 'Plank', done, owner)
+    expect(saved().owner.sessionId).toBe('a')
+
+    // A separate session now occupies the same exercise and set index. The old
+    // React callback must not mark its set complete or start its rest timer.
+    useStore.setState({ S: { ...useStore.getState().S, active: { id: 'other-session', entries: [
+      { id: 'squat', sets: [{ w: 100, r: 5 }] },
+      { id: 'plank', sets: [{ sec: 45 }, { sec: 45 }] },
+    ] } } })
+    if (mode === 'early') useUI.getState().finishWorkEarly()
+    else if (mode === 'abandoned') {
+      vi.advanceTimersByTime(3000)
+      useUI.getState().abandonWork()
+    } else vi.advanceTimersByTime(6000)
+
+    expect(done).not.toHaveBeenCalled()
+    expect(useStore.getState().S.active.id).toBe('other-session')
+    expect(useStore.getState().S.active.entries[1].sets[0]).toEqual({ sec: 45 })
+    expect(useUI.getState().work).toBeNull()
+  })
+
   it('is dropped when its set is gone or already ticked', () => {
     localStorage.setItem(WORK_KEY, JSON.stringify({ endsAt: Date.now() + 30_000, total: 45, label: 'Plank', overtime: false, owner: { idx: 0, i: 0, id: 'plank' } }))
     expect(restoreWork()).toBe(false)
