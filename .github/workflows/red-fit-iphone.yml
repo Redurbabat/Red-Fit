@@ -41,6 +41,9 @@ jobs:
       - name: Test RED Fit native identity and entitlement guard (Node only)
         run: npm run test:ios-identity-unit
 
+      - name: Self-test IPA integrity and embedded target validator
+        run: python3 scripts/verify-unsigned-ipa.py --selftest
+
       - name: Install original locked dependencies
         run: npm ci
 
@@ -76,6 +79,9 @@ jobs:
           ditto "$app" ios/App/build/unsigned/Payload/App.app
           (cd ios/App/build/unsigned && zip -qry RED-Fit-UNSIGNED.ipa Payload)
           test -s ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
+
+      - name: Verify actual unsigned IPA payload and Apple bundle identities
+        run: python3 scripts/verify-unsigned-ipa.py ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
 
       - name: Keep private QA evidence
         if: always()
