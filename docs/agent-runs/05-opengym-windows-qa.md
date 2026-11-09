@@ -31,3 +31,11 @@ Vor einem Release **echte Original-App-Tests** auf einem vollständigen Checkout
 
 - PR gegen `main` tatsächlich eröffnet: **#14** — `https://github.com/Redurbabat/Red-Fit/pull/14` (offen, nicht gemergt).
 - Neuer GitHub-Actions-Run **42701819591** für `Original openGym frontend QA` wurde als **failure** zurückgemeldet; der Job `original-frontend` hat **keine abrufbaren Schritte** (`steps: null`). Dies ist **kein** Nachweis, dass der QA-Runner oder die Original-App-Tests begonnen haben. Nach wie vor zuerst Actions-/Runner-Zuteilung prüfen.
+
+## Fortsetzung — QA-Harness Windows-Kompatibilität
+
+- **Noch offener Punkt bearbeitet:** Die bisherigen Fixture-Tests übersprangen ihre wichtigsten Fälle auf Windows, obwohl Agent 05 Windows QA betreut. Der Test-Mock startet jetzt plattformneutral über `process.execPath` und einen separaten Argumentpräfix. Der QA-Runner aktiviert eine Shell auf Windows nur noch für `.cmd`-/`.bat`-Wrapper; direkt ausgeführte Node-`.exe`-Programme erhalten keine unnötige Shell.
+- **Neue Regressionstests:** `--skip-install` wird tatsächlich übersprungen und korrekt protokolliert; ein fehlendes npm-Executable wird mit Fehlerstatus statt falschem Erfolg ausgewiesen.
+- **Tatsächlich ausgeführt (lokal):** Node.js **v22.16.0**, Linux: `node --check tools/opengym-qa/verify.mjs`, `node --check tools/opengym-qa/verify.test.mjs`, `node --test tools/opengym-qa/verify.test.mjs` → **6/6 Tests bestanden, 0 übersprungen, 0 fehlgeschlagen.** Die Tests verwenden ein synthetisches Original-Frontend-Fixture und einen `fake-npm`-Prozess. **Keine reale Windows-Ausführung, keine echten npm-Installations-/Original-Vitest-/Vite-Builds behauptet.**
+- Commits: `7bcef910c4fedad6eac8fb7f1bb13e4ed4476185` (Runner) und `57914039f04f177235f57de1bdf9352caf49cdea` (Tests).
+- **Nächster Test-Gate:** Diese sechs Fixture-Tests auf echtem Windows ausführen und danach original `vendor/opengym-upstream/frontend` via `node tools/opengym-qa/verify.mjs` bauen, sobald kompletter Checkout / npm und Actions-Runner verfügbar sind. iPhone-Priorität und Agent-04-Dateihoheit bleiben unberührt.
