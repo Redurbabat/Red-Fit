@@ -15,11 +15,50 @@ const number = (value, label, max) => {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > max) throw new Error(label + ' muss eine gültige Zahl sein.')
   return value
 }
+// Recipes are stored as normal foods with an optional immutable ingredient snapshot.
+// This reuses the v1 IndexedDB 'foods' store and v1 nutrition backup without migration.
+export function validateRecipe(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw) ||
+      !Array.isArray(raw.ingredients) || raw.ingredients.length < 1 || raw.ingredients.length > 50)
+    throw new Error('Rezept muss 1 bis 50 Zutaten enthalten.')
+  const yieldGrams = number(raw.yieldGrams, 'Zubereitetes Gesamtgewicht', 100000)
+  if (yieldGrams === 0) throw new Error('Zubereitetes Gesamtgewicht muss grösser als 0 sein.')
+  const servings = number(raw.servings, 'Portionen', 1000)
+  if (!Number.isInteger(servings) || servings === 0) throw new Error('Portionen müssen eine positive ganze Zahl sein.')
+  const ingredients = raw.ingredients.map(item => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error('Ungültige Zutat.')
+    const foodName = typeof item.foodName === 'string' ? item.foodName.trim() : ''
+    if (!foodName || foodName.length > 120) throw new Error('Zutatenname fehlt.')
+    const grams = number(item.grams, 'Zutatenmenge', 100000)
+    if (grams === 0) throw new Error('Zutatenmenge muss grösser als 0 sein.')
+    return {
+      foodName, grams,
+      kcal: number(item.kcal, 'Zutatenkalorien', 1000000),
+      protein: number(item.protein, 'Zutatenprotein', 100000),
+      carbs: number(item.carbs, 'Zutatenkohlenhydrate', 100000),
+      fat: number(item.fat, 'Zutatenfett', 100000),
+    }
+  })
+  return { yieldGrams, servings, ingredients }
+}
+
 export function validateFood(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw) || !positiveId(raw.id)) throw new Error('Ungültige Lebensmittel-ID.')
   const name = typeof raw.name === 'string' ? raw.name.trim() : ''
   if (!name || name.length > 120) throw new Error('Lebensmittelname fehlt oder ist zu lang.')
   if (raw.barcode != null && (typeof raw.barcode !== 'string' || raw.barcode.length > 80)) throw new Error('Ungültiger Barcode.')
+  const recipe = raw.recipe === undefined ? null : validateRecipe(raw.recipe)
+  if (recipe) {
+    const nutrients = ['kcal', 'protein', 'carbs', 'fat']
+    for (const nutrient of nutrients) {
+      const total = recipe.ingredients.reduce((sum, item) => sum + item[nutrient], 0)
+      const expected = total * 100 / recipe.yieldGrams
+      const actual = raw[nutrient + '100']
+      if (typeof actual !== 'number' || !Number.isFinite(actual) ||
+          Math.abs(actual - expected) > Math.max(1e-7, Math.abs(expected) * 1e-10))
+        throw new Error('Rezept-Nährwerte stimmen nicht mit den Zutaten überein.')
+    }
+  }
   return {
     id: raw.id, name,
     kcal100: number(raw.kcal100, 'Kalorien', 10000),
@@ -27,6 +66,7 @@ export function validateFood(raw) {
     carbs100: number(raw.carbs100, 'Kohlenhydrate', 1000),
     fat100: number(raw.fat100, 'Fett', 1000),
     ...(raw.barcode ? { barcode: raw.barcode } : {}),
+    ...(recipe ? { recipe } : {}),
   }
 }
 export function scaleFood(food, grams) {
@@ -53,6 +93,25 @@ export function makeMealEntry(food, grams, mealType, date, id) {
   const values = scaleFood(f, grams)
   return validateEntry({ id, date, mealType, foodName: f.name, grams, ...values })
 }
+// A recipe becomes one selectable food: a meal logged later keeps its own snapshot.
+export function makeRecipeFood({ id, name, ingredients, yieldGrams, servings }) {
+  if (!Array.isArray(ingredients) || ingredients.length === 0 || ingredients.length > 50)
+    throw new Error('Rezept muss 1 bis 50 Zutaten enthalten.')
+  const snapshots = ingredients.map(item => {
+    const food = validateFood(item?.food)
+    const grams = number(item?.grams, 'Zutatenmenge', 100000)
+    if (grams === 0) throw new Error('Zutatenmenge muss grösser als 0 sein.')
+    return { foodName: food.name, grams, ...scaleFood(food, grams) }
+  })
+  const recipe = validateRecipe({ ingredients: snapshots, yieldGrams, servings })
+  const totals = totalsOf(recipe.ingredients)
+  const f = 100 / recipe.yieldGrams
+  return validateFood({
+    id, name, kcal100: totals.kcal * f, protein100: totals.protein * f,
+    carbs100: totals.carbs * f, fat100: totals.fat * f, recipe,
+  })
+}
+
 export function totalsOf(entries) {
   return entries.reduce((sum, e) => ({
     kcal: sum.kcal + e.kcal, protein: sum.protein + e.protein,
