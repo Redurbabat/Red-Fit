@@ -1,0 +1,38 @@
+/* Scoped to the original openGym design tokens; no global dock or iOS style overrides. */
+.nutrition-page { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+.nutrition-head { display:flex; align-items:center; gap:16px; margin:8px 0 18px; }
+.nutrition-head h1 { margin:0; }
+.nutrition-head p { margin:3px 0 0; color:var(--label-2); font-size:var(--fs-footnote); }
+.nutrition-section { margin-bottom:14px; }
+.nutrition-section h2 { margin:0 0 12px; font-size:var(--fs-title3); }
+.nutrition-section h3 { font-size:var(--fs-callout); margin:18px 0 8px; }
+.nutrition-section form { display:grid; gap:13px; }
+.nutrition-section label { display:grid; gap:6px; font-size:var(--fs-subhead); color:var(--label-2); }
+.nutrition-page input:not([type=file]), .nutrition-page select {
+  min-width:0; width:100%; min-height:44px; box-sizing:border-box; padding:10px 12px;
+  border:1px solid var(--sep); background:var(--surface-2); color:var(--label);
+  border-radius:var(--r); font:inherit; font-size:16px;
+}
+.nutrition-page button, .nutrition-file { min-height:44px; border-radius:var(--r); font:inherit; cursor:pointer; }
+.nutrition-page button:disabled { opacity:.5; cursor:default; }
+.nutrition-head button, .nutrition-section button:not(.nutrition-primary) { background:var(--surface-2); color:var(--label); border:1px solid var(--sep); padding:10px 13px; }
+.nutrition-page :is(button,input,select,.nutrition-file):focus-visible { outline:2px solid var(--acc-ink); outline-offset:3px; }
+.nutrition-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.nutrition-totals { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding-top:14px; }
+.nutrition-totals strong { font-variant-numeric:tabular-nums; font-size:1.65rem; }
+.nutrition-totals span { display:grid; gap:3px; font-size:var(--fs-footnote); color:var(--label-2); }
+.nutrition-totals b { font-variant-numeric:tabular-nums; font-size:var(--fs-body); color:var(--label); }
+.nutrition-primary { background:var(--acc); color:var(--on-acc); border:0; font-weight:650!important; }
+.nutrition-section .nutrition-secondary { justify-self:start; }
+.nutrition-hint, .nutrition-preview { color:var(--label-2); line-height:1.45; font-size:var(--fs-footnote); margin:8px 0 14px; }
+.nutrition-mealgroup { border-top:1px solid var(--sep-op); margin-top:14px; }
+.nutrition-entry { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; }
+.nutrition-entry > div { min-width:0; overflow-wrap:anywhere; }
+.nutrition-entry .nutrition-hint { margin:4px 0 0; }
+.nutrition-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.nutrition-file { display:flex!important; align-items:center; position:relative; border:1px solid var(--sep); padding:10px 13px; background:var(--surface-2); color:var(--label)!important; overflow:hidden; }
+.nutrition-file input { position:absolute; opacity:0; width:100%; height:100%; inset:0; cursor:pointer; }
+.nutrition-error, .nutrition-success { padding:12px; margin:12px 0; border-radius:var(--r); border:1px solid var(--sep); }
+.nutrition-error { color:var(--red); } .nutrition-success { color:var(--green); }
+@media (max-width:360px) { .nutrition-grid { grid-template-columns:1fr; } }
+@media (prefers-reduced-motion:reduce) { .nutrition-page * { scroll-behavior:auto; transition:none!important; } }
