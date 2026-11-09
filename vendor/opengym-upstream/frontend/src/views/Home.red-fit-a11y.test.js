@@ -24,7 +24,7 @@ describe('RED Fit branding and screen-reader semantics in the original Home view
   it('keeps both week navigation arrows at a 44px minimum touch area', () => {
     // openGym extends .iconbtn's painted dimensions by 6px on each side.
     const css = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8')
-    const hitArea = css.match(/\.iconbtn::before[^}]*\{[^}]*inset:\s*(-\d+)px\s*\}/)?.[1]
+    const hitArea = css.match(/\.iconbtn::before[^}]*\{[^}]*inset:\s*-(\d+)px\s*\}/)?.[1]
     expect(hitArea).toBe('6')
     const arrows = [...source.matchAll(/<button className="iconbtn" style=\{\{ width: (\d+), height: (\d+), fontSize: 'var\(--fs-subhead\)' \}\}/g)]
     expect(arrows).toHaveLength(2)
