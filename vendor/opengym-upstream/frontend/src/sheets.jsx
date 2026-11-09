@@ -74,7 +74,7 @@ import { shareRoutineSheet } from './components/RoutineShare.jsx'
 import { youtubeSearchUrl } from './lib/youtube.js'
 import { openExternal } from './components/CustomMedia.jsx'
 import { repeatSessionEntries } from './lib/session-repeat.js'
-import { swapActiveExercise } from './lib/active-exercise-swap.js'
+import { swapActiveExercise, hasLoggedWork } from './lib/active-exercise-swap.js'
 import WarmupConfig from './components/WarmupConfig.jsx'
 import { warmupModeOf, ownRowsOf } from './lib/warmup-ramp.js'
 import { useSheetKeyboard, useRevealActiveChip, tappable } from './lib/use-sheet-keyboard.js'
@@ -1940,8 +1940,9 @@ function commitActiveSwap(index, ex, cfg) {
     ui().stopRest()
     update(state => { swapActiveExercise(state.active, index, replacement, options) }, true)
   }
-  const logged = (current.sets || []).some(set => set.done === true)
-  if (!logged) { apply(); return }
+  // A unilateral set with only one completed limb already holds real training data.
+  // Use the same guard as swapActiveExercise so this confirmation cannot be bypassed.
+  if (!hasLoggedWork(current)) { apply(); return }
 
   if (current.sg) {
     swapGroupSheet(groupDisposition => apply({ loggedConfirmed: true, groupDisposition }))
