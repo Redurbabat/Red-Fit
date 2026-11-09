@@ -14,21 +14,22 @@ guard let icon = NSImage(contentsOf: source) else {
 }
 
 func drawAsset(to path: URL, size: Int, imageSize: CGFloat) throws {
-    guard let bitmap = NSBitmapImageRep(
-        bitmapDataPlanes: nil,
-        pixelsWide: size,
-        pixelsHigh: size,
-        bitsPerSample: 8,
-        samplesPerPixel: 3,
-        hasAlpha: false,
-        isPlanar: false,
-        colorSpaceName: .deviceRGB,
-        bytesPerRow: 0,
-        bitsPerPixel: 0
-    ), let context = NSGraphicsContext(bitmapImageRep: bitmap) else {
+    // A 32-bit RGB context with a skipped fourth component is supported in headless
+    // macOS CI and does not encode an alpha channel into App Store icons.
+    // The previous three-component NSBitmapImageRep initializer returned nil on macos-26.
+    guard let cgContext = CGContext(
+        data: nil,
+        width: size,
+        height: size,
+        bitsPerComponent: 8,
+        bytesPerRow: size * 4,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.noneSkipLast.rawValue
+    ) else {
         throw NSError(domain: "REDFitAssets", code: 1,
-                      userInfo: [NSLocalizedDescriptionKey: "Cannot create RGB bitmap"])
+                      userInfo: [NSLocalizedDescriptionKey: "Cannot create RGB Core Graphics context"])
     }
+    let context = NSGraphicsContext(cgContext: cgContext, flipped: false)
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current = context
     context.imageInterpolation = .high
@@ -40,6 +41,11 @@ func drawAsset(to path: URL, size: Int, imageSize: CGFloat) throws {
               from: .zero, operation: .sourceOver, fraction: 1.0)
     context.flushGraphics()
     NSGraphicsContext.restoreGraphicsState()
+    guard let cgImage = cgContext.makeImage() else {
+        throw NSError(domain: "REDFitAssets", code: 3,
+                      userInfo: [NSLocalizedDescriptionKey: "Cannot snapshot RGB context"])
+    }
+    let bitmap = NSBitmapImageRep(cgImage: cgImage)
     guard let data = bitmap.representation(using: .png, properties: [:]) else {
         throw NSError(domain: "REDFitAssets", code: 2,
                       userInfo: [NSLocalizedDescriptionKey: "Cannot encode PNG"])
