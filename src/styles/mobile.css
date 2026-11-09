@@ -197,6 +197,9 @@
 :root[data-reduced-motion="true"] .bottom-nav__selection {
   transition: none;
 }
+:root[data-reduced-motion="true"] .bottom-nav__item[data-pressed="true"] {
+  transform: none;
+}
 
 /* Sticky action area above the bottom nav (e.g. workout controls). */
 .action-bar {
