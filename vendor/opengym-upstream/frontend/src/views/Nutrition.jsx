@@ -212,7 +212,7 @@ function NutritionForScope({ scope }) {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) { setError('Backup ist zu gross (max. 5 MB).'); return }
+    if (file.size > 64 * 1024 * 1024) { setError('Backup ist zu gross (max. 64 MB).'); return }
     let backup
     try { backup = JSON.parse(await file.text()) } catch { setError('Keine gültige JSON-Datei.'); return }
     if (!window.confirm('Ernährungseinträge aus dieser Datei hinzufügen? Bestehende Daten bleiben erhalten.')) return
