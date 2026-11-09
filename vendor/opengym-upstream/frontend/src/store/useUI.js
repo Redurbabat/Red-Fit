@@ -437,8 +437,16 @@ export const useUI = create((set, get) => ({
   // already called Ready opens it again. Nothing is sent back: the notification already shows it.
   followNativeRest({ endsAt, left, total, paused }) {
     const tm = get().timer
-    const forIdx = tm?.forIdx
-    const sessionId = tm?.sessionId ?? useStore.getState().S?.active?.id
+    // An Android notification can report a late button press after its rest was skipped,
+    // expired, or discarded with another workout. Never recreate a rest from that event.
+    // The persisted timer is restored before the native listener is registered at boot.
+    if (!tm) return
+    if (tm.sessionId != null && tm.sessionId !== useStore.getState().S?.active?.id) {
+      get().stopRest()
+      return
+    }
+    const forIdx = tm.forIdx
+    const sessionId = tm.sessionId ?? useStore.getState().S?.active?.id
     const kind = { ...(sessionId != null ? { sessionId } : {}), ...(tm?.kind === 'switch' ? { kind: 'switch' } : {}), ...(tm?.forSet != null ? { forSet: tm.forSet } : {}), ...(tm?.autoNext ? { autoNext: tm.autoNext } : {}) }
     if (paused) {
       stopRestTicking()
