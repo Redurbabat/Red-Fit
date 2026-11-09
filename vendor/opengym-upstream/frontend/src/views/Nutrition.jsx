@@ -5,7 +5,7 @@ import { MOBILE, shareExport } from '../lib/mobile.js'
 import { EMPTY, localDateKey, makeMealEntry, MEAL_TYPES, scaleFood, totalsOf } from '../nutrition/model.js'
 import { exportNutrition, importNutrition, loadNutrition, removeMealEntry, saveFood, saveMealEntry } from '../nutrition/repository.js'
 import { nutritionScope } from '../nutrition/scope.js'
-import { writeNutritionDocumentBackup } from '../nutrition/native-backup.js'
+import { readLatestNutritionDocumentBackup, writeNutritionDocumentBackup } from '../nutrition/native-backup.js'
 import '../nutrition/nutrition.css'
 
 const numberText = (value, digits = 1) => Number(value || 0).toLocaleString('de-CH', { maximumFractionDigits: digits })
@@ -33,6 +33,7 @@ function NutritionForScope({ scope }) {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const busyRef = useRef(false)
+  const restoringRef = useRef(false)
   const [loading, setLoading] = useState(true)
 
   async function refresh() {
@@ -126,6 +127,25 @@ function NutritionForScope({ scope }) {
       'Importiert: ' + added.foods + ' Lebensmittel und ' + added.entries + ' Einträge.')
 
   }
+  async function onRestoreNative() {
+    if (busyRef.current || restoringRef.current) return
+    restoringRef.current = true
+    setBusy(true)
+    setError(''); setMessage('')
+    let latest
+    try {
+      latest = await readLatestNutritionDocumentBackup(scope)
+    } catch (e) {
+      setError(e?.message || 'Gerätesicherung konnte nicht gelesen werden.')
+      return
+    } finally {
+      restoringRef.current = false
+      setBusy(false)
+    }
+    if (!window.confirm('Gerätesicherung vom ' + latest.day + ' für dieses Konto importieren? Bestehende Mahlzeiten bleiben erhalten.')) return
+    await run(() => importNutrition(scope, latest.backup), added =>
+      'Gerätesicherung vom ' + latest.day + ' importiert: ' + added.foods + ' Lebensmittel und ' + added.entries + ' Einträge ergänzt.')
+  }
   if (loading) return <main className="narrow nutrition-page"><p role="status">Ernährung wird geladen …</p></main>
 
   return <main className="narrow nutrition-page">
@@ -198,9 +218,10 @@ function NutritionForScope({ scope }) {
     <section className="card nutrition-section" aria-labelledby="nutrition-backup">
       <h2 id="nutrition-backup">Ernährung sichern</h2>
       <p className="nutrition-hint">Ernährung liegt in einer eigenen lokalen IndexedDB und wird NICHT vom originalen openGym-Workout-Backup oder Server-Sync erfasst. Der Speicher ist pro openGym-Server und Benutzerkonto getrennt. Vor Gerätewechsel oder App-Löschung immer eine JSON-Datei extern sichern.</p>
-      {MOBILE && <p className="nutrition-hint">Nach jeder Änderung versucht RED Fit zusätzlich eine datierte Kopie unter Dateien → Auf meinem iPhone → RED Fit / Ernaehrung (bzw. Android-Dokumente) anzulegen. Eine fehlgeschlagene Sicherung wird oben angezeigt. Kopiere die Dateien vor einer Deinstallation aus dem App-Ordner heraus; ein Backup im App-Ordner allein schützt NICHT vor App-Löschung.</p>}
+      {MOBILE && <p className="nutrition-hint">Nach jeder Änderung versucht RED Fit zusätzlich eine datierte Kopie im App-Dokumentenordner anzulegen. Der Ordner ist je nach iOS-Konfiguration nicht direkt in der Dateien-App sichtbar. Die lokale Sicherung schützt NICHT vor App-Löschung; vor Gerätewechsel oder Deinstallation immer JSON extern exportieren.</p>}
       <div className="nutrition-actions">
         <button type="button" disabled={busy} onClick={onExport}>JSON exportieren</button>
+        {MOBILE && <button type="button" disabled={busy} onClick={onRestoreNative}>Letzte Gerätesicherung wiederherstellen</button>}
         <label className="nutrition-file">JSON importieren<input type="file" accept=".json,application/json" disabled={busy} onChange={onImport} /></label>
       </div>
       <p className="nutrition-hint">Import ergänzt vorhandene Einträge und bewahrt unterschiedliche Datensätze mit gleicher ID.</p>
