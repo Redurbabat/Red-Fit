@@ -78,4 +78,16 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     expect(stats.style.getPropertyValue('--rf-dock-index')).toBe('3')
     expect(stats.querySelector('button[aria-current="page"]')?.textContent).toContain('Stats')
   })
+  it.each([
+    ['/admin', '0', 'Home'],
+    ['/coach/setup', '0', 'Home'],
+    ['/coach/intake', '1', 'Plan'],
+  ])('keeps the original parent tab lit on %s', (path, index, label) => {
+    const nav = renderRoute(path)
+    expect(nav.getAttribute('data-redfit-selection')).toBe('visible')
+    expect(nav.style.getPropertyValue('--rf-dock-index')).toBe(index)
+    const selected = [...nav.querySelectorAll('button[aria-current="page"]')]
+    expect(selected).toHaveLength(1)
+    expect(selected[0].textContent).toContain(label)
+  })
 })
