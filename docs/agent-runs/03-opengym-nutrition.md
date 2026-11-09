@@ -147,3 +147,11 @@
 
 ### Nächster Verifikationsschritt
 `npm ci && npm test && npm run build:mobile` im originalen openGym-Frontend unter funktionierendem CI/iOS-Runner, danach reales iPhone-Szenario: altes v1-Ernährungstagebuch → v2-Migration → Rezept/Plan → Einkaufsliste → als gegessen eintragen → native Backup-Datei exportieren/neu importieren. Erst mit echtem Roundtrip freigeben.
+
+
+### CI-Fehler jetzt konkret lokalisiert (Run `42710138031`)
+- `offline-regressions`: **success**. `verify`: **failure**.
+- Nachweislich erfolgreich im `verify`-Job: `npm ci` (Root-Projekt, 512 Pakete installiert) und `npm run typecheck`. **Fehlgeschlagen**: `npm run lint` bei `src/services/workout/setNotes.ts:10:14` wegen ESLint `no-control-regex` (der vorhandene reguläre Ausdruck `/[\\u0000-\\u001f\\u007f]/g`). Die Schritte `npm run test` und `npm run build` wurden danach **übersprungen**, sind nicht bestanden.
+- Der Root-Workout-Datei-Blob ist auf `main` und `agent/redfit-03-nutrition` identisch: `7217d9cf9736c03bd7d921ba0a33b4b4b7aa1669`. Fehler ist somit **nicht von Agent 03 eingeführt**. Root-`src/` gehört laut Agent-Dateihoheit nicht zu diesem Ernährungsauftrag; bewusst keine Änderung an Workout-Code vorgenommen.
+- Wichtig: Selbst ein später erfolgreicher Root-Build beweist nicht automatisch den **separat installierten original-openGym-Frontend-Build** unter `vendor/opengym-upstream/frontend/`. Für iPhone-Freigabe müssen die Vitest-/Vite-/Capacitor-Tests dort separat laufen.
+- Benötigte Koordination: Root-Workout-Lintfehler im zuständigen Agenten-/Hauptbranch beheben und einen nachweislichen Build des originalen openGym-Frontends ausführen. PR #15 bleibt bis dahin offen.
