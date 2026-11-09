@@ -51,8 +51,9 @@ def verify_ipa(ipa: Path, app_id: str) -> list[str]:
                 expected = app_id + suffix
                 if plist.get('CFBundleIdentifier') != expected:
                     errors.append(f'{label}: CFBundleIdentifier must be {expected}, got {plist.get("CFBundleIdentifier")!r}')
-                if label in ('iPhone', 'Watch') and plist.get('CFBundleDisplayName') != 'RED Fit':
-                    errors.append(f'{label}: CFBundleDisplayName is not RED Fit')
+                expected_name = 'RED Fit animations' if label == 'Background asset downloader' else 'RED Fit'
+                if plist.get('CFBundleDisplayName') != expected_name:
+                    errors.append(f'{label}: CFBundleDisplayName must be {expected_name}')
                 if label == 'Watch' and plist.get('WKCompanionAppBundleIdentifier') != app_id:
                     errors.append(f'Watch: companion app ID does not match {app_id}')
             for required in (APP + 'App', APP + 'Assets.car', APP + 'public/index.html'):
@@ -69,15 +70,16 @@ def selftest() -> None:
     with tempfile.TemporaryDirectory() as folder:
         path = Path(folder) / 'fixture.ipa'
         app_id = 'ch.opengym.app'
-        def make_zip(*, corrupt_watch: bool = False, omit_widget: bool = False) -> None:
+        def make_zip(*, corrupt_watch: bool = False, omit_widget: bool = False, old_widget_brand: bool = False) -> None:
             with ZipFile(path, 'w', ZIP_STORED) as zf:
                 for label, (prefix, suffix) in NATIVE_BUNDLES.items():
                     if omit_widget and label == 'Watch widgets':
                         continue
                     bundle_id = app_id + ('.wrong' if corrupt_watch and label == 'Watch' else suffix)
                     info = {'CFBundleIdentifier': bundle_id}
-                    if label in ('iPhone', 'Watch'):
-                        info['CFBundleDisplayName'] = 'RED Fit'
+                    info['CFBundleDisplayName'] = ('openGym' if old_widget_brand and label == 'Watch widgets'
+                                                   else 'RED Fit animations' if label == 'Background asset downloader'
+                                                   else 'RED Fit')
                     if label == 'Watch':
                         info['WKCompanionAppBundleIdentifier'] = app_id
                     zf.writestr(prefix + 'Info.plist', plistlib.dumps(info))
@@ -89,9 +91,11 @@ def selftest() -> None:
         assert any('Watch: CFBundleIdentifier' in x for x in verify_ipa(path, app_id))
         make_zip(omit_widget=True)
         assert any('Watch widgets: missing' in x for x in verify_ipa(path, app_id))
+        make_zip(old_widget_brand=True)
+        assert any('Watch widgets: CFBundleDisplayName' in x for x in verify_ipa(path, app_id))
         path.write_bytes(b'not a zip')
         assert any('Cannot read IPA as ZIP' in x for x in verify_ipa(path, app_id))
-    print('IPA verifier self-tests: 4/4 passed')
+    print('IPA verifier self-tests: 5/5 passed')
 
 
 def main() -> int:
