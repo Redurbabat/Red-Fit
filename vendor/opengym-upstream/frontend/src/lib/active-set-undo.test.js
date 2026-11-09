@@ -23,6 +23,22 @@ describe('Undo a deleted set in the exact active-workout occurrence', () => {
     expect(locateUndoSetOccurrence(active, token)).toBe(2)
   })
 
+  it('restores a uniquely identifiable selected entry after another exercise is removed', () => {
+    const active = session([entry('squat', 'one'), entry('bench', 'two'), entry('row', 'three')])
+    const token = tokenAfterDelete(active, 1)
+    active.entries.splice(0, 1)
+    expect(locateUndoSetOccurrence(active, token)).toBe(0)
+    active.entries.splice(1, 1)
+    expect(locateUndoSetOccurrence(active, token)).toBe(0)
+  })
+
+  it('rejects a removal when the selected exercise itself is missing', () => {
+    const active = session([entry('squat', 'one'), entry('bench', 'two'), entry('row', 'three')])
+    const token = tokenAfterDelete(active, 1)
+    active.entries.splice(1, 1)
+    expect(locateUndoSetOccurrence(active, token)).toBe(-1)
+  })
+
   it('refuses a wrong duplicate shifted into the selected index after deletion', () => {
     const active = session([entry('bench', 'one'), entry('bench', 'two'), entry('bench', 'three')])
     const token = tokenAfterDelete(active, 1)
