@@ -38,6 +38,9 @@ jobs:
       - name: Test original iOS mobile asset guard (Node only)
         run: npm run test:ios-bundle
 
+      - name: Test RED Fit native identity and entitlement guard (Node only)
+        run: npm run test:ios-identity-unit
+
       - name: Install original locked dependencies
         run: npm ci
 
