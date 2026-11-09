@@ -1,0 +1,84 @@
+# Private QA of the ORIGINAL openGym iOS/Xcode app, rebranded as RED Fit.
+# The upstream workflow nested under vendor/ is NOT a runnable root GitHub Actions workflow.
+# An unsigned IPA is a build artifact only; it is not ready to install without valid signing.
+name: RED Fit – original iPhone
+
+on:
+  pull_request:
+    paths:
+      - 'vendor/opengym-upstream/frontend/**'
+      - '.github/workflows/red-fit-iphone.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: red-fit-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    runs-on: macos-26
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: vendor/opengym-upstream/frontend
+    steps:
+      - name: Checkout complete original openGym tree
+        uses: actions/checkout@v4
+
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: vendor/opengym-upstream/frontend/package-lock.json
+
+      - name: Install original locked dependencies
+        run: npm ci
+
+      - name: Build and brand existing Capacitor app
+        run: npm run build:ios
+
+      - name: Attach original Apple integrations
+        run: |
+          ruby ios/ci/add-asset-downloader.rb
+          ruby ios/ci/add-watch-app.rb
+          ruby ios/ci/add-widgets.rb
+
+      - name: Build unsigned iPhone Simulator app
+        run: |
+          set -o pipefail
+          mkdir -p ios/App/build
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/App/build/dd-sim CODE_SIGNING_ALLOWED=NO \
+            build | tee ios/App/build/simulator.log
+          test -d ios/App/build/dd-sim/Build/Products/Debug-iphonesimulator/App.app
+
+      - name: Build device binary and package unsigned IPA
+        run: |
+          set -o pipefail
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath ios/App/build/dd-device CODE_SIGNING_ALLOWED=NO \
+            build | tee ios/App/build/device.log
+          app=ios/App/build/dd-device/Build/Products/Debug-iphoneos/App.app
+          test -d "$app"
+          mkdir -p ios/App/build/unsigned/Payload
+          ditto "$app" ios/App/build/unsigned/Payload/App.app
+          (cd ios/App/build/unsigned && zip -qry RED-Fit-UNSIGNED.ipa Payload)
+          test -s ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
+
+      - name: Keep private QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: red-fit-ios-unsigned-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            vendor/opengym-upstream/frontend/ios/App/build/simulator.log
+            vendor/opengym-upstream/frontend/ios/App/build/device.log
+            vendor/opengym-upstream/frontend/ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
