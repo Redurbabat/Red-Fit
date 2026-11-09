@@ -28,7 +28,7 @@ function useDialogFocus(open: boolean, onClose: () => void): RefObject<HTMLDivEl
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const background = Array.from(
       document.querySelectorAll<HTMLElement>(".app-shell__content, .desktop-nav, .bottom-nav, .fab"),
-    ).filter((element) => !dialog.contains(element));
+    ).filter((element) => !element.contains(dialog) && !dialog.contains(element));
     const inertBefore = background.map((element) => element.inert);
     background.forEach((element) => { element.inert = true; });
     const overflowBefore = document.body.style.overflow;
