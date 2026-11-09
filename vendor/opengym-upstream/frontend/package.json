@@ -11,7 +11,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:fatigue-probe": "node scripts/fatigue-monotonic-probe.mjs",
-    "pdf:check": "node scripts/pdf/render-samples.mjs --out pdf-samples --langs en,de,ar --paper A4,Letter --check"
+    "pdf:check": "node scripts/pdf/render-samples.mjs --out pdf-samples --langs en,de,ar --paper A4,Letter --check",
+    "ios:brand": "swift ios/ci/brand-red-fit.swift",
+    "test:ios-identity": "node scripts/verify-ios-identity.mjs",
+    "build:ios": "npm run build:mobile && npm run ios:brand && npm run test:ios-identity"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
