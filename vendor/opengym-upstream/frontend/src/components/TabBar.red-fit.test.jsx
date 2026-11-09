@@ -108,7 +108,7 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     const nav = renderRoute('/home')
     expect(nav.getAttribute('data-redfit-compact')).toBe('false')
     const labels = [...nav.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))
-    expect(labels).toEqual(['Home', 'Plan', 'Start', 'Stats', 'Exercises'].map(t))
+    expect(labels).toEqual(['Home', 'Plan', 'Start', 'Stats', 'Exercises'].map(label => t(label)))
   })
 
   it('preserves the expanded dock when Reduced Motion is enabled or the device rotates', () => {
