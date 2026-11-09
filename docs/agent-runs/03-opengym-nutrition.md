@@ -180,3 +180,21 @@
 - Neuer GitHub-Actions-Run **`42711524409`**, Job **`129482008371`** wurde tatsächlich gestartet. Verifizierte Steps: Checkout und `npm ci` **success**, gezielte Nutrition-Vitest-Suite erneut **success**. Die neue vollständige `npm test`-Suite war bei der letzten Abfrage **in_progress**; Build und Bundlekontrolle **pending**. Dies ist **noch kein erfolgreich abgeschlossener Volltest**.
 - Der Download von Logs während des laufenden Jobs gab **404 BlobNotFound**; daraus lässt sich keine konkrete Testursache ableiten. Endergebnis, genaue Testanzahl sowie Build-Erfolg müssen anhand der endgültigen GitHub-Actions-Steps und Logs nachgetragen werden.
 - Keine Änderungen an alten Root-Workout-Dateien, originalen Trainingsdaten, API oder nativer iOS-Signierung.
+
+
+## Fortsetzung — vollständige Original-openGym-Regressionssuite erfolgreich (2026-11-09)
+
+### Tatsächlich verifiziert
+- Der zuvor laufende Run `42711524409`, Job `129482008371`, ist mittlerweile **completed/success**. Job-Steps sowie vollständige originale GitHub-Runner-Logs wurden gelesen.
+- `npx vitest run src/nutrition`: **61/61 Tests aus 6 Testdateien erfolgreich**.
+- Anschliessend `npm test` im Original-Frontend `vendor/opengym-upstream/frontend/`: **7'893/7'893 Tests aus 657/657 Dateien bestanden**. Damit läuft das gesamte vorhandene Original-openGym-Vitest-Testinventar erfolgreich, nicht nur die Ernährungsfunktion.
+- Danach `VITE_MOBILE=1 npm run build`: **success**, `dist/assets/Nutrition-*.js` und `Nutrition-*.css` nachgewiesen. Mobile-`opengym-flavor`-Prüfung **success**.
+- Damit sind die vorher blockierten vollständigen openGym-Tests **erledigt**. Den gesonderten Root-`ci.yml`-Fehler in der *alten* Workout-Datei hat das nicht behoben; der ist weiterhin ausserhalb dieses Agentenbereichs.
+
+### Neuer nächster Validierungsschritt in CI
+- Die dedizierte `.github/workflows/opengym-nutrition.yml` wurde um Folgeschritte **nach** Test und Mobile-Vite-Build ergänzt:
+  1. `node scripts/check-bundle-syntax.mjs dist`: vorhandenen Original-openGym-Kompatibilitätsprüfer für Safari 15.5 über alle kompilierten Bundles ausführen.
+  2. `npx cap copy ios`: mobile Webdateien in das **bestehende** originale iOS-Capacitor-Projekt kopieren. Das ist **kein** `cap sync` und baut/signiert keine native IPA.
+  3. `node scripts/check-mobile-bundle.mjs` plus Assertion auf `ios/App/App/public/assets/Nutrition-*.js`: überprüfen, dass die mobile Seite und der Nutrition-Chunk wirklich im nativen App-Public-Ordner liegen.
+- Diese neuen nachgelagerten Schritte sind erst nach einem erfolgreichen neuen GitHub-Actions-Lauf als bestanden zu betrachten. Das iPhone-Gerät, Xcode, Signing und Backup-/IndexedDB-Roundtrip sind **nicht** Teil dieser CI und bleiben offen.
+- Es wurden weder Apple-Projektdateien noch fremde Workout- oder Root-App-Quellcodes verändert; der Capacitor-Copy-Schritt arbeitet nur auf dem temporären CI-Runner.
