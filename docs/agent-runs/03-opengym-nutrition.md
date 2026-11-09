@@ -198,3 +198,17 @@
   3. `node scripts/check-mobile-bundle.mjs` plus Assertion auf `ios/App/App/public/assets/Nutrition-*.js`: überprüfen, dass die mobile Seite und der Nutrition-Chunk wirklich im nativen App-Public-Ordner liegen.
 - Diese neuen nachgelagerten Schritte sind erst nach einem erfolgreichen neuen GitHub-Actions-Lauf als bestanden zu betrachten. Das iPhone-Gerät, Xcode, Signing und Backup-/IndexedDB-Roundtrip sind **nicht** Teil dieser CI und bleiben offen.
 - Es wurden weder Apple-Projektdateien noch fremde Workout- oder Root-App-Quellcodes verändert; der Capacitor-Copy-Schritt arbeitet nur auf dem temporären CI-Runner.
+
+
+## Fortsetzung — iOS-Capacitor-Webassets unabhängig von Volltests verifiziert (09.11.2026)
+
+- Anfangs liefen die iOS-Copy-Schritte **hinter** der rund fünfminütigen vollständigen original-openGym-Vitest-Suite. Die beiden bereits gestarteten Runs `42712685143` und `42712831083` hatten die Kopierprüfung daher zunächst nicht erreicht. Der vorhandene dedizierte Workflow `.github/workflows/opengym-nutrition.yml` wurde **ohne Änderung anderer Produktdateien** in zwei parallele, unabhängig auswertbare Jobs aufgeteilt: `nutrition` (61 Ernährungstests, volle OpenGym-Tests, mobiler Vite-Build) und `ios-assets` (mobiler Build, Safari-Kompatibilität, Cap-Copy, Kontrolle des Nutrition-Chunks).
+- Neuer GitHub-Actions-Run **`42713511812`**, Job **`129488934492`** `iOS assets / Safari 15.5 compatibility`: **completed/success**. Originale GitHub-Job-Steps und Job-Logs wurden tatsächlich geprüft. Alle Einzelstufen bestanden:
+  - `VITE_MOBILE=1 npm run build`: erfolgreicher originaler OpenGym-Vite-Build;
+  - `node scripts/check-bundle-syntax.mjs dist`: erfolgreicher Original-Parser-/Safari-15.5-Kompatibilitätscheck des Bundles;
+  - `npx cap copy ios`: **erfolgreich**; Original-Log: `Copying web assets from dist to ios/App/App/public` und `copy ios`;
+  - `node scripts/check-mobile-bundle.mjs`: **erfolgreich**, Original-Log: `Mobile bundle OK in dist, ios/App/App/public.`;
+  - zusätzliche Dateiprüfung: **erfolgreich**, Original-Log: `Nutrition chunk present in iOS Capacitor web assets`.
+- Wichtig: Dies verifiziert die **Webdateien im vorhandenen iOS-Projekt auf dem temporären Linux-CI-Runner**. Kein `cap sync`, `pod install`, Xcode-Compile, Apple-Developer-Signing, IPA, iPhone-Installation, iOS-Dateifreigabe oder realer IndexedDB-/Backup-Roundtrip. Native Änderungen bleiben bei Agent 04.
+- Die vollständige OpenGym-Testsuite ist bereits im früheren Run `42711524409` mit **7'893/7'893** erfolgreich belegt. Im parallelen `nutrition`-Job von Run `42713511812` war die erneute volle Suite zum Zeitpunkt dieser Dokumentation noch in Arbeit; den gesamten neueren **Run** nicht voreilig als grün markieren.
+- PR #15 weiter offen gegen `main`, keine Selbst-Merge-Aktion. Nächste sinnvolle Verifikation: echte IPA-/iPhone-QA und Navigation/Offline-Datenmigration mit Agent 04 koordinieren; darunter Original-Workout-Backup getrennt von Nutrition-v2 im Gerätespeicher prüfen.
