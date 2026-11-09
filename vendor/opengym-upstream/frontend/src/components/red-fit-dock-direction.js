@@ -45,3 +45,35 @@ export class RedFitDockDirectionTracker {
 export function canCompactRedFitDock(phoneQuery, reducedMotionQuery) {
   return Boolean(phoneQuery?.matches && !reducedMotionQuery?.matches)
 }
+
+// Recognise the initial gesture axis without blocking browser touch handling.
+// Horizontal carousels must not make a fixed bottom dock collapse from scroll jitter.
+export class RedFitDockGestureAxis {
+  constructor(threshold = 8, ratio = 1.25) {
+    this.threshold = threshold
+    this.ratio = ratio
+    this.end()
+  }
+
+  begin(x, y) {
+    this.startX = x
+    this.startY = y
+    this.direction = null
+  }
+
+  sample(x, y) {
+    if (this.direction || this.startX === null) return this.direction
+    const dx = Math.abs(x - this.startX)
+    const dy = Math.abs(y - this.startY)
+    if (Math.max(dx, dy) < this.threshold) return null
+    if (dx > dy * this.ratio) this.direction = 'horizontal'
+    else if (dy > dx * this.ratio) this.direction = 'vertical'
+    return this.direction
+  }
+
+  end() {
+    this.startX = null
+    this.startY = null
+    this.direction = null
+  }
+}

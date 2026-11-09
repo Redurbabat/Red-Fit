@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import TabBar from './TabBar.jsx'
 import { t } from '../lib/i18n.js'
-import { canCompactRedFitDock } from './red-fit-dock-direction.js'
+import { RedFitDockGestureAxis, canCompactRedFitDock } from './red-fit-dock-direction.js'
 import { DEF, useStore } from '../store/useStore.js'
 
 const where = vi.hoisted(() => ({ loc: { pathname: '/home' } }))
@@ -115,6 +115,20 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     expect(canCompactRedFitDock({ matches: true }, { matches: false })).toBe(true)
     expect(canCompactRedFitDock({ matches: true }, { matches: true })).toBe(false)
     expect(canCompactRedFitDock({ matches: false }, { matches: false })).toBe(false)
+  })
+
+  it('keeps horizontal carousel gestures separate from vertical dock scrolling', () => {
+    const gesture = new RedFitDockGestureAxis()
+    gesture.begin(30, 30)
+    expect(gesture.sample(34, 34)).toBe(null)
+    expect(gesture.sample(55, 33)).toBe('horizontal')
+    expect(gesture.sample(55, 85)).toBe('horizontal')
+    gesture.end()
+    gesture.begin(30, 30)
+    expect(gesture.sample(34, 52)).toBe('vertical')
+    expect(gesture.sample(15, 20)).toBe('vertical')
+    gesture.end()
+    expect(gesture.sample(10, 10)).toBe(null)
   })
 
 })

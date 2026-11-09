@@ -10,7 +10,7 @@ import { useConnectionTrouble } from './SyncBanner.jsx'
 import { retapTab } from '../lib/scroll-top.js'
 import './red-fit-dock.css'
 import { resolveDockRoute } from './red-fit-dock-route.js'
-import { RedFitDockDirectionTracker, canCompactRedFitDock } from './red-fit-dock-direction.js'
+import { RedFitDockDirectionTracker, RedFitDockGestureAxis, canCompactRedFitDock } from './red-fit-dock-direction.js'
 
 // Module scope, not TabBar's render body. Declared inside it, `Tab` was a new function on every
 // render, so React saw a different component type each time and threw the button away and built a
@@ -43,27 +43,41 @@ export default function TabBar({ onStart }) {
     const phoneQuery = window.matchMedia('(max-width: 767px) and (pointer: coarse)')
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     const tracker = new RedFitDockDirectionTracker()
+    const gesture = new RedFitDockGestureAxis()
     const isEnabled = () => canCompactRedFitDock(phoneQuery, reducedMotionQuery)
     const onPolicyChange = () => {
-      if (!isEnabled()) { tracker.end(); setCompact(false) }
+      if (!isEnabled()) { tracker.end(); gesture.end(); setCompact(false) }
     }
     const onTouchStart = event => {
       if (!isEnabled() || event.touches?.length !== 1 || event.target?.closest?.('#tabbar, input, textarea, select, [role="dialog"]')) {
         tracker.end()
+        gesture.end()
         return
       }
+      const touch = event.touches[0]
+      gesture.begin(touch.clientX, touch.clientY)
       tracker.begin(window.scrollY)
     }
-    const onTouchEnd = () => tracker.end()
+    // Do not react to a horizontal week strip, carousel or chip rail.
+    // Keep the browser's native touch gesture entirely unmodified.
+    const onTouchMove = event => {
+      if (!tracker.active) return
+      if (event.touches?.length !== 1) { tracker.end(); gesture.end(); return }
+      const touch = event.touches[0]
+      if (gesture.sample(touch.clientX, touch.clientY) === 'horizontal') tracker.end()
+    }
+    const onTouchEnd = () => { tracker.end(); gesture.end() }
     const onScroll = () => {
       if (!isEnabled()) return
       if (window.scrollY < 20) { setCompact(false); return }
+      if (gesture.direction !== 'vertical') return
       const direction = tracker.sample(window.scrollY)
       if (direction) setCompact(direction === 'down')
     }
     phoneQuery.addEventListener?.('change', onPolicyChange)
     reducedMotionQuery.addEventListener?.('change', onPolicyChange)
     document.addEventListener('touchstart', onTouchStart, { passive: true })
+    document.addEventListener('touchmove', onTouchMove, { passive: true })
     document.addEventListener('touchend', onTouchEnd, { passive: true })
     document.addEventListener('touchcancel', onTouchEnd, { passive: true })
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -71,6 +85,7 @@ export default function TabBar({ onStart }) {
       phoneQuery.removeEventListener?.('change', onPolicyChange)
       reducedMotionQuery.removeEventListener?.('change', onPolicyChange)
       document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchmove', onTouchMove)
       document.removeEventListener('touchend', onTouchEnd)
       document.removeEventListener('touchcancel', onTouchEnd)
       window.removeEventListener('scroll', onScroll)
