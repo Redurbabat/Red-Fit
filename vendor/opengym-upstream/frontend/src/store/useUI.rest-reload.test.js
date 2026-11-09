@@ -83,6 +83,32 @@ describe('the rest timer across a reload', () => {
     expect(useUI.getState().timer.left).toBe(33)
   })
 
+  it('saves the source workout id, so a paused rest resumes only in the same session', () => {
+    useUI.getState().startRest(90, 0)
+    expect(saved().sessionId).toBe('a')
+    useUI.getState().pauseRest()
+    const paused = saved()
+    useUI.getState().stopRest()
+    localStorage.setItem(REST_KEY, JSON.stringify(paused))
+    expect(restoreRest()).toBe(true)
+    expect(useUI.getState().timer).toMatchObject({ paused: true, sessionId: 'a', left: paused.left })
+  })
+
+  it.each([false, true])('does not attach a rest from another workout after reload (paused=%s)', paused => {
+    useUI.getState().startRest(90, 0)
+    if (paused) useUI.getState().pauseRest()
+    const previous = saved()
+    expect(previous.sessionId).toBe('a')
+    useUI.getState().stopRest()
+
+    // Same exercise position, but a different workout record was restored.
+    useStore.setState({ S: { ...useStore.getState().S, active: { id: 'b', entries: [] } } })
+    localStorage.setItem(REST_KEY, JSON.stringify(previous))
+    expect(restoreRest()).toBe(false)
+    expect(useUI.getState().timer).toBeNull()
+    expect(saved()).toBeNull()
+  })
+
   it('a rest that ended meanwhile, or one with no session running, is dropped', () => {
     localStorage.setItem(REST_KEY, JSON.stringify({ endsAt: Date.now() - 1, total: 90, forIdx: 0, paused: false, left: 3 }))
     expect(restoreRest()).toBe(false)
