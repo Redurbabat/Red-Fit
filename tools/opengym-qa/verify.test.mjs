@@ -19,11 +19,8 @@ const fixture = (t, name = 'opengym-frontend') => {
 }
 
 test('runs npm ci, original tests and build in the ORIGINAL frontend; records JSON and logs', async (t) => {
-  if (process.platform === 'win32') return t.skip('fixture uses POSIX executable shebang')
   const x = fixture(t)
-  const { chmodSync } = await import('node:fs')
-  chmodSync(x.mock, 0o755)
-  const result = await verify({ repoRoot: x.root, npmBinary: x.mock, env: { ...process.env, QA_CALLS: x.calls } })
+  const result = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock], env: { ...process.env, QA_CALLS: x.calls } })
   assert.equal(result.status, 'passed')
   assert.deepEqual(result.steps.map(s => s.id), ['install', 'test', 'build'])
   assert.ok(result.steps.every(s => s.status === 'passed'))
@@ -37,18 +34,16 @@ test('runs npm ci, original tests and build in the ORIGINAL frontend; records JS
 })
 
 test('records a test failure, then still builds for independent diagnosis', async (t) => {
-  if (process.platform === 'win32') return t.skip('fixture uses POSIX executable shebang')
-  const x = fixture(t); const { chmodSync } = await import('node:fs'); chmodSync(x.mock, 0o755)
-  const report = await verify({ repoRoot: x.root, npmBinary: x.mock, env: { ...process.env, QA_CALLS: x.calls, QA_FAIL: 'test' } })
+  const x = fixture(t);
+  const report = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock], env: { ...process.env, QA_CALLS: x.calls, QA_FAIL: 'test' } })
   assert.equal(report.status, 'failed')
   assert.deepEqual(report.steps.map(s => s.status), ['passed', 'failed', 'passed'])
   assert.equal(report.steps[1].exitCode, 17)
 })
 
 test('failed installation stops dependent checks and labels them skipped', async (t) => {
-  if (process.platform === 'win32') return t.skip('fixture uses POSIX executable shebang')
-  const x = fixture(t); const { chmodSync } = await import('node:fs'); chmodSync(x.mock, 0o755)
-  const report = await verify({ repoRoot: x.root, npmBinary: x.mock, env: { ...process.env, QA_CALLS: x.calls, QA_FAIL: 'ci' } })
+  const x = fixture(t);
+  const report = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock], env: { ...process.env, QA_CALLS: x.calls, QA_FAIL: 'ci' } })
   assert.equal(report.status, 'failed')
   assert.deepEqual(report.steps.map(s => s.status), ['failed', 'skipped', 'skipped'])
   assert.equal(readFileSync(x.calls, 'utf8').trim().split('\n').length, 1)
@@ -56,8 +51,26 @@ test('failed installation stops dependent checks and labels them skipped', async
 
 test('refuses to accidentally verify the legacy RED Fit PWA', async (t) => {
   const x = fixture(t, 'red-fit')
-  const report = await verify({ repoRoot: x.root, npmBinary: x.mock })
+  const report = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock] })
   assert.equal(report.status, 'failed')
   assert.match(report.preflightError, /non-original/)
   assert.equal(report.steps.length, 0)
+})
+
+test('skip-install does not invoke npm ci and records why it was skipped', async (t) => {
+  const x = fixture(t)
+  const report = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock], skipInstall: true, env: { ...process.env, QA_CALLS: x.calls } })
+  assert.equal(report.status, 'passed')
+  assert.deepEqual(report.steps.map(s => s.status), ['skipped', 'passed', 'passed'])
+  assert.equal(report.steps[0].reason, '--skip-install')
+  assert.equal(readFileSync(x.calls, 'utf8').trim().split('\n').length, 2)
+})
+
+test('missing npm executable produces a failed, auditable report rather than false success', async (t) => {
+  const x = fixture(t)
+  const report = await verify({ repoRoot: x.root, npmBinary: join(x.root, 'missing-npm'), env: process.env })
+  assert.equal(report.status, 'failed')
+  assert.deepEqual(report.steps.map(s => s.status), ['failed', 'skipped', 'skipped'])
+  assert.match(report.steps[0].error, /ENOENT|not found/i)
+  assert.equal(JSON.parse(readFileSync(join(x.root, 'artifacts', 'opengym-qa', 'report.json'))).status, 'failed')
 })
