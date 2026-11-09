@@ -34,7 +34,6 @@ workflows:
             -workspace ios/App/App.xcworkspace \
             -scheme App \
             -configuration Debug \
-            -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -derivedDataPath ios/App/build/dd-device \
             CODE_SIGNING_ALLOWED=NO \
