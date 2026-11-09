@@ -1,5 +1,7 @@
 # AUFGABEN.md — RED Fit
 
+> **Aktualisierung 09.11.2026:** Höchste Priorität: bestehende originale openGym-iPhone-App als **RED Fit** rebranden und verifiziert bauen. Dies ist eine **Weiterentwicklung von openGym**, kein neuer RED-Fit-PWA-Aufbau. 21'977 Originaldateien sind komplett im Repo. Siehe [docs/OPEN-GYM-IS-RED-FIT.md](docs/OPEN-GYM-IS-RED-FIT.md). Die nachfolgenden Phasenlisten beschreiben zum Teil das Legacy-Projekt und sind nicht der aktuelle iPhone-Masterplan.
+
 ## PHASE 0 — Quellenanalyse und Konsolidierung ✅ ABGESCHLOSSEN
 
 ### 0.1 Archive sichern ✅

@@ -1,5 +1,7 @@
 # openGym als unveränderte Quellbasis für RED Fit
 
+> **STATUSUPDATE 09.11.2026:** Der Originalimport wurde nachträglich **vollständig** abgeschlossen. Git-Blob-Hashvergleich: **21'977/21'977 identisch**, inklusive **13'108** Übungsmedien; letzter verifizierter Importkorrektur-Commit `043b7552ef604636262e85dacb3f613f609080e8`. Die folgenden früheren Zahlen 128/8'869 beschreiben einen älteren Zwischenstand. **Neue Produktentscheidung:** Original-openGym selbst wird als **RED Fit** weiterentwickelt, iPhone zuerst; siehe [docs/OPEN-GYM-IS-RED-FIT.md](OPEN-GYM-IS-RED-FIT.md). Bestehende Lizenzhinweise für Drittanbieter-Medien bleiben gültig.
+
 Stand: 2026-11-08. **Nutzerentscheid:** Der Eigentümer hat ausdrücklich erklärt, dass openGym sein Repository ist und der Originalcode 1:1 als Ausgangsbasis für RED Fit übernommen werden soll. Damit hat openGym-Code-Übernahme Vorrang vor einer bloßen Funktionsadaption.
 
 ## Quellidentität und Reproduzierbarkeit

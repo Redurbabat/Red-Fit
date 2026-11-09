@@ -1,5 +1,7 @@
 # CLAUDE.md — RED Fit
 
+> **2026-11-09 — OVERRIDES LEGACY RULES:** Die **Original-openGym-App selbst** ist das Produkt und wird in **RED Fit** umbenannt. Original `vendor/opengym-upstream/frontend/` inklusive vorhandener iOS-Xcode-App ist die primäre Laufzeit; die Root-PWA ist nur Legacy-/Ernährungsreferenz. iPhone-IPA hat erste Priorität, nicht ein neuer RED-Fit-Core. [Verbindliche Entscheidung](docs/OPEN-GYM-IS-RED-FIT.md). Widersprechende Stack-/Lizenz-/„nur BABAT“-Aussagen im restlichen Dokument sind historische Regeln und gelten **nicht** für den neuen openGym-Produktpfad.
+
 > **Eigentümerentscheidung 2026-11-08 (Vorrang):** openGym ist das eigene Quellprojekt des Nutzers und ab sofort die direkte Codebasis für die weitere RED-Fit-Entwicklung. Die ältere Regel „nur BABAT-RED-Code“ ist insoweit überholt. Originaldateien werden unter `vendor/opengym-upstream/` staged; der vollständige, separat lizenzierte Medien ausschließende ZIP-Import ist in `docs/OPENGYM-BASELINE.md` dokumentiert. Die bereits laufende React/TypeScript-RED-Fit-PWA darf erst nach erfolgreichem Build, API-/Auth-/Privacy-Audit und Daten-/Backup-Migration umgestellt werden. Die eigene openGym-Node-API ist kein automatischer Bestandteil des bisherigen statischen Cloudflare-Workers.
 
 ## Auftrag
