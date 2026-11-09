@@ -1,6 +1,6 @@
 import { webcrypto } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
-import { backupNameForScope, writeNutritionDocumentBackup } from './native-backup.js'
+import { backupNameForScope, readLatestNutritionDocumentBackup, writeNutritionDocumentBackup } from './native-backup.js'
 
 const food = { id: 'food-1', name: 'Haferflocken', kcal100: 370, protein100: 13, carbs100: 60, fat100: 7 }
 const entry = { id: 'meal-1', date: '2026-11-09', mealType: 'Frühstück', foodName: 'Haferflocken', grams: 80,
@@ -70,4 +70,83 @@ describe('Nutrition native Documents backup (original openGym app)', () => {
     await expect(writeNutritionDocumentBackup('local', JSON.stringify(data),
       { filesystem, cryptoAPI: webcrypto })).rejects.toThrow('Dateisystem')
   })
+  it('restores the newest valid snapshot from this exact scope only', async () => {
+    const newest = JSON.stringify(data)
+    const filesystem = {
+      Filesystem: {
+        readdir: vi.fn(async () => ({ files: [
+          { name: 'redfit-nutrition-2026-11-08.json' }, { name: 'redfit-nutrition-2026-11-09.json' },
+          { name: '../redfit-nutrition-2026-11-10.json' }, { name: 'redfit-nutrition-2026-02-30.json' },
+          { name: 'private.json' },
+        ] })),
+        readFile: vi.fn(async () => ({ data: newest })),
+      },
+      Directory: { Documents: 'DOCUMENTS' }, Encoding: { UTF8: 'utf8' },
+    }
+    const result = await readLatestNutritionDocumentBackup('account:server:4', { filesystem, cryptoAPI: webcrypto })
+    expect(result.day).toBe('2026-11-09')
+    expect(result.backup).toEqual(data)
+    const expected = await backupNameForScope('account:server:4', '2026-11-09', webcrypto)
+    expect(filesystem.Filesystem.readFile).toHaveBeenCalledWith({
+      path: expected, directory: 'DOCUMENTS', encoding: 'utf8',
+    })
+    expect(filesystem.Filesystem.readFile).toHaveBeenCalledTimes(1)
+  })
+  it('falls back safely to an older valid date when the latest JSON is corrupt', async () => {
+    const filesystem = {
+      Filesystem: {
+        readdir: vi.fn(async () => ({ files: [
+          'redfit-nutrition-2026-11-08.json', 'redfit-nutrition-2026-11-09.json',
+        ] })),
+        readFile: vi.fn(async ({ path }) => ({
+          data: path.endsWith('2026-11-09.json') ? '{' : JSON.stringify(data),
+        })),
+      },
+      Directory: { Documents: 'DOCUMENTS' }, Encoding: { UTF8: 'utf8' },
+    }
+    const recovered = await readLatestNutritionDocumentBackup('local', { filesystem, cryptoAPI: webcrypto })
+    expect(recovered.day).toBe('2026-11-08')
+    expect(filesystem.Filesystem.readFile).toHaveBeenCalledTimes(2)
+  })
+  it('rejects backup files with an invalid schema and does not return corrupt content', async () => {
+    const filesystem = {
+      Filesystem: {
+        readdir: vi.fn(async () => ({ files: [{ name: 'redfit-nutrition-2026-11-09.json' }] })),
+        readFile: vi.fn(async () => ({ data: JSON.stringify({ ...data, version: 99 }) })),
+      },
+      Directory: { Documents: 'DOCUMENTS' }, Encoding: { UTF8: 'utf8' },
+    }
+    await expect(readLatestNutritionDocumentBackup('local', { filesystem, cryptoAPI: webcrypto }))
+      .rejects.toThrow('beschädigt')
+  })
+  it('explains missing backup folders without touching original openGym data', async () => {
+    const filesystem = {
+      Filesystem: {
+        readdir: vi.fn(async () => { throw new Error('ENOENT') }),
+        readFile: vi.fn(),
+      },
+      Directory: { Documents: 'DOCUMENTS' }, Encoding: { UTF8: 'utf8' },
+    }
+    await expect(readLatestNutritionDocumentBackup('local', { filesystem, cryptoAPI: webcrypto }))
+      .rejects.toThrow('Keine Gerätesicherung')
+    expect(filesystem.Filesystem.readFile).not.toHaveBeenCalled()
+  })
+  it('does not read arbitrary filenames from a controlled Documents directory', async () => {
+    const filesystem = {
+      Filesystem: {
+        readdir: vi.fn(async () => ({ files: [
+          '../redfit-nutrition-2026-11-09.json',
+          'redfit-nutrition-2026-13-01.json',
+          'opengym-backup-2026-11-09.json',
+          { name: 'redfit-nutrition-2026-11-09.json', type: 'directory' },
+        ] })),
+        readFile: vi.fn(async () => ({ data: JSON.stringify(data) })),
+      },
+      Directory: { Documents: 'DOCUMENTS' }, Encoding: { UTF8: 'utf8' },
+    }
+    await expect(readLatestNutritionDocumentBackup('local', { filesystem, cryptoAPI: webcrypto }))
+      .rejects.toThrow('Keine Gerätesicherung')
+    expect(filesystem.Filesystem.readFile).not.toHaveBeenCalled()
+  })
+
 })
