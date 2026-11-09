@@ -39,3 +39,9 @@ export class RedFitDockDirectionTracker {
     return direction
   }
 }
+
+// A reduced-motion preference keeps the original navigation permanently expanded.
+// MediaQueryList instances are passed in to make this policy testable without a DOM.
+export function canCompactRedFitDock(phoneQuery, reducedMotionQuery) {
+  return Boolean(phoneQuery?.matches && !reducedMotionQuery?.matches)
+}

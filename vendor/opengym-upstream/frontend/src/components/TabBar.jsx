@@ -10,7 +10,7 @@ import { useConnectionTrouble } from './SyncBanner.jsx'
 import { retapTab } from '../lib/scroll-top.js'
 import './red-fit-dock.css'
 import { resolveDockRoute } from './red-fit-dock-route.js'
-import { RedFitDockDirectionTracker } from './red-fit-dock-direction.js'
+import { RedFitDockDirectionTracker, canCompactRedFitDock } from './red-fit-dock-direction.js'
 
 // Module scope, not TabBar's render body. Declared inside it, `Tab` was a new function on every
 // render, so React saw a different component type each time and threw the button away and built a
@@ -39,23 +39,37 @@ export default function TabBar({ onStart }) {
   // buttons, but adapts the same 13px touch-direction hysteresis on compact phones.
   useEffect(() => {
     setCompact(false)
-    if (typeof window === 'undefined' || !window.matchMedia?.('(max-width: 767px) and (pointer: coarse)').matches) return
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const phoneQuery = window.matchMedia('(max-width: 767px) and (pointer: coarse)')
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     const tracker = new RedFitDockDirectionTracker()
+    const isEnabled = () => canCompactRedFitDock(phoneQuery, reducedMotionQuery)
+    const onPolicyChange = () => {
+      if (!isEnabled()) { tracker.end(); setCompact(false) }
+    }
     const onTouchStart = event => {
-      if (event.touches?.length !== 1 || event.target?.closest?.('#tabbar, input, textarea, select, [role="dialog"]')) return
+      if (!isEnabled() || event.touches?.length !== 1 || event.target?.closest?.('#tabbar, input, textarea, select, [role="dialog"]')) {
+        tracker.end()
+        return
+      }
       tracker.begin(window.scrollY)
     }
     const onTouchEnd = () => tracker.end()
     const onScroll = () => {
+      if (!isEnabled()) return
       if (window.scrollY < 20) { setCompact(false); return }
       const direction = tracker.sample(window.scrollY)
       if (direction) setCompact(direction === 'down')
     }
+    phoneQuery.addEventListener?.('change', onPolicyChange)
+    reducedMotionQuery.addEventListener?.('change', onPolicyChange)
     document.addEventListener('touchstart', onTouchStart, { passive: true })
     document.addEventListener('touchend', onTouchEnd, { passive: true })
     document.addEventListener('touchcancel', onTouchEnd, { passive: true })
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
+      phoneQuery.removeEventListener?.('change', onPolicyChange)
+      reducedMotionQuery.removeEventListener?.('change', onPolicyChange)
       document.removeEventListener('touchstart', onTouchStart)
       document.removeEventListener('touchend', onTouchEnd)
       document.removeEventListener('touchcancel', onTouchEnd)

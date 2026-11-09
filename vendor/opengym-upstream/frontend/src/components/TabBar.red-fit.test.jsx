@@ -4,6 +4,7 @@ import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import TabBar from './TabBar.jsx'
+import { canCompactRedFitDock } from './red-fit-dock-direction.js'
 import { DEF, useStore } from '../store/useStore.js'
 
 const where = vi.hoisted(() => ({ loc: { pathname: '/home' } }))
@@ -107,6 +108,12 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     expect(nav.getAttribute('data-redfit-compact')).toBe('false')
     const labels = [...nav.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))
     expect(labels).toEqual(['Home', 'Plan', 'Start', 'Stats', 'Exercises'])
+  })
+
+  it('preserves the expanded dock when Reduced Motion is enabled or the device rotates', () => {
+    expect(canCompactRedFitDock({ matches: true }, { matches: false })).toBe(true)
+    expect(canCompactRedFitDock({ matches: true }, { matches: true })).toBe(false)
+    expect(canCompactRedFitDock({ matches: false }, { matches: false })).toBe(false)
   })
 
 })

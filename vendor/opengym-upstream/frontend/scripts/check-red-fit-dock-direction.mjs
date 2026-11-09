@@ -1,6 +1,6 @@
 // Run from original openGym frontend: node scripts/check-red-fit-dock-direction.mjs
 import assert from 'node:assert/strict'
-import { RedFitDockDirectionTracker } from '../src/components/red-fit-dock-direction.js'
+import { RedFitDockDirectionTracker, canCompactRedFitDock } from '../src/components/red-fit-dock-direction.js'
 
 const tracker = new RedFitDockDirectionTracker()
 let checks = 0
@@ -27,4 +27,14 @@ expect(tracker.sample(0.4), null)
 expect(tracker.sample(0.9), null)
 expect(tracker.sample(13.2), null)
 expect(tracker.sample(14.2), 'down')
-console.log(`RED Fit dock: ${checks} touch-direction checks passed`)
+for (const [phone, reduced, expected] of [
+  [true, false, true],
+  [true, true, false],
+  [false, false, false],
+  [false, true, false],
+]) {
+  expect(canCompactRedFitDock({ matches: phone }, { matches: reduced }), expected)
+}
+expect(canCompactRedFitDock(null, { matches: false }), false)
+expect(canCompactRedFitDock({ matches: true }, null), true)
+console.log(`RED Fit dock: ${checks} direction/policy checks passed`)
