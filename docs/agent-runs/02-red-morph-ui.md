@@ -69,3 +69,7 @@ Nicht verändert: `src/features/**`, `src/services/**`, Datenbank, Medien, `pack
 - Reale iPhone/Android/Windows-Tests und Screenshots nachweisen; insbesondere Bildschirmtastatur und gesperrte Hintergrundfokusse.
 - Cross-Agent-Integrationsreview: kein Paketmanifest-, Feature- oder Plattformcode in dieser Branchänderung. Das openGym-Cutover gehört nicht zu Agent 02.
 - **Kein Merge nach main durch diesen Agenten.**
+
+## Integrationsstand zum Abschluss (parallel geändertes main)
+
+Während der Arbeit wurde **PR #10 vom selben Branch bei Commit `2ae57635` bereits am 2026-11-09 um 21:09 UTC von anderer Seite nach main gemergt**. Agent 02 hat diesen Merge nicht ausgeführt. Darin liegen die grundlegenden UI-Codeänderungen. Der **nachfolgende Draft-PR #11** desselben Branches enthält nur die noch ausstehenden Korrekturen, Tests und dieses QA-Protokoll; er ist **offen und ungemergt**. Es darf kein zweiter neuer PR für diesen Rest angelegt werden. Vor Merge von #11 die komplette App-QA durchführen, nicht nur die Änderungsliste von #11 lesen.
