@@ -5,13 +5,14 @@
 #tabbar.redfit-morph-dock {
   /* Matches the stock bar padding: 6px on phones, 10px at 1000px+. */
   --rf-dock-gutter: 6px;
+  --rf-dock-bottom-space: calc(6px + var(--sab));
   isolation: isolate;
 }
 
 #tabbar.redfit-morph-dock::before {
   content: '';
   position: absolute;
-  inset-block-start: 2px;
+  inset-block-end: var(--rf-dock-bottom-space);
   inset-inline-start: var(--rf-dock-gutter);
   box-sizing: border-box;
   width: calc((100% - var(--rf-dock-gutter) - var(--rf-dock-gutter)) / 5);
@@ -85,5 +86,6 @@
 @media (min-width: 1000px) {
   #tabbar.redfit-morph-dock {
     --rf-dock-gutter: 10px;
+    --rf-dock-bottom-space: 9px;
   }
 }

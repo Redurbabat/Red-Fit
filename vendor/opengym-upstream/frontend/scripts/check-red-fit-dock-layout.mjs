@@ -6,6 +6,9 @@ const css = readFileSync(new URL('../src/components/red-fit-dock.css', import.me
 const rules = [
   /#tabbar\.redfit-morph-dock\s*\{[^}]*--rf-dock-gutter:\s*6px;/,
   /@media\s*\(min-width:\s*1000px\)\s*\{\s*#tabbar\.redfit-morph-dock\s*\{\s*--rf-dock-gutter:\s*10px;/,
+  /--rf-dock-bottom-space:\s*calc\(6px \+ var\(--sab\)\);/,
+  /inset-block-end:\s*var\(--rf-dock-bottom-space\)/,
+  /--rf-dock-bottom-space:\s*9px;/,
   /inset-inline-start:\s*var\(--rf-dock-gutter\)/,
   /width:\s*calc\(\(100% - var\(--rf-dock-gutter\) - var\(--rf-dock-gutter\)\) \/ 5\)/,
   /transform:\s*translateX\(calc\(var\(--rf-dock-index, 0\) \* 100%\)\)/,

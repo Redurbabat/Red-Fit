@@ -16,6 +16,13 @@ describe('RED Morph dock geometry and accessibility fallbacks', () => {
     expect((520 - 10 * 2) / 5).toBe(100)
   })
 
+  it('aligns the selection to the real tab baseline and iPhone bottom safe area', () => {
+    expect(css).toMatch(/--rf-dock-bottom-space:\s*calc\(6px \+ var\(--sab\)\);/)
+    expect(css).toMatch(/inset-block-end:\s*var\(--rf-dock-bottom-space\)/)
+    expect(css).toMatch(/@media \(min-width:\s*1000px\)[\s\S]*?--rf-dock-bottom-space:\s*9px;/)
+    expect(css).not.toMatch(/inset-block-start:\s*2px;/)
+  })
+
   it('keeps the moving material passive and supplies accessible fallback states', () => {
     expect(css).toMatch(/pointer-events:\s*none;/)
     expect(css).toMatch(/:focus-visible/)
