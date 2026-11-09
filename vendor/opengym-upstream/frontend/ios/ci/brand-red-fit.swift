@@ -1,6 +1,6 @@
 // Generates private RED Fit iOS assets from the repository's existing RED Fit icon.
 // Run from vendor/opengym-upstream/frontend with: swift ios/ci/brand-red-fit.swift
-// This changes only the default app icon and launch splash, not alternate icons or entitlements.
+// This changes the default iPhone and companion Watch app icons and splash; alternate icons and entitlements remain untouched.
 import AppKit
 import Foundation
 
@@ -50,6 +50,10 @@ func drawAsset(to path: URL, size: Int, imageSize: CGFloat) throws {
 
 do {
     try drawAsset(to: assetRoot.appendingPathComponent("AppIcon.appiconset/AppIcon-512@2x.png"),
+                  size: 1024, imageSize: 1024)
+    // Keep the embedded Apple Watch app branded consistently with the RED Fit iPhone app.
+    // Filename is defined by Watch/Assets.xcassets/AppIcon.appiconset/Contents.json.
+    try drawAsset(to: frontend.appendingPathComponent("ios/App/Watch/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png"),
                   size: 1024, imageSize: 1024)
     let splashDir = assetRoot.appendingPathComponent("Splash.imageset")
     for scale in 1...3 {
