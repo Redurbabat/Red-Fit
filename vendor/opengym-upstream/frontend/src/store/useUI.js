@@ -396,6 +396,12 @@ export const useUI = create((set, get) => ({
   resumeRest() {
     const tm = get().timer
     if (!tm?.paused) return
+    // A paused rest can survive an in-memory workout switch. Do not re-arm an old
+    // iPhone/Android alarm under the new active workout when Resume is tapped.
+    if (tm.sessionId != null && tm.sessionId !== useStore.getState().S?.active?.id) {
+      get().stopRest()
+      return
+    }
     const { paused, ...rest } = tm
     // As in startRest: the page may have been hidden and shown while paused, and that is no
     // catch-up of a countdown that was not running.
@@ -572,6 +578,12 @@ export const useUI = create((set, get) => ({
   resumeWork() {
     const wk = get().work
     if (!wk?.paused) return
+    // A hold left paused in memory must not begin counting down for another
+    // session or for a set which was already removed/completed while suspended.
+    if (wk.owner && !ownerSet(wk.owner)) {
+      get().stopWork()
+      return
+    }
     const { paused, ...rest } = wk
     pageHiddenAt = document.hidden ? Date.now() : null
     const endsAt = resumedEnd(wk)
