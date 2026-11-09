@@ -212,3 +212,16 @@
 - Wichtig: Dies verifiziert die **Webdateien im vorhandenen iOS-Projekt auf dem temporären Linux-CI-Runner**. Kein `cap sync`, `pod install`, Xcode-Compile, Apple-Developer-Signing, IPA, iPhone-Installation, iOS-Dateifreigabe oder realer IndexedDB-/Backup-Roundtrip. Native Änderungen bleiben bei Agent 04.
 - Die vollständige OpenGym-Testsuite ist bereits im früheren Run `42711524409` mit **7'893/7'893** erfolgreich belegt. Im parallelen `nutrition`-Job von Run `42713511812` war die erneute volle Suite zum Zeitpunkt dieser Dokumentation noch in Arbeit; den gesamten neueren **Run** nicht voreilig als grün markieren.
 - PR #15 weiter offen gegen `main`, keine Selbst-Merge-Aktion. Nächste sinnvolle Verifikation: echte IPA-/iPhone-QA und Navigation/Offline-Datenmigration mit Agent 04 koordinieren; darunter Original-Workout-Backup getrennt von Nutrition-v2 im Gerätespeicher prüfen.
+
+
+## Fortsetzung — Agent-04-/Agent-03-Kombinationsbuild in macOS Xcode (2026-11-09)
+
+**Tatsächlich abgefragter GitHub-Actions-Run `42714640715`** (Workflow-Commit `c514e2b319e5819513f78a4198e78c300dd54756`):
+- `Nutrition tests and iPhone-flavour web bundle`: **completed/success**, inklusive kompletter original-openGym-Tests, Mobile-Vite-Build und Bundle-Prüfung.
+- `iOS assets / Safari 15.5 compatibility`: **completed/success**, inklusive `npx cap copy ios`, Safari-Kompatibilität und Nutrition-Chunk im iOS-Webasset-Ordner.
+- `Unsigned Xcode build with Agent 04 + Nutrition` (macOS-26, Job `129492882216`): temporäres Git-Zusammenführen des **gepinnten Agent-04-Commits `cb12e7439dca0041e0901fe6ea403015e9205ec4`** mit Agent-03-PR #15, `npm ci`, `npm run build:ios`, Watch-/Widget-/Background-Asset-Integration und der **unsignierte iPhone-Simulator-Xcode-Build** **alle SUCCESS**. Ergebnis zeigt, dass Ernährung in einem kombinierten **Simulator**-Build integrierbar ist; `main` und PR #13 wurden nicht verändert.
+- **Bei letzter Kontrolle noch offen:** Schritt `Build unsigned physical-device IPA with Nutrition included` war **in_progress** und Artifact-Upload **pending**. Bis diese Schritte abgeschlossen sind, existiert **kein nachgewiesenes kombiniertes iPhone-Gerätebinary/IPA**. Weder Apple-Signierung noch echte Installation oder Backup-/IndexedDB-Restore auf dem iPhone getestet.
+
+### Agent-04-Übergabe
+- Der vollständige Gerätetest- und Datenmigrationsplan wurde im **GitHub-PR #13, Issue-Kommentar `6753504495`** hinterlegt. Die erste unsignierte Agent-04-IPA ohne Nutrition (Run `42711457712`) ist **nicht** mit dem kombinierten Nutrition-Build zu verwechseln.
+- Der temporäre Cross-Agent-Merge im CI benutzt nur die geprüfte Agent-04-Fassung. Für einen signierten gemeinsamen Release müssen Agent 04 und Agent 03 denselben finalen Branchinhalt integrieren, IDs/Entitlements/Provisioning prüfen und den kompletten realen iPhone-Datenmigrations-/Backup-Roundtrip durchführen. Kein eigener Merge/kein eigenständiges Signing.
