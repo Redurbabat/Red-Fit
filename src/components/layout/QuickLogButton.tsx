@@ -160,6 +160,7 @@ export function QuickLogButton() {
       <BottomSheet
         open={sheetOpen}
         title="Schnell erfassen"
+        material="glass"
         onClose={() => setSheetOpen(false)}
       >
         {actionOrderFor(location.pathname).map((id) => {

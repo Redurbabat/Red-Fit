@@ -1,0 +1,38 @@
+/* RED Morph Touch Kit material adapted to RED Fit's own light/dark tokens.
+   Refractive filters are intentionally omitted for Safari/WebKit parity. */
+.redfit-morph-glass {
+  position: relative;
+  isolation: isolate;
+  background: var(--fit-glass-tint);
+  color: var(--text);
+  border: 1px solid var(--fit-glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--fit-glass-highlight),
+    inset 0 -1px 0 var(--fit-glass-lowlight),
+    0 10px 30px var(--fit-glass-shadow);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
+  backdrop-filter: blur(16px) saturate(145%);
+}
+
+.redfit-morph-glass--tinted {
+  background: var(--fit-glass-tint-strong);
+}
+
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .redfit-morph-glass {
+    background: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    border: 1px solid var(--border-strong);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .redfit-morph-glass {
+    background: var(--surface);
+    border-color: var(--text);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

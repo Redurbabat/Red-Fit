@@ -1,14 +1,16 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { ReactNode, RefObject } from "react";
+import { X } from "lucide-react";
+import { GlassSurface } from "../../design/red-morph/GlassSurface";
 import { Button } from "../ui/Button";
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
- * Dialog focus management: moves focus into the dialog on open, traps Tab
- * inside it, closes on Escape and restores focus to the trigger on close.
- * The returned ref must be attached to the dialog container (tabIndex={-1}).
+ * RED Morph focus contract: autofocus a real field when requested, otherwise
+ * focus the explicit dismiss control. Trap Tab, support Escape, return focus
+ * and make the shell inert while an overlay is active.
  */
 function useDialogFocus(open: boolean, onClose: () => void): RefObject<HTMLDivElement | null> {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -24,7 +26,17 @@ function useDialogFocus(open: boolean, onClose: () => void): RefObject<HTMLDivEl
     if (!dialog) return;
 
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    dialog.focus();
+    const background = Array.from(
+      document.querySelectorAll<HTMLElement>(".app-shell__content, .desktop-nav, .bottom-nav, .fab"),
+    ).filter((element) => !element.contains(dialog) && !dialog.contains(element));
+    const inertBefore = background.map((element) => element.inert);
+    background.forEach((element) => { element.inert = true; });
+    const overflowBefore = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const initial = dialog.querySelector<HTMLElement>("[autofocus]") ??
+      dialog.querySelector<HTMLElement>("[data-dialog-close]");
+    (initial ?? dialog).focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -37,7 +49,6 @@ function useDialogFocus(open: boolean, onClose: () => void): RefObject<HTMLDivEl
 
       const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
       if (focusable.length === 0) {
-        // Nothing focusable inside — keep focus on the dialog container.
         event.preventDefault();
         dialog.focus();
         return;
@@ -60,6 +71,8 @@ function useDialogFocus(open: boolean, onClose: () => void): RefObject<HTMLDivEl
     document.addEventListener("keydown", handleKeyDown, true);
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true);
+      background.forEach((element, index) => { element.inert = inertBefore[index]; });
+      document.body.style.overflow = overflowBefore;
       previous?.focus();
     };
   }, [open]);
@@ -76,19 +89,25 @@ interface ModalProps {
 
 export function Modal({ open, title, onClose, children }: ModalProps) {
   const dialogRef = useDialogFocus(open, onClose);
+  const titleId = useId();
   if (!open) return null;
   return (
     <>
-      <div className="overlay" onClick={onClose} />
+      <div className="overlay" aria-hidden="true" onClick={onClose} />
       <div
         ref={dialogRef}
         tabIndex={-1}
         className="modal"
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={titleId}
       >
-        <h2 className="modal__title">{title}</h2>
+        <div className="modal__header">
+          <h2 id={titleId} className="modal__title">{title}</h2>
+          <button data-dialog-close type="button" className="modal__close" aria-label="Schliessen" onClick={onClose}>
+            <X size={20} aria-hidden="true" />
+          </button>
+        </div>
         {children}
       </div>
     </>
@@ -100,26 +119,46 @@ interface BottomSheetProps {
   title?: string;
   onClose: () => void;
   children: ReactNode;
+  /** Only short contextual chrome uses glass; dense forms stay solid. */
+  material?: "solid" | "glass";
 }
 
-export function BottomSheet({ open, title, onClose, children }: BottomSheetProps) {
+export function BottomSheet({ open, title, onClose, children, material = "solid" }: BottomSheetProps) {
   const dialogRef = useDialogFocus(open, onClose);
+  const titleId = useId();
   if (!open) return null;
+
+  const content = (
+    <>
+      <div className="bottom-sheet__handle" aria-hidden="true" />
+      <div className="bottom-sheet__header">
+        {title ? <h2 id={titleId} className="bottom-sheet__title">{title}</h2> : <span />}
+        <button data-dialog-close type="button" className="modal__close" aria-label="Schliessen" onClick={onClose}>
+          <X size={20} aria-hidden="true" />
+        </button>
+      </div>
+      {children}
+    </>
+  );
+  const props = {
+    tabIndex: -1,
+    role: "dialog",
+    "aria-modal": "true" as const,
+    "aria-labelledby": title ? titleId : undefined,
+    "aria-label": title ? undefined : "Auswahl",
+  };
   return (
     <>
-      <div className="overlay" onClick={onClose} />
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        className="bottom-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title ?? "Auswahl"}
-      >
-        <div className="bottom-sheet__handle" />
-        {title ? <h2 className="bottom-sheet__title">{title}</h2> : null}
-        {children}
-      </div>
+      <div className="overlay" aria-hidden="true" onClick={onClose} />
+      {material === "glass" ? (
+        <GlassSurface ref={dialogRef} {...props} tone="tinted" className="bottom-sheet">
+          {content}
+        </GlassSurface>
+      ) : (
+        <div ref={dialogRef} {...props} className="bottom-sheet">
+          {content}
+        </div>
+      )}
     </>
   );
 }
@@ -133,7 +172,6 @@ interface ConfirmDialogProps {
   danger?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-  /** Extra middle option, e.g. "Weiter trainieren" vs "Trotzdem beenden". */
   extraAction?: { label: string; onClick: () => void };
 }
 
