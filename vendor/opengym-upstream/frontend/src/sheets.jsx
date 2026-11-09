@@ -1885,6 +1885,10 @@ export const exercisePicker = (onPick, { title, like, actionIcon, backups } = {}
 export function swapActiveWorkoutExercise(index) {
   const active = S().active
   if (!active?.entries?.[index]) return
+  // The picker/configuration sheet may stay open while a background resume or sync
+  // changes the workout. Do not let its old index silently target a new exercise.
+  const pickedSessionId = active.id
+  const pickedEntry = JSON.stringify(active.entries[index])
 
   // The "+" on a picker row commits with the default config, exactly as it does in the add
   // flows; tapping the row still opens the config sheet first.
@@ -1894,6 +1898,11 @@ export function swapActiveWorkoutExercise(index) {
     // The picker is a chooser here, not a stack you keep adding from: one swap, then back to
     // the workout. (The add flow deliberately leaves it open.)
     picker.close()
+    const live = S().active
+    if (!live || live.id !== pickedSessionId || JSON.stringify(live.entries?.[index]) !== pickedEntry) {
+      ui().toast(t('Something went wrong'))
+      return
+    }
     commitActiveSwap(index, ex, cfg)
   }
 }
