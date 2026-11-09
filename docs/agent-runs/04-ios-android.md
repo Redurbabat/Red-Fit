@@ -34,3 +34,7 @@ npm run native:bootstrap, native:check, npm ci, app-wide typecheck/lint/test/bui
 On a networked machine checkout this branch, run the existing native bootstrap, commit BOTH package.json and package-lock.json together, then run npm ci and all configured quality gates. On macOS/Xcode generate and verify ios/**, on Android Studio/SDK verify android/** and Gradle. Review optional plugin versions, register their JS exports and integrate specific production flows with explicit permissions, test on devices, verify app identity/provisioning and backup migration. Update this document after real evidence and keep a single PR against main, without merging it.
 
 Status levels: configuration **partial**; isolated TS contract **tested**; Web production build **unverified**; native simulator **unverified**; device **unverified**; signable IPA **unavailable**; built APK **unavailable**.
+
+## Pull Request
+
+PR #13 gegen main wurde als Draft erstellt: https://github.com/Redurbabat/Red-Fit/pull/13 . Beim anschliessenden GitHub-Metadatenabruf: open, nicht gemergt, mergeable=true; das sagt nichts über fehlende native Buildtests aus. Kein Merge, keine Änderung an main.
