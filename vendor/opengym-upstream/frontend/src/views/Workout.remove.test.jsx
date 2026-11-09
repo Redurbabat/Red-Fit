@@ -215,6 +215,27 @@ describe('Undo of active sets with duplicate exercise ids', () => {
     expect(entries.map(e => e.sets.length)).toEqual([2, 2, 2])
   })
 
+  it('rejects Undo after two identical post-delete exercises swap in an immutable Store update', () => {
+    // The first entry loses one set. Afterwards its remaining content is exactly
+    // the same as the second exercise: JSON alone cannot identify the occurrence.
+    const first = entry('1001')
+    first.sets = [{ w: 0, r: 1, done: false }, { w: 0, r: 1, done: false }]
+    setActive([first, entry('1001'), entry('1002')], 0)
+    act(() => { expect(deleteActiveSet(0, 0)).toBe(true) })
+    expect(useStore.getState().S.active.entries[0]).toEqual(useStore.getState().S.active.entries[1])
+
+    act(() => useStore.getState().update(s => {
+      const [a, b] = s.active.entries
+      s.active.entries[0] = b
+      s.active.entries[1] = a
+    }, false))
+    act(() => useUI.getState().runToastAction())
+
+    const active = useStore.getState().S.active
+    expect(active.entries.map(e => e.sets.length)).toEqual([1, 1, 1])
+    expect(useUI.getState().toastMsg).toBe('Too late, that one’s gone')
+  })
+
   it('does not restore into a different duplicate shifted into the deleted exercise slot', () => {
     setActive([duplicate('first'), duplicate('middle'), duplicate('last')], 1)
     act(() => { expect(deleteActiveSet(1, 0)).toBe(true) })
