@@ -89,3 +89,23 @@
     --rf-dock-bottom-space: 9px;
   }
 }
+
+/* RED-Bit-inspired touch-direction compact mode. SwiftUI's native iOS TabView
+ * cannot be embedded in openGym's React WebView; keep all five real controls.
+ * Labels are visually hidden only. TabBar provides explicit accessible names. */
+@media (max-width: 767px) and (pointer: coarse) {
+  #tabbar.redfit-morph-dock[data-redfit-compact='true'] {
+    --rf-dock-bottom-space: calc(4px + var(--sab));
+    padding-block-start: 4px;
+    padding-block-end: calc(4px + var(--sab));
+  }
+  #tabbar.redfit-morph-dock[data-redfit-compact='true'] > button:not(.start) > span:last-child,
+  #tabbar.redfit-morph-dock[data-redfit-compact='true'] > button.start > span:not(.cir) {
+    display: none;
+  }
+  #tabbar.redfit-morph-dock[data-redfit-compact='true'] > button.start { margin-top: -4px; }
+  #tabbar.redfit-morph-dock[data-redfit-compact='true'] > button.start .cir {
+    width: 44px;
+    height: 44px;
+  }
+}

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { effectiveRoutineIds, effectiveRoutines } from '../lib/history.js'
@@ -9,6 +10,7 @@ import { useConnectionTrouble } from './SyncBanner.jsx'
 import { retapTab } from '../lib/scroll-top.js'
 import './red-fit-dock.css'
 import { resolveDockRoute } from './red-fit-dock-route.js'
+import { RedFitDockDirectionTracker } from './red-fit-dock-direction.js'
 
 // Module scope, not TabBar's render body. Declared inside it, `Tab` was a new function on every
 // render, so React saw a different component type each time and threw the button away and built a
@@ -16,7 +18,7 @@ import { resolveDockRoute } from './red-fit-dock-route.js'
 // state it took with it is the DOM node itself: focus, the :active tint, any in-flight transition.
 function Tab({ active, icon, label, onClick, dot, tour }) {
   return (
-    <button className={active ? 'on' : ''} onClick={onClick} data-tour={tour} aria-current={active ? 'page' : undefined} aria-label={dot ? label + ', ' + t('Connection problem') : undefined}>
+    <button className={active ? 'on' : ''} onClick={onClick} data-tour={tour} aria-current={active ? 'page' : undefined} aria-label={dot ? label + ', ' + t('Connection problem') : label}>
       <span className="tab-ic"><Icon name={icon} />{dot && <span className="tab-dot" aria-hidden="true" />}</span><span>{label}</span>
     </button>
   )
@@ -31,6 +33,36 @@ export default function TabBar({ onStart }) {
   // With the connection banner switched off, a sync problem shows as a dot on Home, the tab
   // Settings lives under (#369, #330).
   const trouble = useConnectionTrouble()
+  const [compact, setCompact] = useState(false)
+
+  // RED-Bit uses a native iOS 26 TabView. This WebView keeps its real openGym
+  // buttons, but adapts the same 13px touch-direction hysteresis on compact phones.
+  useEffect(() => {
+    setCompact(false)
+    if (typeof window === 'undefined' || !window.matchMedia?.('(max-width: 767px) and (pointer: coarse)').matches) return
+    const tracker = new RedFitDockDirectionTracker()
+    const onTouchStart = event => {
+      if (event.touches?.length !== 1 || event.target?.closest?.('#tabbar, input, textarea, select, [role="dialog"]')) return
+      tracker.begin(window.scrollY)
+    }
+    const onTouchEnd = () => tracker.end()
+    const onScroll = () => {
+      if (window.scrollY < 20) { setCompact(false); return }
+      const direction = tracker.sample(window.scrollY)
+      if (direction) setCompact(direction === 'down')
+    }
+    document.addEventListener('touchstart', onTouchStart, { passive: true })
+    document.addEventListener('touchend', onTouchEnd, { passive: true })
+    document.addEventListener('touchcancel', onTouchEnd, { passive: true })
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchend', onTouchEnd)
+      document.removeEventListener('touchcancel', onTouchEnd)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [loc.pathname])
+
   if (!user && !isGuest) return null
   // Preserve original parent-tab semantics, including Muscles opened from Stats.
   // Four tabs share a moving selection; Start keeps its original raised disc.
@@ -45,6 +77,7 @@ export default function TabBar({ onStart }) {
   }
 
   const running = !!S.active && cur !== 'workout' && !S.active.editingWorkoutId && !S.active.backfill && S.active.start > 0
+  const startLabel = S.active ? (cur === 'workout' ? t('Workout') : S.active.editingWorkoutId ? t('Edit workout') : t('Resume')) : t('Start')
   const startWorkout = () => {
     if (!S.active) {
       // A weekday can hold several routines; start the combined session if any of them has
@@ -57,6 +90,7 @@ export default function TabBar({ onStart }) {
   return (
     <nav id="tabbar" className="redfit-morph-dock" aria-label={t('Navigation')}
       data-redfit-selection={activeIndex === -1 ? 'hidden' : 'visible'}
+      data-redfit-compact={compact ? 'true' : 'false'}
       style={{ '--rf-dock-index': Math.max(0, activeIndex) }}>
       <Tab active={on('home')} icon="house" label={t('Home')} dot={trouble} onClick={() => switchTab('/home')} tour="tab-home" />
       <Tab active={on('plan')} icon="calendar" label={t('Plan')} onClick={() => switchTab('/plan')} tour="tab-plan" />
@@ -68,10 +102,10 @@ export default function TabBar({ onStart }) {
           button still named Resume; a past workout being edited or logged after the fact has no
           clock to run. */}
       <button data-tour="start" className={'start' + (S.active ? ' rec' : '') + (S.active && cur === 'workout' ? ' on' : '')} onClick={startWorkout}
-        aria-label={running ? t('Resume') : undefined} aria-current={cur === 'workout' ? 'page' : undefined}>
+        aria-label={startLabel} aria-current={cur === 'workout' ? 'page' : undefined}>
         <span className="cir"><Icon name="play" /></span>
         {running ? <span className="tab-time"><Elapsed start={S.active.start} /></span>
-          : <span>{S.active ? (cur === 'workout' ? t('Workout') : S.active.editingWorkoutId ? t('Edit workout') : t('Resume')) : t('Start')}</span>}
+          : <span>{startLabel}</span>}
       </button>
       <Tab active={on('stats')} icon="chart" label={t('Stats')} onClick={() => switchTab('/stats')} tour="tab-stats" />
       <Tab active={on('library')} icon="dumbbell" label={t('Exercises')} onClick={() => switchTab('/library')} tour="tab-library" />

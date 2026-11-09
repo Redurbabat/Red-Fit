@@ -90,4 +90,11 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     expect(selected).toHaveLength(1)
     expect(selected[0].textContent).toContain(label)
   })
+  it('names all five real tabs even if compact mode visually hides labels', () => {
+    const nav = renderRoute('/home')
+    expect(nav.getAttribute('data-redfit-compact')).toBe('false')
+    const labels = [...nav.querySelectorAll('button')].map(button => button.getAttribute('aria-label'))
+    expect(labels).toEqual(['Home', 'Plan', 'Start', 'Stats', 'Exercises'])
+  })
+
 })
