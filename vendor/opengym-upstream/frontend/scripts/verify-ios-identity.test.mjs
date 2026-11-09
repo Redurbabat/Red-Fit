@@ -22,6 +22,15 @@ function withFixture(check) {
     'ios/App/Watch/Info.plist': plist({
       CFBundleDisplayName: 'RED Fit', WKCompanionAppBundleIdentifier: xcodeID,
     }),
+    'ios/App/WatchWidgets/Info.plist': plist({ CFBundleDisplayName: 'RED Fit' }),
+    'ios/App/AnimationPacksDownloader/Info.plist': plist({
+      CFBundleDisplayName: 'RED Fit animations', BAAppGroupID: group,
+    }),
+    'ios/App/WatchWidgets/OpenGymWatchWidgets.entitlements': shared,
+    'ios/App/AnimationPacksDownloader/AnimationPacksDownloader.entitlements': shared,
+    'ios/ci/add-widgets.rb': "BUNDLE_ID = 'ch.opengym.app.widgets'",
+    'ios/ci/add-watch-app.rb': "BUNDLE_ID = 'ch.opengym.app.watchkitapp'\ns['PRODUCT_BUNDLE_IDENTIFIER'] = \"#{BUNDLE_ID}.widgets\"",
+    'ios/ci/add-asset-downloader.rb': "BUNDLE_ID = 'ch.opengym.app.AnimationPacksDownloader'",
     'ios/App/App/App.entitlements': shared,
     'ios/App/OpenGymWidgets/OpenGymWidgets.entitlements': shared,
     'ios/App/Watch/OpenGymWatch.entitlements': shared,
@@ -74,5 +83,37 @@ test('missing native workout bridge is rejected', () => {
   withFixture(({ root }) => {
     unlinkSync(join(root, 'ios/App/App/PhoneWorkoutPlugin.swift'))
     assert.throws(() => verifyIOSIdentity(root), /PhoneWorkoutPlugin.swift is missing/)
+  })
+})
+
+test('all five Apple targets reject an extension bundle ID mismatch before signing', () => {
+  withFixture(({ root, write }) => {
+    write('ios/ci/add-watch-app.rb', "BUNDLE_ID = 'ch.opengym.app.WRONG'\ns['PRODUCT_BUNDLE_IDENTIFIER'] = \"#{BUNDLE_ID}.widgets\"")
+    assert.throws(() => verifyIOSIdentity(root), /Watch bundle ID mismatch/)
+  })
+})
+test('Watch widget App Group mismatch is rejected', () => {
+  withFixture(({ root, write }) => {
+    write('ios/App/WatchWidgets/OpenGymWatchWidgets.entitlements', '<string>group.invalid</string>')
+    assert.throws(() => verifyIOSIdentity(root), /watch widgets app group mismatch/)
+  })
+})
+test('background downloader BAAppGroupID mismatch is rejected', () => {
+  withFixture(({ root, write }) => {
+    write('ios/App/AnimationPacksDownloader/Info.plist', plist({
+      CFBundleDisplayName: 'RED Fit animations', BAAppGroupID: 'group.invalid',
+    }))
+    assert.throws(() => verifyIOSIdentity(root), /downloader BAAppGroupID mismatch/)
+  })
+})
+test('Watch widget and downloader display names must be branded', () => {
+  withFixture(({ root, write }) => {
+    write('ios/App/WatchWidgets/Info.plist', plist({ CFBundleDisplayName: 'openGym' }))
+    assert.throws(() => verifyIOSIdentity(root), /watch widgets display name/)
+    write('ios/App/WatchWidgets/Info.plist', plist({ CFBundleDisplayName: 'RED Fit' }))
+    write('ios/App/AnimationPacksDownloader/Info.plist', plist({
+      CFBundleDisplayName: 'openGym', BAAppGroupID: group,
+    }))
+    assert.throws(() => verifyIOSIdentity(root), /downloader display name/)
   })
 })
