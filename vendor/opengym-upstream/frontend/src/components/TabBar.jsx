@@ -93,17 +93,30 @@ export default function TabBar({ onStart }) {
     const startLabel = S.active
       ? (cur === 'workout' ? t('Workout') : S.active.editingWorkoutId ? t('Edit workout') : t('Resume'))
       : t('Start')
+    let lastVisible
     const send = () => {
-      // Native overlays are outside the WKWebView: hide the glass dock while
-      // a sheet is presented, so it cannot cover dismissal or Save buttons.
+      // Modals.jsx creates #modal-root only when a sheet opens; observing an
+      // initially missing portal would leave native buttons over Save/Close.
       const modal = !!document.querySelector('#modal-root .mback, #modal-root .sheet, #modal-root [role="dialog"]')
-      bridge.postMessage({ visible: canShow && !modal, selected, running: !!S.active, startLabel })
+      // RED-Bit's native bar stays clear of the iPhone keyboard.
+      const typing = document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]')
+      const visible = canShow && !modal && !typing
+      // Body observation sees new portals and their removal. Deduplicate
+      // updates: scrolling exercise lists can change many DOM nodes.
+      if (visible === lastVisible) return
+      lastVisible = visible
+      bridge.postMessage({ visible, selected, running: !!S.active, startLabel })
     }
     send()
     const observer = new MutationObserver(send)
-    const portal = document.getElementById('modal-root')
-    if (portal) observer.observe(portal, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'role'] })
-    return () => observer.disconnect()
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'role'] })
+    document.addEventListener('focusin', send, true)
+    document.addEventListener('focusout', send, true)
+    return () => {
+      observer.disconnect()
+      document.removeEventListener('focusin', send, true)
+      document.removeEventListener('focusout', send, true)
+    }
   }, [nativeDock, canShow, cur, parent, S.active])
 
   if (!canShow) return null
