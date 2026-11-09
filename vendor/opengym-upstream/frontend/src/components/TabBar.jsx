@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { effectiveRoutineIds, effectiveRoutines } from '../lib/history.js'
@@ -29,7 +30,8 @@ export default function TabBar({ onStart }) {
   // With the connection banner switched off, a sync problem shows as a dot on Home, the tab
   // Settings lives under (#369, #330).
   const trouble = useConnectionTrouble()
-  if (!user && !isGuest) return null
+  const canShow = !!user || isGuest
+  const nativeDock = typeof window !== 'undefined' && !!window.webkit?.messageHandlers?.redFitDock
   const cur = loc.pathname.split('/')[1] || 'home'
   // A screen without a tab of its own lights the tab it is opened from (Muscles from both).
   const PARENT = { history: 'stats', 'structural-balance': 'stats', 'progress-photos': 'stats', measurements: 'stats', settings: 'home', checkin: 'home', muscles: 'library' }
@@ -53,6 +55,58 @@ export default function TabBar({ onStart }) {
     nav('/workout')
   }
 
+  // RED Fit iOS 26: the actual visible dock lives in MainViewController.swift
+  // as a single native SwiftUI glass surface (RED-Bit material reference).
+  // React Router continues to own navigation and workout state: no second
+  // WKWebView, no alternative workout store, no re-mounting of the original app.
+  // This event is sent only by the native dock; desktop/Android keep this bar.
+  useEffect(() => {
+    if (!nativeDock) return
+    const onNativeTap = (event) => {
+      const tab = event.detail?.tab
+      if (tab === 'start') startWorkout()
+      else if (tab === 'home') switchTab('/home')
+      else if (tab === 'plan') switchTab('/plan')
+      else if (tab === 'stats') switchTab('/stats')
+      else if (tab === 'library') switchTab('/library')
+    }
+    window.addEventListener('redfit:native-dock', onNativeTap)
+    return () => window.removeEventListener('redfit:native-dock', onNativeTap)
+  })
+
+  useEffect(() => {
+    if (!nativeDock) return
+    const bridge = window.webkit.messageHandlers.redFitDock
+    // The native dock is installed only on supported iPhones. Never suppress
+    // the original HTML bar unless the native message channel exists.
+    document.documentElement.dataset.redfitNativeDock = 'true'
+    return () => {
+      bridge.postMessage({ visible: false })
+      delete document.documentElement.dataset.redfitNativeDock
+    }
+  }, [nativeDock])
+
+  useEffect(() => {
+    if (!nativeDock) return
+    const bridge = window.webkit.messageHandlers.redFitDock
+    const selected = on('home') ? 'home' : on('plan') ? 'plan' : on('stats') ? 'stats' : 'library'
+    const startLabel = S.active
+      ? (cur === 'workout' ? t('Workout') : S.active.editingWorkoutId ? t('Edit workout') : t('Resume'))
+      : t('Start')
+    const send = () => {
+      // Native overlays are outside the WKWebView: hide the glass dock while
+      // a sheet is presented, so it cannot cover dismissal or Save buttons.
+      const modal = !!document.querySelector('#modal-root .mback, #modal-root .sheet, #modal-root [role="dialog"]')
+      bridge.postMessage({ visible: canShow && !modal, selected, running: !!S.active, startLabel })
+    }
+    send()
+    const observer = new MutationObserver(send)
+    const portal = document.getElementById('modal-root')
+    if (portal) observer.observe(portal, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'role'] })
+    return () => observer.disconnect()
+  }, [nativeDock, canShow, cur, parent, S.active])
+
+  if (!canShow) return null
   return (
     <nav id="tabbar">
       <Tab active={on('home')} icon="house" label={t('Home')} dot={trouble} onClick={() => switchTab('/home')} tour="tab-home" />
