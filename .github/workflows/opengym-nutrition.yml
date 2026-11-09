@@ -47,6 +47,28 @@ jobs:
       - name: Build original openGym mobile-flavour frontend
         run: VITE_MOBILE=1 npm run build
 
+      # The original app targets Safari 15.5. Verify that every generated JS
+      # chunk can be parsed on this floor before copying it into the iOS shell.
+      - name: Check minimum iOS WebView JS compatibility
+        run: node scripts/check-bundle-syntax.mjs dist
+
+      # cap copy only stages web assets in the existing native project on the
+      # ephemeral runner; it does NOT sign, build or change iOS project code.
+      - name: Copy mobile frontend into original iOS Capacitor shell
+        run: npx cap copy ios
+
+      - name: Verify copied iOS mobile shell
+        run: |
+          node scripts/check-mobile-bundle.mjs
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            import assert from 'node:assert/strict';
+            const dir = 'ios/App/App/public/assets';
+            assert.ok(fs.existsSync(dir), 'iOS web assets were not copied');
+            assert.ok(fs.readdirSync(dir).some(file => /^Nutrition-.+\\.js$/.test(file)), 'Nutrition screen missing from iOS copy');
+            console.log('Nutrition chunk present in iOS Capacitor web assets');
+          "
+
       - name: Verify mobile flavour and nutrition bundle
         run: |
           node --input-type=module -e "
