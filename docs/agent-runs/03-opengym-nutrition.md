@@ -225,3 +225,19 @@
 ### Agent-04-Übergabe
 - Der vollständige Gerätetest- und Datenmigrationsplan wurde im **GitHub-PR #13, Issue-Kommentar `6753504495`** hinterlegt. Die erste unsignierte Agent-04-IPA ohne Nutrition (Run `42711457712`) ist **nicht** mit dem kombinierten Nutrition-Build zu verwechseln.
 - Der temporäre Cross-Agent-Merge im CI benutzt nur die geprüfte Agent-04-Fassung. Für einen signierten gemeinsamen Release müssen Agent 04 und Agent 03 denselben finalen Branchinhalt integrieren, IDs/Entitlements/Provisioning prüfen und den kompletten realen iPhone-Datenmigrations-/Backup-Roundtrip durchführen. Kein eigener Merge/kein eigenständiges Signing.
+
+
+## Fortsetzung — kombinierte UNSIGNIERTE iPhone-IPA erfolgreich gebaut (2026-11-09)
+
+### Endgültiger Build-Nachweis
+- **GitHub Actions Run `42714640715`, Job `129492882216`: `completed/success`**, vom Connector als abgeschlossener Job bestätigt und per Original-Runner-Log untersucht.
+- Auf `macos-26` wurden exakt die Änderungen von Agent 03 (Ernährung, PR #15) mit dem **gepinnten Agent-04-Commit `cb12e7439dca0041e0901fe6ea403015e9205ec4`** im temporären CI-Checkout zusammengeführt. `git merge --no-commit --no-ff`, `npm ci`, `npm run build:ios`, Watch-/Widget-/Background-Integrationen waren erfolgreich. Es gab **keinen** Merge in `main` und **keinen** Push auf PR #13.
+- **Xcode-Simulator-Debug-App: success**, Original-Runner-Ausgabe `Combined iOS Simulator BUILD SUCCEEDED`.
+- **Xcode-Device-Debug-App (arm64, unsigned): success**, Original-Runner-Ausgabe `Combined original-openGym iPhone device binary with Nutrition BUILD SUCCEEDED (unsigned)`. Der Schritt prüft explizit, dass `App.app/public/index.html` existiert und ein `Nutrition-*.js`-Chunk in `App.app/public/assets` enthalten ist; anschliessend `RED-Fit-Nutrition-UNSIGNED.ipa` gezippt und mit `test -s` als nichtleer geprüft.
+- `actions/upload-artifact@v4`: **success**. Private GitHub-Artifact-ID **`13718111454`**, Name `red-fit-nutrition-agent04-unsigned-ab1688bd085898476e291cc9e395652f16907d98`, ZIP-Artefakt `215757973` Bytes, SHA-256 des hochgeladenen ZIP-Artifacts **`73e1125d0b4a0597df0b2791ebc7aab28005b849a12812eba9cec66081c27903`** (GitHub-Actions-Log). Download für berechtigte Repository-Nutzer: `https://github.com/Redurbabat/Red-Fit/actions/runs/42714640715/artifacts/13718111454`. **Die ZIP-Grösse ist nicht die IPA-Grösse.**
+- Die beiden anderen Jobs im selben Lauf (`Nutrition tests and iPhone-flavour web bundle` und `iOS assets / Safari 15.5 compatibility`) waren ebenfalls **completed/success**.
+
+### Grenzen und nächster Schritt
+- Ein **UNSIGNIERTES iPhone-Geräte-Binary und eine unsignierte IPA** sind nun belegt; **keine** Apple-Provisionierung/Signatur, installierbares IPA, reale iPhone-Installation, WKWebView-/Filesystem-/IndexedDB-v1→v2-Migration, Datenwiederherstellung oder Benutzerabnahme ist nachgewiesen.
+- Der iOS-Branch enthält noch originale Bundle-IDs und Apple-App-Groups. Für einen installierbaren **gemeinsamen** Release muss Agent 04 den geprüften Nutrition-Quellstand integrieren, Apple-Identitäten/Entitlements mit passender Provisionierung abstimmen, IPA signieren und die Gerätetests durchführen. Das private CI-Artefakt ist nicht gleichbedeutend mit einer installierbaren App.
+- PR #15 bleibt offen gegen `main`, keine Selbst-Merge-Aktion. Root-`ci.yml` der alten Root-App ist ein gesonderter Status und kein Hindernis für diesen nachgewiesenen Original-Xcode-Compile.
