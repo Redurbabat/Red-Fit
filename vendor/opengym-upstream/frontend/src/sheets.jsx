@@ -1933,7 +1933,17 @@ function commitActiveSwap(index, ex, cfg) {
     ...(current.noProg === true ? { noProg: true } : {}),
   }
 
+  // A confirmation can be accepted later, after a sync, background restore, or another
+  // workout edit changed the entry at this index. The store clones active on every update, so
+  // compare its persisted content (not object identity) before touching timers or logged data.
+  const originalSessionId = st.active.id
+  const originalEntry = JSON.stringify(current)
   const apply = options => {
+    const live = S().active
+    if (!live || live.id !== originalSessionId || JSON.stringify(live.entries?.[index]) !== originalEntry) {
+      ui().toast(t('Something went wrong'))
+      return
+    }
     // A timed callback closes over entry/set indexes. Invalidate it, and the current rest,
     // before the selected occurrence can be replaced or a new entry shifts those indexes.
     ui().stopWork()
