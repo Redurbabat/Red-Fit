@@ -107,3 +107,25 @@ Die Pipeline packte aus dem tatsächlich gebauten `Debug-iphoneos/App.app` ein *
 
 - Root-CI `42711456012` bestand **Typecheck, Lint und Offline-Regressionsjob**, scheiterte jedoch in `npm run test`. Root-Vitest sammelte ungewollt auch die separaten OpenGym-Upstream-Vitest-Dateien aus `vendor/opengym-upstream`; dadurch traten falsche Root-Pfade und fehlende Upstream-Dependencies (u. a. `@capacitor/core`) auf.
 - **Gezielte Korrektur:** `vite.config.ts` enthält nun `exclude: [...configDefaults.exclude, "vendor/**"]` aus `vitest/config`. So bleibt das Root-RED-Fit-Testset erhalten, während die originalen openGym-Tests weiterhin in ihrer **eigenen** `vendor/opengym-upstream/frontend`-Umgebung ausführbar sind. Noch nicht durch den nächsten CI-Testlauf bestätigt, daher nicht als bestanden melden.
+
+## 09.11.2026 – Vollständig gruene Root-CI und Apple-Signing-Vorabprüfung
+
+- **Echte Root-CI nach Korrektur:** GitHub Actions `42713685287` ist **completed / success**. Beide Jobs `offline-regressions` und `verify` erfolgreich; `npm ci`, `npm run typecheck`, `npm run lint`, `npm run test` und `npm run build` erfolgreich. Vitest: **36/36 Testdateien und 263/263 Tests bestanden**. Build: Vite erfolgreich in 5,18 s. Nachweis: https://github.com/Redurbabat/Red-Fit/actions/runs/42713685287 .
+- Der letzte Blocker war die unvollständige `Blob`-Implementierung der Testumgebung für sechs sensible Foto-Backup-Tests. **Test-only** verwendet `src/services/backup/photoBackupService.test.ts` während dieser Suite `node:buffer`-`Blob` und stellt den ursprünglichen globalen Wert danach wieder her; produktiver Foto-/Backup-/Privacy-Code unverändert. Erfolgreicher Head `cb12e7439dca0041e0901fe6ea403015e9205ec4`.
+- **Unsignierte IPA bereits bestätigt:** iOS-Run `42711457712` Erfolg, Artifact `13716626340` mit `RED-Fit-UNSIGNED.ipa`; das Artifact umfasst drei Dateien und ist nicht selbst eine signierte IPA. Simulator und Device sind **kompiliert**, nicht auf einem iPhone ausgeführt. Der neue iOS-Run auf der neuesten CI-Änderung ist keine Voraussetzung für den bereits belegten Build.
+
+### Konkrete Identitäten und Berechtigungen vor der Installation
+
+| Ursprüngliches natives Ziel | Aktuelle Bundle-ID (noch Upstream) | Sonderfall |
+| --- | --- | --- |
+| iPhone App | `ch.opengym.app` | HealthKit, NFC, App Groups, Background Assets, Universal Links `opengym.ch` |
+| Home-/Lockscreen-Widgets und Live Activity | `ch.opengym.app.widgets` | App Group |
+| Apple Watch App | `ch.opengym.app.watchkitapp` | HealthKit, App Group, Companion Bundle-ID |
+| Apple Watch Widgets | `ch.opengym.app.watchkitapp.widgets` | App Group |
+| Background Asset Downloader | `ch.opengym.app.AnimationPacksDownloader` | App Group, ExtensionKit |
+
+Die gemeinsame App Group ist aktuell `group.ch.opengym.app`. Diese fünf IDs sind in den originalen Ruby-Integrationsskripten (`ios/ci/add-watch-app.rb`, `add-widgets.rb`, `add-asset-downloader.rb`) und der vorhandenen Xcode-Konfiguration festgelegt. Das originale Release-Skript `scripts/ios/finish-ipa.sh` prüft ebenfalls explizit diese IDs. **Es genügt deshalb nicht, nur die Capacitor-`appId` umzubenennen.** Für RED Fit unter eigener Apple-Identität müssen alle Ziele, Entitlements, Companion- und App-Group-Referenzen sowie die Signing- und Release-Checks zusammen migriert werden. Eine Veränderung der App ID kann vorhandene lokale Daten und Keychain-/App-Group-Zugriffe beeinflussen; vorher Migrationsentscheidung und Geräte-Backup erforderlich.
+
+**Lizenzen:** `vendor/opengym-upstream/NOTICE.md` unterscheidet ausdrücklich den AGPL-Code von der separat lizenzierten Gym-visual-Übungsmediathek. Ein nichtkommerzieller Fork darf die unmodifizierten 180-px-Medien mit Notice behalten; eine eigenständige kommerzielle Verwertung oder weitere Weitergabe kann eine eigene Lizenz von Gym visual erfordern. Vor einer Veröffentlichung von RED Fit als separater App muss die Medienlizenz geklärt werden.
+
+**Offen und freigabepflichtig:** eigene Bundle-ID und App-Group-Namenskonvention (z. B. `com.redurbabat.redfit` / `group.com.redurbabat.redfit`) sowie Signierweg (Entwicklerteam mit passenden Provisioning Profiles oder eingeschränkte private Installation). Ohne Signatur ist das jetzt gebaute IPA nicht direkt installierbar. Apple-ID-Passwörter und Zertifikat-Privatschlüssel gehören nicht in Chat, Dokumentation oder Git.
