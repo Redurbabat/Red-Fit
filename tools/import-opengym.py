@@ -29,6 +29,7 @@ def main():
     if digest != EXPECTED:
         p.error("Archive SHA-256 does not match the audited openGym snapshot")
     copied, skipped, total = 0, 0, 0
+    already_present, crlf_equivalent = 0, 0
     seen = set()
     with ZipFile(archive) as z:
         for entry in z.infolist():
@@ -52,9 +53,18 @@ def main():
             if args.apply:
                 dest = DEST.joinpath(*PurePosixPath(rel).parts)
                 if dest.exists():
-                    if not dest.is_file() or dest.read_bytes() != data:
-                        p.error("Existing source differs; refusing overwrite: " + str(dest))
-                    continue  # Already imported byte-for-byte, safe to resume.
+                    if not dest.is_file():
+                        p.error("Existing source is not a file: " + str(dest))
+                    existing = dest.read_bytes()
+                    if existing != data:
+                        # Git for Windows may check out tracked text with CRLF.
+                        # Accept ONLY a byte-for-byte match after CRLF -> LF.
+                        # Keep the existing file unchanged; git add normalizes it.
+                        if existing.replace(b"\r\n", b"\n") != data:
+                            p.error("Existing source differs; refusing overwrite: " + str(dest))
+                        crlf_equivalent += 1
+                    already_present += 1
+                    continue  # Existing exact match or checkout-only line endings.
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 dest.write_bytes(data)
                 if (entry.external_attr >> 16) & 0o111:
@@ -64,6 +74,8 @@ def main():
         "source_sha256": digest, "files": copied,
         "bytes": total, "excluded_media_files": skipped,
         "included_media": args.include_media,
+        "already_present": already_present,
+        "existing_crlf_equivalent": crlf_equivalent,
         "destination": str(DEST)
     }, indent=2))
     if not args.apply:
