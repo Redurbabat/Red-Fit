@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { effectiveRoutines, effectiveRoutineIds, nextTrainingDay, lastBW, setsDoneActive } from '../lib/history.js'
@@ -31,6 +31,7 @@ import RecoveryHint from '../components/RecoveryHint.jsx'
 import { ChallengesCard } from '../components/Challenges.jsx'
 import { isOn } from '../lib/modules.js'
 import './red-fit-home.css'
+import { revealHomeToday } from './scroll-home-week.js'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
 export default function Home() {
@@ -40,6 +41,7 @@ export default function Home() {
   // The banner switched off and the sync stuck: a dot on the gear (Settings → Show connection status).
   const trouble = useConnectionTrouble()
   const [weekOffset, setWeekOffset] = useState(0)
+  const weekStripRef = useRef(null)
 
   const today = new Date()
   // A weekday can hold several routines. `todayRoutines` is the whole day; `routine` is the
@@ -119,6 +121,13 @@ export default function Home() {
   const on = id => isOn(S, id)
   const bwPoints = S.bodyweight.slice(-30).map(b => ({ t: weighInAt(b), y: b.w, d: b.d }))
 
+  // Seven 44px weekday targets overflow narrow phones. Only on the current week,
+  // reveal today's existing cell horizontally without scrolling the Home page.
+  // Re-run when returning from another week or switching out of rotation mode.
+  useEffect(() => {
+    if (weekOffset === 0 && !rotating) revealHomeToday(weekStripRef.current)
+  }, [weekOffset, rotating, todayKey])
+
   // today's session shown right under the week strip
   const onToday = () => { if (S.active) nav('/workout'); else if (todayRoutines.length) startFlow(effectiveRoutineIds(S, todayISO())); else dayOverrideSheet(todayISO()) }
   // A chip on the coach week's progress row starts that one routine, in any order. A session
@@ -148,7 +157,7 @@ export default function Home() {
           <div className="small muted" style={{ fontWeight: 500 }}>{wkLabel}</div>
           <button className="iconbtn" style={{ width: 32, height: 32, fontSize: 'var(--fs-subhead)' }} onClick={() => setWeekOffset(w => w + 1)} aria-label={t('Next week')}><Icon name="chevronRight" /></button>
         </div>
-        <div className="week redfit-home-week" role="group" aria-label={wkLabel}>{strip}</div>
+        <div ref={weekStripRef} className="week redfit-home-week" role="group" aria-label={wkLabel}>{strip}</div>
       </>}
       {/* The week's plan as a countdown (#753, lib/week-left.js): "2 of 4 left this week". */}
       {left && <div className={'small dim wkleft' + (left.left > 0 ? '' : ' done')}>

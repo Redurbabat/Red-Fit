@@ -51,4 +51,12 @@ describe('RED Fit branding and screen-reader semantics in the original Home view
     expect(css).toMatch(/\.week\.redfit-home-week\s*>\s*\.wday:focus-visible\s*\{[^}]*outline-offset:\s*-3px;/)
   })
 
+  it('auto-reveals today only while the fixed current week is displayed', () => {
+    expect(source).toContain("import { revealHomeToday } from './scroll-home-week.js'")
+    expect(source).toContain('const weekStripRef = useRef(null)')
+    expect(source).toContain('if (weekOffset === 0 && !rotating) revealHomeToday(weekStripRef.current)')
+    expect(source).toContain('[weekOffset, rotating, todayKey]')
+    expect(source).toContain('ref={weekStripRef} className="week redfit-home-week"')
+  })
+
 })
