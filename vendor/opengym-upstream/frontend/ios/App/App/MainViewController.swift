@@ -128,6 +128,20 @@ class MainViewController: CAPBridgeViewController {
         if supportsREDNativeDock {
             config.userContentController.add(redFitDockHandler, name: "redFitDock")
         }
+        // The dedicated dock-navigation XCTest must not wait on an optional
+        // iOS Health authorization sheet. Skip only the app's introductory
+        // permission explanations; NEVER grant OS permissions or change
+        // the onboarding path for a normally launched RED Fit app.
+        if ProcessInfo.processInfo.arguments.contains("-REDFitUITestSkipOnboardingPermissions") {
+            let source = """
+            try {
+              localStorage.setItem('gym_onboard_perms_seen', '["notifications","appleHealth"]');
+            } catch (error) { /* The test will fail visibly if storage is unavailable. */ }
+            """
+            config.userContentController.addUserScript(
+                WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+            )
+        }
         return config
     }
 
