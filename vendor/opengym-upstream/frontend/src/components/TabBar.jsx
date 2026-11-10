@@ -97,7 +97,6 @@ export default function TabBar({ onStart }) {
     }
   }, [loc.pathname, nativeDock])
 
-  if (!canShow) return null
   // Preserve original parent-tab semantics, including Muscles opened from Stats.
   // Four tabs share a moving selection; Start keeps its original raised disc.
   const { cur, parent, activeIndex } = resolveDockRoute(loc.pathname, loc.state)
@@ -185,6 +184,8 @@ export default function TabBar({ onStart }) {
     }
   }, [nativeDock, canShow, cur, parent, activeIndex, S.active, startLabel, trouble])
 
+  // Every React hook above must run even before login; only the markup is gated.
+  if (!canShow) return null
   return (
     <nav id="tabbar" className="redfit-morph-dock" aria-label={t('Navigation')}
       data-redfit-selection={activeIndex === -1 ? 'hidden' : 'visible'}
