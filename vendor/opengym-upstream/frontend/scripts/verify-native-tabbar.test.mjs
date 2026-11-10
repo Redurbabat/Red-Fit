@@ -39,6 +39,16 @@ test('original Capacitor plugins and native dock appearance gates survive', () =
   }
 })
 
+test('native callback is visible to its file-local delegate and VoiceOver names are localized', () => {
+  // The iOS simulator build previously failed when this method was private:
+  // REDFitSystemBarDelegate is a separate type in the same Swift source file.
+  assert.match(swift, /fileprivate func openREDNativeTab\(_ tab: String\)/)
+  assert.match(swift, /owner\?\.openREDNativeTab\(tabs\[item\.tag\]\)/)
+  assert.match(swift, /start\.title = redFitDockModel\.startLabel/)
+  assert.doesNotMatch(swift, /start\.accessibilityLabel\s*=\s*redFitDockModel\.running\s*\?/)
+  assert.match(react, /startLabel:|startLabel,/)
+})
+
 test('keyboard/sheet visibility and non-iPhone web fallback remain supported', () => {
   assert.match(swift, /bar\.isHidden = !redFitDockModel\.visible/)
   assert.match(react, /window\.webkit\?\.messageHandlers\?\.redFitDock/)
