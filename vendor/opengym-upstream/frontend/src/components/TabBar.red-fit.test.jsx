@@ -29,6 +29,8 @@ afterEach(() => {
   host.remove()
   useStore.setState({ S: previousState, user: previousUser })
   where.loc = { pathname: '/home' }
+  vi.unstubAllGlobals()
+  expect(document.documentElement.hasAttribute('data-redfit-native-dock')).toBe(false)
 })
 
 const renderRoute = (pathname, state) => {
@@ -221,6 +223,50 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
       expect(phone.listenerCount).toBe(1)
       expect(reduce.listenerCount).toBe(1)
     })
+  })
+
+  it('native UIKit bridge keeps RED Morph buttons but hides their duplicate presentation', () => {
+    const messages = []
+    vi.stubGlobal('webkit', { messageHandlers: {
+      redFitDock: { postMessage: message => messages.push(message) },
+    } })
+    const nav = renderRoute('/home')
+    expect(document.documentElement.dataset.redfitNativeDock).toBe('true')
+    expect(nav.querySelectorAll('button')).toHaveLength(5)
+    expect(nav.getAttribute('data-redfit-compact')).toBe('false')
+    expect(messages.at(-1)).toMatchObject({
+      visible: true, selected: 'home', startLabel: t('Start'),
+      labels: { home: t('Home'), plan: t('Plan'), stats: t('Stats'), library: t('Exercises') },
+      connectionTrouble: false,
+    })
+    renderRoute('/workout')
+    expect(messages.at(-1).selected).toBe('start')
+    renderRoute('/muscles', { from: '/stats' })
+    expect(messages.at(-1).selected).toBe('stats')
+    act(() => root.unmount())
+    expect(document.documentElement.hasAttribute('data-redfit-native-dock')).toBe(false)
+    expect(messages.at(-1)).toMatchObject({ visible: false })
+    vi.unstubAllGlobals()
+    root = createRoot(host)
+  })
+
+  it('native UIKit bar clears space for a web sheet and restores after close', async () => {
+    const messages = []
+    vi.stubGlobal('webkit', { messageHandlers: {
+      redFitDock: { postMessage: message => messages.push(message) },
+    } })
+    renderRoute('/home')
+    const portal = document.createElement('div')
+    portal.id = 'modal-root'
+    const sheet = document.createElement('div')
+    sheet.className = 'sheet'
+    document.body.appendChild(portal)
+    await act(async () => { portal.appendChild(sheet); await Promise.resolve() })
+    expect(messages.at(-1).visible).toBe(false)
+    await act(async () => { sheet.remove(); await Promise.resolve() })
+    expect(messages.at(-1).visible).toBe(true)
+    portal.remove()
+    vi.unstubAllGlobals()
   })
 
 })

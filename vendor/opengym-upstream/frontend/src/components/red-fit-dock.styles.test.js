@@ -39,4 +39,10 @@ describe('RED Morph dock geometry and accessibility fallbacks', () => {
     ]) expect(css).toContain(preference)
     expect(css).toContain(':dir(rtl)::before')
   })
+  it('never draws a duplicate web dock when Agent 04 native iOS UIKit bridge is present', () => {
+    expect(css).toMatch(/:root\[data-redfit-native-dock\]\s+#tabbar\.redfit-morph-dock\s*\{[^}]*visibility:\s*hidden;/)
+    expect(css).toMatch(/:root\[data-redfit-native-dock\]\s+#tabbar\.redfit-morph-dock\s*\{[^}]*pointer-events:\s*none;/)
+    expect(css).toMatch(/:root\[data-redfit-native-dock\]\s+#app\s*\{[^}]*padding-bottom:\s*calc\(120px \+ var\(--sab\)\);/)
+  })
+
 })

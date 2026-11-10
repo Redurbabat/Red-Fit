@@ -34,12 +34,17 @@ export default function TabBar({ onStart }) {
   // Settings lives under (#369, #330).
   const trouble = useConnectionTrouble()
   const [compact, setCompact] = useState(false)
+  const canShow = !!user || isGuest
+  // The native iOS 26 UIKit bar is installed by Agent 04's MainViewController.
+  // A channel exists only on supported iPhones. The WKWebView retains the real
+  // buttons and React Router; its web bar must not paint over the native bar.
+  const nativeDock = typeof window !== 'undefined' && !!window.webkit?.messageHandlers?.redFitDock
 
   // RED-Bit uses a native iOS 26 TabView. This WebView keeps its real openGym
   // buttons, but adapts the same 13px touch-direction hysteresis on compact phones.
   useEffect(() => {
     setCompact(false)
-    if (typeof window === 'undefined' || !window.matchMedia) return
+    if (typeof window === 'undefined' || !window.matchMedia || nativeDock) return
     const phoneQuery = window.matchMedia('(max-width: 767px) and (pointer: coarse)')
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     const tracker = new RedFitDockDirectionTracker()
@@ -90,9 +95,9 @@ export default function TabBar({ onStart }) {
       document.removeEventListener('touchcancel', onTouchEnd)
       window.removeEventListener('scroll', onScroll)
     }
-  }, [loc.pathname])
+  }, [loc.pathname, nativeDock])
 
-  if (!user && !isGuest) return null
+  if (!canShow) return null
   // Preserve original parent-tab semantics, including Muscles opened from Stats.
   // Four tabs share a moving selection; Start keeps its original raised disc.
   const { cur, parent, activeIndex } = resolveDockRoute(loc.pathname, loc.state)
@@ -115,6 +120,70 @@ export default function TabBar({ onStart }) {
     }
     nav('/workout')
   }
+
+
+  // Agent 04's native UIKit bar sends tab intentions to the original React
+  // router. This mirrors the already implemented iOS message protocol, not a
+  // second navigation state machine or a replacement for the openGym WKWebView.
+  useEffect(() => {
+    if (!nativeDock) return
+    const onNativeTap = event => {
+      const tab = event.detail?.tab
+      if (tab === 'start') startWorkout()
+      else if (tab === 'home') switchTab('/home')
+      else if (tab === 'plan') switchTab('/plan')
+      else if (tab === 'stats') switchTab('/stats')
+      else if (tab === 'library') switchTab('/library')
+    }
+    window.addEventListener('redfit:native-dock', onNativeTap)
+    return () => window.removeEventListener('redfit:native-dock', onNativeTap)
+  })
+
+  useEffect(() => {
+    if (!nativeDock) return
+    const bridge = window.webkit.messageHandlers.redFitDock
+    document.documentElement.dataset.redfitNativeDock = 'true'
+    return () => {
+      bridge.postMessage({ visible: false })
+      delete document.documentElement.dataset.redfitNativeDock
+    }
+  }, [nativeDock])
+
+  useEffect(() => {
+    if (!nativeDock) return
+    const bridge = window.webkit.messageHandlers.redFitDock
+    const selected = cur === 'workout' ? 'start'
+      : activeIndex === 0 ? 'home' : activeIndex === 1 ? 'plan'
+        : activeIndex === 3 ? 'stats' : activeIndex === 4 ? 'library' : 'home'
+    let lastVisible
+    const send = () => {
+      // UIKit must be behind web modal sheets and the on-screen keyboard.
+      // Modal portals may be inserted after the first render.
+      const modal = !!document.querySelector('#modal-root .mback, #modal-root .sheet, #modal-root [role="dialog"]')
+      const typing = document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]')
+      const visible = canShow && !modal && !typing
+      if (visible === lastVisible) return
+      lastVisible = visible
+      bridge.postMessage({
+        visible, selected, running: !!S.active, startLabel,
+        labels: { home: t('Home'), plan: t('Plan'), stats: t('Stats'), library: t('Exercises') },
+        connectionTrouble: !!trouble,
+      })
+    }
+    send()
+    const observer = new MutationObserver(send)
+    observer.observe(document.body, {
+      subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'role'],
+    })
+    const onFocusOut = () => queueMicrotask(send)
+    document.addEventListener('focusin', send, true)
+    document.addEventListener('focusout', onFocusOut, true)
+    return () => {
+      observer.disconnect()
+      document.removeEventListener('focusin', send, true)
+      document.removeEventListener('focusout', onFocusOut, true)
+    }
+  }, [nativeDock, canShow, cur, parent, activeIndex, S.active, startLabel, trouble])
 
   return (
     <nav id="tabbar" className="redfit-morph-dock" aria-label={t('Navigation')}
