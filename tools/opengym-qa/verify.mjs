@@ -71,8 +71,8 @@ export async function verify({ repoRoot = defaultRoot, npmBinary = process.platf
     const lockPath = join(frontend, 'package-lock.json')
     if (!existsSync(manifestPath) || !existsSync(lockPath)) throw new Error('Original frontend manifest or lockfile missing')
     const pkg = JSON.parse(readFileSync(manifestPath, 'utf8'))
-    if (pkg.name !== 'opengym-frontend' || !pkg.scripts?.build || !pkg.scripts?.test) {
-      throw new Error('Refusing a non-original or untestable frontend (expected opengym-frontend with test/build)')
+    if (!['opengym-frontend', 'red-fit-frontend'].includes(pkg.name) || !pkg.scripts?.build || !pkg.scripts?.test) {
+      throw new Error('Refusing a non-original or untestable frontend (expected original or renamed red-fit-frontend with test/build)')
     }
     report.dependencies = {
       name: pkg.name, version: pkg.version,

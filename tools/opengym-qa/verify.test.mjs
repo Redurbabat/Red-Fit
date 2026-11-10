@@ -98,3 +98,13 @@ test('mobile artefact validator rejects missing JS, unstamped worker and missing
   assert.match(checkMobileWebDist(dist).join(' | '), /Missing mobile asset/)
   assert.match(checkMobileWebDist(dist).join(' | '), /Unstamped service worker/)
 })
+
+
+test('accepts the renamed original RED Fit frontend while still rejecting the root PWA', async (t) => {
+  const x = fixture(t, 'red-fit-frontend')
+  const report = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock], env: { ...process.env, QA_CALLS: x.calls } })
+  assert.equal(report.status, 'passed')
+  assert.equal(report.dependencies.name, 'red-fit-frontend')
+  assert.equal(report.steps.length, 4)
+  assert.ok(report.steps.every(step => step.status === 'passed'))
+})
