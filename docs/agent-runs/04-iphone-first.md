@@ -161,3 +161,31 @@ Die gemeinsame App Group ist aktuell `group.ch.opengym.app`. Diese fünf IDs sin
 Da die GitHub-API das Repository als `public` meldet und das Original-iPhone-IPA separat lizenzierte Übungsmedien enthält, wurde in `.github/workflows/red-fit-iphone.yml` ausschliesslich der `upload-artifact`-Step mit `if: always() && github.event.repository.private` geschützt. **Xcode-/Unit-Builds bleiben unverändert; eine IPA wird aus dieser Pipeline bei öffentlichem Repo aber nicht mehr als herunterladbares Actions-Artefakt ausgegeben.** Das ist kein Ersatz für eine tatsächliche private GitHub-Repository-Einstellung, löscht keine älteren Artefakte und gewährt keine Medienlizenz. Vor neuem privaten Download Repository-Sichtbarkeit verifizieren.
 
 CI-Nachtrag: Für den vorherigen Commit `36fd08837fc86d83973ef0496c9a6bdb13931bfd` meldete die allgemeine CI `42724559568` `completed/success`; die iPhone-Vorabstufen einschliesslich `Test RED Fit native identity and entitlement guard` waren im Job `129526736912` bereits erfolgreich. Der iPhone-Run `42724559732` wurde anschliessend durch neueren Branch-Run **cancelled**, daher **kein** neuer Gesamt-Xcode-/IPA-Erfolgsnachweis. Nach Schutzänderung gestartet: iOS-Run `42724847324` (`pending` beim Abruf), Root-CI `42724847428` (`in_progress`). Die **ältere** erfolgreich gebaute unsigned IPA aus Run `42718097186` bleibt der letzte vollumfänglich nachgewiesene Paket-Build.
+
+
+## 10.11.2026 – Nutzer bestaetigt IPA auf iPhone; Apple-System-Dock statt handgezeichneter Glas-Kapsel
+
+**Nutzerangabe:** Eine RED-Fit-IPA ist bereits auf seinem iPhone installiert. Das ist eine Nutzerbestaetigung, **kein in GitHub oder per XCUITest nachvollzogener Geraetetest** und betrifft nicht automatisch die hier neu eingebauten Dock-Aenderungen. Die vorherige Aussage, eine Installation sei grundsaetzlich nicht erfolgt, ist daher als historischer Entwicklungsstand zu lesen. Signingmethode und tatsaechliche installierte Revision sind noch nicht belegt.
+
+**Referenzen gelesen:** `Redurbabat/RED-Morph` – `skills/red-morph/SKILL.md`, `STYLE_CONTRACT.md`, `docs/native-swiftui/UX_RULES.md`, `MOTION.md`; `Redurbabat/RED-Bit` – `RootView.swift`, `docs/apple-native-ui-adoption.md`, `docs/DESIGN_SYSTEM.md`, `bbt-liquid-motion`, `bbt-ios-testing`, `bbt-apple-xcode`, `bbt-release` plus lokal bereitgestellte SwiftUI-Komponenten-/UX-/Motion-Skills. Apple bestaetigt `UITabBar` als eigenstaendig nutzbares **systemeigenes** Steuerelement; bei `UITabBarController` ist iOS-26-Liquid-Glass offiziell vorgesehen. Die **exakte visuelle Uebereinstimmung eines standalone `UITabBar` mit einer kompletten System-`TabView`** ist ohne realen iPhone-Screenshot/UITest noch nicht belegt.
+
+### Keep / Rework / Archive
+
+| Knoten | Entscheidung | Grund |
+| --- | --- | --- |
+| Original `MainViewController: CAPBridgeViewController` mit nur einem `WKWebView` | KEEP | Training, Daten, Plugin-Lifecycle und Offline-Session beibehalten |
+| Original `src/components/TabBar.jsx` als Routing-/Start-Logik | KEEP | Ein einziger React Router; keine zweite Datenhaltung |
+| Von Agent 04 handgebauter `REDFitGlassDock` auf SwiftUI-`Capsule.glassEffect` | REWORK | Wunsch: **echtes Apple-iPhone-Systemdock**, keine manuell gezeichnete Kopie |
+| `UITabBar` auf iOS 26+ mit nativen `UITabBarItem` + SF Symbols | KEEP als neue Implementierung, Geraeteabnahme offen | Apple UIKit selbst zeichnet die Leiste und verwaltet Auswahl / Accessibility |
+| Root-RED-Fit-PWA / andere Agent-Branches | UNCHANGED | Nicht neues Produkt oder parallele Navigation bauen |
+
+### Aenderungen auf Branch `agent/redfit-04-ios-android`
+
+1. `vendor/opengym-upstream/frontend/ios/App/App/MainViewController.swift`: `REDFitGlassDock` und `UIHostingController` entfernt. Stattdessen ein **echtes `UITabBar`-System-Control** mit originalen fuenf Bereichen Home/Plan/Start/Stats/Exercises; System-SF-Symbole und die echte iOS-Bar-Darstellung. Bestehende native Plugins/Bridge/Workout-Session nicht veraendert. Bei iOS <26 / iPad / Android / Browser gilt unveraendert die originale HTML-Leiste.
+2. `vendor/opengym-upstream/frontend/src/components/TabBar.jsx`: Die native Leiste benutzt weiterhin den originalen Router und die Start-/Resume-Funktion. Der aktuelle Workout-Screen waehlt jetzt korrekt den nativen **Start**-Tab statt faelschlich Exercises. Vorhandene `t(...)`-Uebersetzungen fuer Tabs und originaler Sync-Warnzustand gehen an UIKit (native Badge statt selbst gezeichneter Punkt).
+3. `vendor/opengym-upstream/frontend/src/components/TabBar.native-dock.test.jsx`: Regression gegen Routing und lokalisierten native-dock-Status ergaenzt.
+4. `vendor/opengym-upstream/frontend/scripts/verify-native-tabbar.test.mjs`: vier neue **strukturelle** Node-Checks (echte Apple-`UITabBar` statt nachgebautes Glas, fuenf native Tabs, unveraenderte Swift-Plugins, Modal-/Tastatur-Ausblendung). GitHub-iOS-Workflow und Codemagic fuehren sie vor dem Build aus.
+
+**Testgrenzen:** Node-Source-Guards und originale Web-Routing-Tests sind keine iOS-Screenshot- oder SwiftUI-Animationsbeweise. Apple-Originalkontrolle heisst hier UIKit-`UITabBar`, **nicht** eine 1:1-Portierung von RED-Bits Musik-`TabView` mit Player-`tabViewBottomAccessory`: ein solches fremdes Musik-Navigationssystem wuerde eine zweite Runtime oder einen instabilen WKWebView-Umbau erzwingen. `UITabBarController`-spezifisches automatisches Scroll-Minimizing ist daher **nicht implementiert**. Beim Test am iPhone visuelle Form, Touch/VoiceOver, Dark/Light, Keyboard, Sheet und Workout-Sperre pruefen.
+
+**Ausstehend:** aktuelle iOS-Actions-/Root-CI fuer diesen Commit vollstaendig fertig pruefen, neu gebautes IPA sicher zum bereits installierten Build zuordnen und auf dem echten iPhone verifizieren. Bei `public`-Repository kein neues lizenziertes IPA-Artefakt hochladen; Repo-Sichtbarkeit pruefen. PR #13 bleibt Draft / kein Merge.
