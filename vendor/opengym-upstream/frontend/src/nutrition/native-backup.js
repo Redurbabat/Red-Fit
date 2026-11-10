@@ -1,5 +1,5 @@
 // An additional native Documents backup for nutrition. It is intentionally separate from
-// the original openGym backup/sync until a tested cross-domain migration exists.
+// the original RED Fit backup/sync until a tested cross-domain migration exists.
 // A dated, account-scoped copy is written after successful IndexedDB commits.
 // Users must still copy it out of the app folder before uninstalling.
 import { localDateKey, validateBackup } from './model.js'

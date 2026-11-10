@@ -108,3 +108,14 @@ describe('RED Fit iOS 26 original UIKit tab bar handoff', () => {
     field.remove()
   })
 })
+
+
+it('hides the actual Apple surface for the first-run tour outside modal-root', async () => {
+  const tour = document.createElement('div')
+  tour.setAttribute('role', 'dialog')
+  tour.setAttribute('aria-modal', 'true')
+  await act(async () => { document.body.appendChild(tour); await Promise.resolve() })
+  expect(nativeMessages.at(-1).visible).toBe(false)
+  await act(async () => { tour.remove(); await Promise.resolve() })
+  expect(nativeMessages.at(-1).visible).toBe(true)
+})

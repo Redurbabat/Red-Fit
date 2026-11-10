@@ -40,7 +40,7 @@ export default function TabBar({ onStart }) {
   // buttons and React Router; its web bar must not paint over the native bar.
   const nativeDock = typeof window !== 'undefined' && !!window.webkit?.messageHandlers?.redFitDock
 
-  // RED-Bit uses a native iOS 26 TabView. This WebView keeps its real openGym
+  // RED-Bit uses a native iOS 26 TabView. This WebView keeps its real RED Fit
   // buttons, but adapts the same 13px touch-direction hysteresis on compact phones.
   useEffect(() => {
     setCompact(false)
@@ -123,7 +123,7 @@ export default function TabBar({ onStart }) {
 
   // Agent 04's native UIKit bar sends tab intentions to the original React
   // router. This mirrors the already implemented iOS message protocol, not a
-  // second navigation state machine or a replacement for the openGym WKWebView.
+  // second navigation state machine or a replacement for the RED Fit WKWebView.
   useEffect(() => {
     if (!nativeDock) return
     const onNativeTap = event => {
@@ -158,7 +158,7 @@ export default function TabBar({ onStart }) {
     const send = () => {
       // UIKit must be behind web modal sheets and the on-screen keyboard.
       // Modal portals may be inserted after the first render.
-      const modal = !!document.querySelector('#modal-root .mback, #modal-root .sheet, #modal-root [role="dialog"]')
+      const modal = !!document.querySelector('#modal-root .mback, #modal-root .sheet, #modal-root [role="dialog"], [role="dialog"][aria-modal="true"]')
       const typing = document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]')
       const visible = canShow && !modal && !typing
       if (visible === lastVisible) return

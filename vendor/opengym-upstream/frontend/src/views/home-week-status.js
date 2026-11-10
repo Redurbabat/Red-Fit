@@ -1,5 +1,5 @@
 // A week-dot is visual; reuse its priority for a localized VoiceOver label.
-// Source strings are existing openGym i18n keys, not a second translation table.
+// Source strings are existing RED Fit i18n keys, not a second translation table.
 export function homeWeekStatus({ done, noted, overridden, planned }) {
   if (done) return { dot: ' done', label: 'Completed' }
   if (noted) return { dot: ' noted', label: 'Note' }

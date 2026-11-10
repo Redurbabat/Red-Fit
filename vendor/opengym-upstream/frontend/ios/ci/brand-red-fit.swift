@@ -6,7 +6,7 @@ import Foundation
 
 let fileManager = FileManager.default
 let frontend = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true)
-let source = frontend.appendingPathComponent("../../../public/icons/icon-512.png").standardizedFileURL
+let source = frontend.appendingPathComponent("resources/red-fit-master.png").standardizedFileURL
 let assetRoot = frontend.appendingPathComponent("ios/App/App/Assets.xcassets", isDirectory: true)
 guard let icon = NSImage(contentsOf: source) else {
     fputs("RED Fit icon missing at \(source.path)\n", stderr)
@@ -33,8 +33,8 @@ func drawAsset(to path: URL, size: Int, imageSize: CGFloat) throws {
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current = context
     context.imageInterpolation = .high
-    NSColor(calibratedRed: 12.0 / 255.0, green: 14.0 / 255.0,
-            blue: 18.0 / 255.0, alpha: 1.0).setFill()
+    NSColor(calibratedRed: 64.0 / 255.0, green: 11.0 / 255.0,
+            blue: 27.0 / 255.0, alpha: 1.0).setFill()
     NSRect(x: 0, y: 0, width: size, height: size).fill()
     let offset = (CGFloat(size) - imageSize) / 2
     icon.draw(in: NSRect(x: offset, y: offset, width: imageSize, height: imageSize),

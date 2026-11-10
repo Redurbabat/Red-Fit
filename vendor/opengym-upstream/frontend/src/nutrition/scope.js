@@ -1,4 +1,4 @@
-// A server-scoped namespace prevents two independent openGym installations from sharing
+// A server-scoped namespace prevents two independent RED Fit installations from sharing
 // nutrition entries just because their account tables both contain user ID "1".
 // Do not store tokens or personal credentials in the database name.
 export function nutritionScope({ userId, server, origin }) {

@@ -1,5 +1,5 @@
 // Separate, additive IndexedDB database: never writes gym_state_v1, sync stamps, native mirrors,
-// or the existing openGym workout JSON. Native WebView and offline browser both use this store.
+// or the existing RED Fit workout JSON. Native WebView and offline browser both use this store.
 import { mergeRecords, validateBackup, validateEntry, validateFood, validatePlannedMeal } from './model.js'
 
 const DB_NAME = 'redfit-nutrition-v1'

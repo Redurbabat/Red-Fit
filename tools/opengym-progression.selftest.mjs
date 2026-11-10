@@ -1,8 +1,8 @@
 /**
  * Source-backed smoke tests of the owner's original openGym progression engine.
  *
- * The original modules remain byte-identical under vendor/opengym-upstream/;
- * this is not a production RED Fit entrypoint or a replacement for Vitest.
+ * The original hash manifest is retained; explicitly reviewed RED Fit derivatives are locked separately.
+ * This checks the active original-based app and does not replace Vitest.
  *
  * Run: node --test tools/opengym-progression.selftest.mjs (Node 22+).
  */
@@ -105,7 +105,7 @@ test("the complete original module/test import closure is present in vendor", ()
     const code = readFileSync(path, "utf8");
     const expression = /(?:from\s+|import\s*\(|import\s+)["'](\.[^"']+)["']/g;
     for (const match of code.matchAll(expression)) {
-      const base = resolve(dirname(path), match[1]);
+      const base = resolve(dirname(path), match[1].split("?")[0]);
       const candidate = [base, base + ".js", base + ".jsx", base + ".json", base + ".mjs", resolve(base, "index.js")]
         .find(existsSync);
       assert.ok(candidate, `Missing import ${match[1]} in ${path}`);
@@ -113,15 +113,21 @@ test("the complete original module/test import closure is present in vendor", ()
     }
   };
   for (const name of sourceRoots) visit(resolve(lib, name));
-  assert.equal(seen.size, 70);
+  assert.equal(seen.size, 71); // Original 70 modules plus the inline brand image.
 });
 
-test("all 70 staged files match the immutable Git blobs of the original ZIP", () => {
+test("original provenance and explicitly reviewed RED Fit derivative hashes match", () => {
   const lock = JSON.parse(readFileSync(
     resolve(root, "tools/opengym-progression-source.lock.json"), "utf8",
   ));
   assert.equal(lock.schemaVersion, 1);
   assert.equal(lock.commit, "8fb98b16861a2728652302a7e6e30c50548493a0");
+  const derived = JSON.parse(readFileSync(resolve(root, "tools/opengym-progression-derived.lock.json"), "utf8"));
+  assert.equal(derived.upstreamCommit, lock.commit);
+  for (const [name, entry] of Object.entries(derived.overrides)) {
+    assert.equal(entry.upstreamSha, lock.files[name], `Unknown original source: ${name}`);
+    assert.ok(entry.reason);
+  }
   const entries = Object.entries(lock.files);
   assert.equal(entries.length, 70);
   let totalBytes = 0;
@@ -133,7 +139,7 @@ test("all 70 staged files match the immutable Git blobs of the original ZIP", ()
       .update(new Uint8Array([0]))
       .update(bytes)
       .digest("hex");
-    assert.equal(actual, sha, `Original source modified: ${name}`);
+    assert.equal(actual, derived.overrides[name]?.derivedSha || sha, `Unreviewed source change: ${name}`);
   }
-  assert.equal(totalBytes, lock.totalBytes);
+  assert.equal(totalBytes, derived.derivedTotalBytes);
 });

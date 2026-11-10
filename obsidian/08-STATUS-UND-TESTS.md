@@ -230,3 +230,15 @@ Nächster konkreter Schritt:
 - Extra failures: Tour.test.jsx:513 once in nutrition full suite and OpenGymUITests.swift:67 in original iOS onboarding/Home smoke. Both remain open.
 - Root CI and combined iOS simulator workflow were green at old integration head 9740f4bc, not confirmation of real iPhone install. Github repository visibility is public.
 - Next: confirm new CI head, then fix iOS native navigation/onboarding failure; no signed IPA or secrets release.
+
+## 2026-11-10 — PR #17: neues RED-Fit-Branding und Dock-Integration
+
+- Weiterarbeit direkt auf `integration/red-fit-opengym-iphone-20261110`, ausgehend von `a7be58b`. Alle fünf aktuellen Quell-PR-Heads (#11–#15) sind mit Git als Vorfahren bestätigt.
+- Letzte Nutzerentscheidung fürs Logo: **Bordeaux/Elfenbein, abstraktes eigenständiges Symbol aus drei fließenden Formen; kein R, keine Buchstaben und keine Hantel**. Nur dieser letzte Entwurf ist eingebaut.
+- Neue primäre und alternative App-Icons, Splash für iPhone/Watch/Android, PWA/Referenz-Icons, Onboarding, Druck-/Share-Marke; sichtbare Texte aller unterstützten Sprachen und neue Exportnamen = RED Fit. Update-/Projektlinks zeigen ins eigene Repo. Alte Daten-/URL-/Importkennungen und originale Lizenzhinweise bleiben kompatibel.
+- Echtes UIKit-`UITabBar` bleibt erhalten; Web-Fallback schwebend und >=44px. Ernährung markiert Home. Native Leiste versteckt sich auch hinter der ersten Einführungstour. Health-Origin-Erkennung umfasst neue und alte Bundle-IDs.
+- Browser-A11y belegt `Today Rest day` als Button: XCUITest nutzt nun den echten Button statt nicht vorhandenem separatem `Today`-Text, schließt die optionale Tour vor Dock-Taps und hängt bei Fehlschlag Screenshots/A11y an.
+- Tatsächlich bestanden: **218 Offline-Regressionen**, **23 native Struktur-/Identitäts-/Bundle-Guards**, **89 fokussierte Branding-/Backup-/Health-/Dock-Tests**, **28 zusätzliche Exporttests**, Original-Web-/Mobile-Build und Safari-15.5-Syntaxcheck. Chromium: vier Breiten, Navigation, 80 g = 296 kcal, Reload-Persistenz, Offline-Navigation, Reduce Motion, keine JS-Ausnahmen.
+- Vollständiger Frontend-/Root-Teststand wird nach Abschluss des aktuellen Durchlaufs ergänzt.
+- Offen: macOS-Xcode-Workflow für diesen neuen Stand, echte iPhone-/Watch-Darstellung und native Minimierung, Signing/installierbare IPA, Android-/Windows-Binaries. Kein Merge, keine Veröffentlichung/kein manueller Deploy.
+- Details: `docs/design/RED-FIT-BRAND-INTEGRATION.md`, `docs/agent-runs/00-consolidated-integration.md`; reproduzierbarer Browsercheck: `E2E_BASE_URL=http://localhost:4173 node tools/redfit-original-e2e.mjs` gegen einen lokalen `VITE_MOBILE=1`-Preview.

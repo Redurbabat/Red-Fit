@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// These tests exercise the original openGym TabBar, not the legacy root RED Fit shell.
+// These tests exercise the original RED Fit TabBar, not the legacy root RED Fit shell.
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -39,7 +39,7 @@ const renderRoute = (pathname, state) => {
   return host.querySelector('#tabbar')
 }
 
-describe('RED Fit selection material in the existing openGym navigation', () => {
+describe('RED Fit selection material in the existing RED Fit navigation', () => {
   it.each([
     ['/home', '0', 'Home'],
     ['/plan', '1', 'Plan'],

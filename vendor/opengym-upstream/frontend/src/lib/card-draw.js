@@ -1,4 +1,5 @@
-// What every shared picture of openGym has in common: the two formats, the light and dark looks
+import { BRAND_WIDTH, BRAND_HEIGHT, BRAND_SPANS } from './brand-mark.js'
+// What every shared picture of RED Fit has in common: the two formats, the light and dark looks
 // and the logo in the corner. Pure drawing, no DOM: the workout card (lib/workout-card.js, after a
 // workout and in History) and Your year (lib/wrapped-cards.js) both paint with it, and
 // lib/share-image.js gets the picture out of the app. No exercise picture or clip is ever drawn
@@ -8,7 +9,7 @@
 export const FORMATS = { story: { width: 1080, height: 1920 }, square: { width: 1080, height: 1080 } }
 export const FORMAT_IDS = Object.keys(FORMATS)
 export const STYLE_IDS = ['dark', 'light']
-export const SITE = 'opengym.ch'
+export const SITE = 'RED Fit'
 
 /**
  * The colours of a card, the app's own (index.css) in a fixed light or dark look, whatever the
@@ -50,23 +51,20 @@ export function cardPalette(style, acc = '#30d158') {
     : { bg: '#000000', surface: '#1c1c1e', tile: '#2c2c2e', label: '#ffffff', label2: '#98989f', acc: a, accText: a, sep: '#38383a', light: false }
 }
 
-// The dumbbell of the app icon (public/icon-512.png) on a 208×72 grid, centred on 0,0.
-const MARK = [[-72, -10, 144, 20], [-80, -36, 20, 72], [-104, -25, 17, 50], [60, -36, 20, 72], [87, -25, 17, 50]]
-export const MARK_ASPECT = 208 / 72
-
-/** The logo mark, `h` high, its left edge at x (its right edge for rtl), centred on y. */
+// Same abstract identity as the installed icon, as a single-color stencil.
+export const MARK_ASPECT = BRAND_WIDTH / BRAND_HEIGHT
 export function drawMark(ctx, x, y, h, color) {
-  const s = h / 72
+  const scale = h / BRAND_HEIGHT
   ctx.save()
-  ctx.translate(x + 104 * s, y)
-  ctx.scale(s, s)
+  ctx.translate(x, y - h / 2)
+  ctx.scale(scale, scale)
   ctx.fillStyle = color
-  for (const [rx, ry, rw, rh] of MARK) { roundRect(ctx, rx, ry, rw, rh, 7); ctx.fill() }
+  for (const [sx, sy, w] of BRAND_SPANS) ctx.fillRect(sx, sy, w, 1)
   ctx.restore()
 }
 
 /**
- * The footer every card ends with: the mark, "openGym" with "Gym" in the accent, and the site at
+ * The footer every card ends with: the mark, "RED Fit" with "Gym" in the accent, and the site at
  * the other end. `y` is the text's baseline. Drawn left to right whatever the language: it is a
  * logo, and a logo does not mirror.
  */
@@ -78,10 +76,10 @@ export function drawBrand(ctx, { x, y, width, colors, family, size = 40 }) {
   ctx.textAlign = 'left'
   ctx.font = `800 ${size}px ${family}`
   ctx.fillStyle = colors.label
-  ctx.fillText('open', tx, y)
-  tx += ctx.measureText('open').width
+  ctx.fillText('RED ', tx, y)
+  tx += ctx.measureText('RED ').width
   ctx.fillStyle = colors.accText || colors.acc
-  ctx.fillText('Gym', tx, y)
+  ctx.fillText('Fit', tx, y)
   ctx.font = `600 ${Math.round(size * 0.72)}px ${family}`
   ctx.fillStyle = colors.label2
   ctx.textAlign = 'right'

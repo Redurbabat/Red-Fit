@@ -12,7 +12,7 @@ const numberText = (value, digits = 1) => Number(value || 0).toLocaleString('de-
 const freshFood = { name: '', kcal100: '', protein100: '', carbs100: '', fat100: '', barcode: '' }
 const newID = () => globalThis.crypto?.randomUUID?.() || Array.from(crypto.getRandomValues(new Uint8Array(16)), n => n.toString(16).padStart(2, '0')).join('')
 
-// Unmount this page immediately when openGym changes account. A guest stays local-only.
+// Unmount this page immediately when RED Fit changes account. A guest stays local-only.
 export default function Nutrition() {
   const userId = useStore(s => s.user?.id)
   const server = useStore(s => s.sync?.server)
@@ -448,7 +448,7 @@ function NutritionForScope({ scope }) {
 
     <section className="card nutrition-section" aria-labelledby="nutrition-backup">
       <h2 id="nutrition-backup">Ernährung sichern</h2>
-      <p className="nutrition-hint">Ernährung liegt in einer eigenen lokalen IndexedDB und wird NICHT vom originalen openGym-Workout-Backup oder Server-Sync erfasst. Der Speicher ist pro openGym-Server und Benutzerkonto getrennt. Vor Gerätewechsel oder App-Löschung immer eine JSON-Datei extern sichern.</p>
+      <p className="nutrition-hint">Ernährung liegt in einer eigenen lokalen IndexedDB und wird NICHT vom originalen RED-Fit-Workout-Backup oder Server-Sync erfasst. Der Speicher ist pro RED-Fit-Server und Benutzerkonto getrennt. Vor Gerätewechsel oder App-Löschung immer eine JSON-Datei extern sichern.</p>
       {MOBILE && <p className="nutrition-hint">Nach jeder Änderung versucht RED Fit zusätzlich eine datierte Kopie im App-Dokumentenordner anzulegen. Der Ordner ist je nach iOS-Konfiguration nicht direkt in der Dateien-App sichtbar. Die lokale Sicherung schützt NICHT vor App-Löschung; vor Gerätewechsel oder Deinstallation immer JSON extern exportieren.</p>}
       <div className="nutrition-actions">
         <button type="button" disabled={busy} onClick={onExport}>JSON exportieren</button>

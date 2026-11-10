@@ -58,7 +58,7 @@ class MainViewController: CAPBridgeViewController {
         bar.delegate = delegate
         redFitSystemBarDelegate = delegate  // UITabBar.delegate is weak.
         bar.selectedItem = bar.items?.first
-        bar.tintColor = .systemGreen
+        bar.tintColor = .systemRed
         bar.accessibilityIdentifier = "redfit-system-tabbar"
         bar.isHidden = !redFitDockModel.visible
         bar.translatesAutoresizingMaskIntoConstraints = false
@@ -237,7 +237,7 @@ private final class REDFitDockState {
 
 // UITabBarDelegate forwards the original five navigation intentions to the
 // existing React Router. The controller never creates another web view or
-// a second workout store. Repeated taps retain openGym's scroll-to-top behavior.
+// a second workout store. Repeated taps retain RED Fit's scroll-to-top behavior.
 private final class REDFitSystemBarDelegate: NSObject, UITabBarDelegate {
     weak var owner: MainViewController?
     private let tabs = ["home", "plan", "start", "stats", "library"]

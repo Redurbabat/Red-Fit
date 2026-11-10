@@ -1,4 +1,4 @@
-/* Scoped to the original openGym design tokens; no global dock or iOS style overrides. */
+/* Scoped to the original RED Fit design tokens; no global dock or iOS style overrides. */
 .nutrition-page { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 .nutrition-head { display:flex; align-items:center; gap:16px; margin:8px 0 18px; }
 .nutrition-head h1 { margin:0; }

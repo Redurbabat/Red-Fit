@@ -1,9 +1,10 @@
-// The paper side of openGym: one page shell every printout shares (the weekly plan, one routine,
+import brandIcon from '../assets/red-fit-icon.png?inline'
+// The paper side of RED Fit: one page shell every printout shares (the weekly plan, one routine,
 // one workout, the performance report), and the one way to send it to a printer or a PDF.
 //
 // What every printout gets from here:
-//  - the openGym logo top left, the title, a line of facts, and who it is for and when;
-//  - page numbers and opengym.ch in the bottom margin (CSS @page margin boxes: Chrome, Android's
+//  - the RED Fit logo top left, the title, a line of facts, and who it is for and when;
+//  - page numbers and RED Fit in the bottom margin (CSS @page margin boxes: Chrome, Android's
 //    WebView, desktop Chrome/Edge; the iOS app draws the same line natively, PrintPlugin.swift).
 //    Desktop Firefox (checked with 158) and Safari drop margin boxes, so there the line is left
 //    out on purpose: nothing else changes, and their own "Headers and footers" print option (on
@@ -43,11 +44,8 @@ export function probeMarks(probe) {
   return { s: id => mark('s', id), e: id => mark('e', id), h: id => mark('h', id) }
 }
 
-// The app icon (frontend/resources/icon.svg), drawn small: the lime dumbbell on its dark tile.
-export const LOGO_SVG = '<svg class="logo-mark" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#0c0e12"/>'
-  + '<g fill="#a3e635"><rect x="80" y="242" width="352" height="28"/><rect x="80" y="199" width="36" height="114"/>'
-  + '<rect x="131" y="169" width="47" height="174"/><rect x="334" y="169" width="47" height="174"/>'
-  + '<rect x="396" y="199" width="36" height="114"/></g></svg>'
+// Inline the small original brand asset so printing also works offline/native.
+export const LOGO_SVG = '<svg class="logo-mark" viewBox="0 0 180 180" aria-hidden="true"><image width="180" height="180" href="' + brandIcon + '"/></svg>'
 
 // "Page {0} of {1}" in the reader's language, as the content of an @page margin box: the text
 // around the two numbers comes from the translation, the numbers from CSS counters.
@@ -70,7 +68,7 @@ export const PRINT_CSS = `
   @page {
     size: auto;
     margin: 15mm 14mm 17mm;
-    @bottom-left { content: "opengym.ch"; font: 7.5pt/1 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #9aa0ad; }
+    @bottom-left { content: "RED Fit"; font: 7.5pt/1 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #9aa0ad; }
     @bottom-right { font: 7.5pt/1 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #9aa0ad; }
   }
   :root {
@@ -151,13 +149,13 @@ export function printShell({ title, kicker = '', facts = [], owner = '', date, b
 ${css}</style></head>
 <body><div class="doc">
   <header class="mast keep">
-    <div class="mast-top"><div class="brand">${LOGO_SVG}<span>openGym</span></div><div class="mast-meta">${meta}</div></div>
+    <div class="mast-top"><div class="brand">${LOGO_SVG}<span>RED Fit</span></div><div class="mast-meta">${meta}</div></div>
     ${kicker ? `<div class="kicker">${esc(kicker)}</div>` : ''}
     <h1>${esc(title)}</h1>
     ${factLine ? `<div class="facts">${factLine}</div>` : ''}
   </header>
   ${body}
-  <div class="end keep">${esc(t('Made with openGym'))} · opengym.ch${credit ? `<div class="credit" lang="en" dir="ltr">${esc(credit)}</div>` : ''}</div>
+  <div class="end keep">${esc(t('Made with RED Fit'))} · RED Fit${credit ? `<div class="credit" lang="en" dir="ltr">${esc(credit)}</div>` : ''}</div>
 </div></body></html>`
 }
 
@@ -174,7 +172,7 @@ export function paperFor(locale) {
 export function printOptions() {
   let locale = ''
   try { locale = navigator.language || '' } catch (e) { /* */ }
-  return { paper: paperFor(locale), footer: { left: 'opengym.ch', page: t('Page {0} of {1}') } }
+  return { paper: paperFor(locale), footer: { left: 'RED Fit', page: t('Page {0} of {1}') } }
 }
 
 // The web: a hidden iframe and the browser's own print dialog (→ Save as PDF), so we never
@@ -212,7 +210,7 @@ function printInFrame(html) {
  * suggested PDF file; Android refuses a job without one.
  */
 export function printDocument(html, name) {
-  if (MOBILE) return printHtml(html, name || 'openGym', printOptions()).catch(() => { /* dismissed */ })
+  if (MOBILE) return printHtml(html, name || 'RED Fit', printOptions()).catch(() => { /* dismissed */ })
   printInFrame(html)
   return Promise.resolve()
 }

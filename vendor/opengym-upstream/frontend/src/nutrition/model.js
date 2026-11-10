@@ -1,4 +1,4 @@
-// Nutrition domain for the ORIGINAL openGym frontend. No workout-state mutations.
+// Nutrition domain for the ORIGINAL RED Fit frontend. No workout-state mutations.
 export const MEAL_TYPES = ['Frühstück', 'Mittagessen', 'Abendessen', 'Snack']
 export const EMPTY = Object.freeze({ kcal: 0, protein: 0, carbs: 0, fat: 0 })
 

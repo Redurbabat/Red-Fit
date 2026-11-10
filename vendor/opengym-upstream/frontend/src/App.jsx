@@ -90,7 +90,7 @@ const ProgrammeEdit = lazyView(() => import('./views/Programmes.jsx').then(m => 
 const Stats = lazyView(() => import('./views/Stats.jsx'))
 const History = lazyView(() => import('./views/History.jsx'))
 const Library = lazyView(() => import('./views/Library.jsx'))
-// Agent 03: nutrition stays a separate lazy chunk inside the original openGym app.
+// Agent 03: nutrition stays a separate lazy chunk inside the original RED Fit app.
 const Nutrition = lazyView(() => import('./views/Nutrition.jsx'))
 const Muscles = lazyView(() => import('./views/Muscles.jsx'))
 const SettingsRoute = lazyView(() => import('./views/Settings.jsx').then(m => ({ default: m.SettingsRoute })))
@@ -391,7 +391,7 @@ function Shell() {
       {/* Seasonal decoration (lib/seasonal.js): nothing, and nothing loaded, out of season. Never
           over a running workout or the first-launch screens. */}
       {authed && !needsMobileOnboarding && !permSteps && <SeasonalLayer hidden={inWorkout || loc.pathname === '/workout'} />}
-      {/* Your year in openGym (components/WrappedEntry.jsx): nothing loaded until it is opened. */}
+      {/* Your year in RED Fit (components/WrappedEntry.jsx): nothing loaded until it is opened. */}
       {authed && isOn(S, 'motivation') && <WrappedLayer ready={setupDone} />}
     </>
   )

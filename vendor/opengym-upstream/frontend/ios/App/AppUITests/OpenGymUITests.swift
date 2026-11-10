@@ -59,7 +59,7 @@ final class OpenGymUITests: XCTestCase {
         // cannot establish whether Home loaded. The original Home.jsx always
         // renders "Today"; the native navigation test checks that same stable
         // marker again after selecting the real UIKit tabs.
-        let homeToday = app.webViews.firstMatch.staticTexts["Today"]
+        let homeToday = app.webViews.firstMatch.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Today")).firstMatch
         if homeToday.waitForExistence(timeout: 45) { return }   // chosen in an earlier test
         let local = app.buttons["Use on this device"]
         XCTAssertTrue(local.waitForExistence(timeout: 60), "the onboarding choice did not show up")
@@ -69,6 +69,11 @@ final class OpenGymUITests: XCTestCase {
             passPermissionSteps()
             if homeToday.waitForExistence(timeout: 20) { return }
         }
+        shot("redfit-onboarding-failure")
+        let snapshot = XCTAttachment(string: app.debugDescription)
+        snapshot.name = "redfit-onboarding-accessibility"
+        snapshot.lifetime = .keepAlways
+        add(snapshot)
         XCTFail("home never showed after the onboarding choice")
     }
 
@@ -151,6 +156,11 @@ final class OpenGymUITests: XCTestCase {
         app.launchArguments = ["-REDFitUITestSkipOnboardingPermissions"]
         app.launch()
         chooseLocal()
+        // The first-run tour is a real modal, so finish its invitation before
+        // interacting with the native peer navigation behind it.
+        if app.staticTexts["Want a 1-minute tour?"].waitForExistence(timeout: 5) {
+            tap(app.buttons["Skip"], "skip the optional introduction")
+        }
 
         let dock = app.tabBars.matching(identifier: "redfit-system-tabbar").firstMatch
         XCTAssertTrue(dock.waitForExistence(timeout: 30), "native iPhone system tab bar is missing")
@@ -168,7 +178,7 @@ final class OpenGymUITests: XCTestCase {
             XCTAssertEqual(app.webViews.count, 1, "switching to " + tab + " replaced the web view")
         }
         tap(dock.buttons["Home"], "native Home")
-        XCTAssertTrue(web.staticTexts["Today"].waitForExistence(timeout: 20),
+        XCTAssertTrue(web.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Today")).firstMatch.waitForExistence(timeout: 20),
             "native Home did not restore the original dashboard")
 
         tap(dock.buttons["Start"], "native Start workout")

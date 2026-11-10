@@ -68,7 +68,7 @@ describe('Share with a friend', () => {
     // runner: wait for the share sheet. A late one would land in the next test's share mock.
     await vi.waitFor(() => expect(share).toHaveBeenCalledTimes(1), { timeout: 5000 })
     const { url, text } = share.mock.calls[0][0]
-    expect(text).toBe('Here’s my Push Day on openGym 💪')
+    expect(text).toBe('Here’s my Push Day on RED Fit 💪')
     expect(url.startsWith('https://opengym.ch/r#1.')).toBe(true)
     const data = await decodePayload(routinePayloadFromUrl(url))
     expect(data.routines[0].ex[0].weight).toBeUndefined()

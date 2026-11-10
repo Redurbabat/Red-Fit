@@ -8,7 +8,7 @@ const recipe = overrides => makeRecipeFood({
   yieldGrams: 280, servings: 2, ...overrides,
 })
 
-describe('Original openGym nutrition: recipe composition using v1 foods and backups', () => {
+describe('Original RED Fit nutrition: recipe composition using v1 foods and backups', () => {
   it('computes macros from actual ingredient amounts', () => {
     const r = recipe()
     expect(r.recipe.ingredients).toHaveLength(2)

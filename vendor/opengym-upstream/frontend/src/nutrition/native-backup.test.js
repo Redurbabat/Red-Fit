@@ -10,7 +10,7 @@ const docFS = () => {
   const writeFile = vi.fn(async () => ({}))
   return { Filesystem: { writeFile }, Directory: { Documents: 'DOCUMENTS' }, Encoding: { UTF8: 'utf8' } }
 }
-describe('Nutrition native Documents backup (original openGym app)', () => {
+describe('Nutrition native Documents backup (original RED Fit app)', () => {
   it('never exposes the server URL or account identifier in file paths', async () => {
     const scope = 'account:' + encodeURIComponent('https://gym.example/app') + ':alice@example.com'
     const path = await backupNameForScope(scope, '2026-11-09', webcrypto)
@@ -119,7 +119,7 @@ describe('Nutrition native Documents backup (original openGym app)', () => {
     await expect(readLatestNutritionDocumentBackup('local', { filesystem, cryptoAPI: webcrypto }))
       .rejects.toThrow('beschädigt')
   })
-  it('explains missing backup folders without touching original openGym data', async () => {
+  it('explains missing backup folders without touching original RED Fit data', async () => {
     const filesystem = {
       Filesystem: {
         readdir: vi.fn(async () => { throw new Error('ENOENT') }),
@@ -137,7 +137,7 @@ describe('Nutrition native Documents backup (original openGym app)', () => {
         readdir: vi.fn(async () => ({ files: [
           '../redfit-nutrition-2026-11-09.json',
           'redfit-nutrition-2026-13-01.json',
-          'opengym-backup-2026-11-09.json',
+          'red-fit-backup-2026-11-09.json',
           { name: 'redfit-nutrition-2026-11-09.json', type: 'directory' },
         ] })),
         readFile: vi.fn(async () => ({ data: JSON.stringify(data) })),

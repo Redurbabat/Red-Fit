@@ -1,4 +1,4 @@
-/* RED Fit / RED Morph: restrained selection material for the ORIGINAL openGym tab bar.
+/* RED Fit / RED Morph: restrained selection material for the ORIGINAL RED Fit tab bar.
  * Keeps the existing five real buttons, router actions, running workout disc, safe areas,
  * and the existing near-opaque bar. Material is decorative and never catches input.
  * Motion uses only transform/opacity, and stops for Reduce Motion. */
@@ -82,7 +82,7 @@
   }
 }
 
-/* The original openGym desktop dock switches from 6px to 10px inline padding. */
+/* The original RED Fit desktop dock switches from 6px to 10px inline padding. */
 @media (min-width: 1000px) {
   #tabbar.redfit-morph-dock {
     --rf-dock-gutter: 10px;
@@ -91,7 +91,7 @@
 }
 
 /* RED-Bit-inspired touch-direction compact mode. SwiftUI's native iOS TabView
- * cannot be embedded in openGym's React WebView; keep all five real controls.
+ * cannot be embedded in RED Fit's React WebView; keep all five real controls.
  * Labels are visually hidden only. TabBar provides explicit accessible names. */
 @media (max-width: 767px) and (pointer: coarse) {
   #tabbar.redfit-morph-dock[data-redfit-compact='true'] {
@@ -146,4 +146,25 @@
 }
 :root[data-redfit-native-dock] #totop {
   bottom: calc(116px + var(--sab));
+}
+
+/* Floating browser fallback, with one glass surface and a visible selection.
+ * The installed iPhone app continues to use Apple's real UITabBar. */
+@media (max-width: 999px) {
+  #tabbar.redfit-morph-dock {
+    inset-inline: 12px;
+    bottom: max(10px, var(--sab));
+    --rf-dock-bottom-space: 8px;
+    padding: 8px 6px;
+    border: var(--hair) solid var(--sep);
+    border-radius: 30px;
+    box-shadow: 0 8px 28px -12px rgba(0,0,0,.45);
+  }
+  #tabbar.redfit-morph-dock > button.start { margin-top: 0; }
+  #tabbar.redfit-morph-dock > button.start .cir { width: 44px; height: 44px; box-shadow: none; }
+  #tabbar.redfit-morph-dock > button.start.rec .cir::after { animation: none; }
+  #tabbar.redfit-morph-dock[data-redfit-compact='true'] {
+    --rf-dock-bottom-space: 6px;
+    padding-block: 6px;
+  }
 }

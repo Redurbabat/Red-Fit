@@ -1,4 +1,4 @@
-// UI-only route selection for the original openGym five-button dock.
+// UI-only route selection for the original RED Fit five-button dock.
 // No React/store/iOS dependencies, so navigation can be regression-tested with Node.
 const PARENT_TAB = {
   history: 'stats',
@@ -6,6 +6,7 @@ const PARENT_TAB = {
   'progress-photos': 'stats',
   measurements: 'stats',
   settings: 'home',
+  nutrition: 'home',
   checkin: 'home',
   admin: 'home',
   muscles: 'library',

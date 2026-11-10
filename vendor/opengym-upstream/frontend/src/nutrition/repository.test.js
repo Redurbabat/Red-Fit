@@ -152,7 +152,7 @@ describe('RED Fit nutrition v1 → v2 IDB migration and transaction safety', () 
     await expect(importNutrition('local', corrupt)).rejects.toThrow()
     expect((await loadNutrition('local')).plans).toEqual([planned])
   })
-  it('isolates one openGym account from another in IndexedDB', async () => {
+  it('isolates one RED Fit account from another in IndexedDB', async () => {
     await savePlannedMeal('local', planned)
     expect((await loadNutrition('account:example:42')).plans).toEqual([])
   })

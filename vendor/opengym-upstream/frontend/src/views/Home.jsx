@@ -204,7 +204,7 @@ export default function Home() {
       <SeasonDeco spot="home-hero" />
     </div>
 
-    {/* RED Fit nutrition module (Agent 03): stays in the original openGym app. */}
+    {/* RED Fit nutrition module (Agent 03): stays in the original RED Fit app. */}
     <div className="card tap-host">
       <CardHead icon="chart" tint="var(--orange)" eyebrow="RED Fit" title="Ernährung"
         sub="Lebensmittel, Mahlzeiten und Tagesmakros" open={{ onClick: () => nav('/nutrition') }}
@@ -217,7 +217,7 @@ export default function Home() {
     {/* Christmas (lib/seasonal.js): the advent calendar's card, 1 to 24 December, from the theme's chunk. */}
     <SeasonDeco spot="home-advent" />
 
-    {/* December and January: the year in openGym is ready (lib/wrapped.js homeCardYear). */}
+    {/* December and January: the year in RED Fit is ready (lib/wrapped.js homeCardYear). */}
     {on('motivation') && <WrappedHomeCard S={S} />}
 
     {/* What has rested and what is still recovering, kindly (lib/recovery-hint.js). */}

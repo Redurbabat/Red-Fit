@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
 const css = readFileSync(resolve(process.cwd(), 'src/components/red-fit-dock.css'), 'utf8')
 
 describe('RED Morph dock geometry and accessibility fallbacks', () => {
-  it('tracks original openGym 6px mobile and 10px desktop nav padding', () => {
+  it('tracks original RED Fit 6px mobile and 10px desktop nav padding', () => {
     expect(css).toMatch(/--rf-dock-gutter:\s*6px;/)
     expect(css).toMatch(/@media \(min-width:\s*1000px\)\s*\{[\s\S]*?--rf-dock-gutter:\s*10px;/)
     expect(css).toMatch(/inset-inline-start:\s*var\(--rf-dock-gutter\)/)

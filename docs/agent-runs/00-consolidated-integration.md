@@ -54,3 +54,24 @@ GitHub meldet Repository-Sichtbarkeit `public`, die Projektdoku verlangt `privat
 - **App ID migration prepared together:** iOS/Capacitor/Xcode primary identifier `ch.redurbabat.redfit` replacing `ch.opengym.app`. Embedded Apple targets derive `.widgets`, `.watchkitapp`, `.watchkitapp.widgets`, `.AnimationPacksDownloader`, and `.uitests`; the shared App Group is `group.ch.redurbabat.redfit`. The Watch companion, Background Assets, BGTaskScheduler, Swift stores, entitlement plists and CI integrity fixture all reference the new IDs.
 - **Safeguards:** The original deep link URL schemes `opengym://` and `opengym-watch://` remain temporarily for existing widget/NFC/share routing (URL schemes are not the app's bundle identifier). `applinks:opengym.ch` remains a **legacy associated-domain entitlement pending audit**; a new bundle ID does not automatically own or activate that domain. No migration, old-app uninstall, or data deletion is performed.
 - **Release limitations:** Changing bundle ID installs as a **new iOS app**. Any data stored by the old bundle ID / App Group will **not** automatically transfer; export/verify backup before installing or removing the old app. All new bundle IDs, App Group, capabilities and matching provisioning profiles require real Apple signing setup. An unsigned CI IPA is **not** installable as delivered. Until native tests and signing complete, PR #17 stays Draft and no artifact is published.
+
+## 2026-11-10 — RED Fit identity and navigation follow-up
+
+Continued on the same PR #17 branch, starting from `a7be58befb1552c125f78d157f773692b586e99b`.
+All current source PR heads (#11 `8110296`, #12 `af0aa0d`, #13 `a100871`, #14 `e433d3b`, #15 `db1f3b2`) were verified as ancestors with `git merge-base --is-ancestor`.
+
+The owner's final logo direction is a completely original abstract mark: no R, no monogram and no dumbbell; warm ivory on burgundy, three flowing forms. The earlier red letter/fitness sketches are not included in the repository. Sources and component inventory: [brand integration](../design/RED-FIT-BRAND-INTEGRATION.md).
+
+Product copy and locale packs, browser metadata, generated iPhone/Watch/Android icons and splash, print/share branding, exported filenames and source/update links now use RED Fit. Historical licenses, protocol/storage keys and existing import handlers remain compatible. Old media ZIP backups are accepted alongside the new RED Fit name. A new Health origin guard prevents self-import after the bundle-ID change.
+
+The real UIKit bar remains the iPhone/iOS 26 control. React owns workout/router state. First-run modal coverage now includes dialogs outside `modal-root`; nutrition selects Home. Browser accessibility evidence showed Home's `Today` is a button label, not a standalone accessible text; native QA now finds the real button, dismisses the optional tour, and captures accessibility evidence on failure. This is a targeted test/bridge correction, **not** a claim of a passed iOS simulator run.
+
+Local evidence on Linux/Node 24:
+- 218 offline regression tests passed.
+- 23 Node native structure/bundle/identity tests passed; real identity verifier passed.
+- 89 focused brand/backup/Health/dock tests passed and 28 additional export tests passed.
+- Original web and mobile-flavour production builds passed; Safari 15.5 syntax gate passed.
+- Chromium smoke passed for first launch, 320/390/430/1024px layouts and >=44px dock targets, all five routes, a food/80g meal yielding 296kcal, persistence after reload, Home selection from Nutrition, offline navigation, reduced motion and no page exceptions. This tests the mobile-flavour browser bundle, not UIKit rendering or an offline native cold launch.
+- Full original frontend and legacy-root verification: final result recorded in the accompanying Obsidian status update.
+
+Release boundaries: Linux has no Xcode. The new native onboarding assertion and icon compilation still require the macOS workflow; native minimization, real iPhone/Watch UX, signing/install, Android and Windows installers remain unverified. PR #17 remains Draft; no main merge, no release, no manual deployment and no IPA uploaded. Existing external Cloudflare build failures are not treated as a successful deployment.

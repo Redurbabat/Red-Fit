@@ -39,7 +39,7 @@ console.log(`RED Fit: running ${files.length} offline regression suites (Node ${
 const childEnv = { ...process.env };
 delete childEnv.NODE_TEST_CONTEXT;
 const child = spawnSync(process.execPath,
-  ['--experimental-strip-types', '--test', '--test-concurrency=4', ...files],
+  ['--experimental-strip-types', '--test', '--test-reporter=tap', '--test-concurrency=4', ...files],
   { cwd: root, stdio: 'inherit', shell: false, env: childEnv },
 );
 if (child.error) {

@@ -1,3 +1,5 @@
+> **Aktueller Integrationsstand 10.11.2026:** Weiter auf PR #17 / `integration/red-fit-opengym-iphone-20261110`. Neue Marke: Bordeaux/Elfenbein, drei abstrakte fließende Formen, **keine Buchstaben/Hantel**. `docs/design/RED-FIT-BRAND-INTEGRATION.md` und den neuesten Abschnitt von `08-STATUS-UND-TESTS.md` lesen. Die Quell-PRs sind integriert; keine zweite App bauen. Native iPhone-Abnahme/Signing bleiben gesondert zu belegen.
+
 ---
 
 > **HÖCHSTE PRIORITÄT 09.11.2026:** **Nicht neue RED Fit App entwickeln.** Die bereits vollständige **originale openGym-App** in `vendor/opengym-upstream/` direkt als **RED Fit** weiterentwickeln und umbenennen. **Zuerst die bestehende iOS-/iPhone-App bauen und auf dem Gerät testen.** Root-`src/` ist Legacy/Referenz für Ernährung. Fünf bestehende getrennte Agenten-Branches, keine Selbst-Merges. Verbindlich: [docs/OPEN-GYM-IS-RED-FIT.md](../docs/OPEN-GYM-IS-RED-FIT.md). Der folgende ältere Text über einen unvollständigen Quellimport ist überholt.
