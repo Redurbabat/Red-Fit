@@ -139,6 +139,11 @@ final class OpenGymUITests: XCTestCase {
      */
     func test0REDFitNativeTabBarKeepsOriginalNavigation() {
         guard #available(iOS 26.0, *) else { return }
+        // This test verifies native navigation, not the optional HealthKit
+        // authorization sheet. The app's narrowly scoped test launch argument
+        // marks only the onboarding explanations as seen; OS permissions are
+        // never granted or bypassed.
+        app.launchArguments = ["-REDFitUITestSkipOnboardingPermissions"]
         app.launch()
         chooseLocal()
 
