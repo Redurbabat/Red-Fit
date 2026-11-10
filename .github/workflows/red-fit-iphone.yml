@@ -62,9 +62,6 @@ jobs:
           ruby ios/ci/add-watch-app.rb
           ruby ios/ci/add-widgets.rb
 
-      - name: Attach the original openGym XCUITest target without changing the committed Xcode project
-        run: ruby ios/ci/add-ui-tests.rb
-
       - name: Build unsigned iPhone Simulator app
         run: |
           set -o pipefail
@@ -91,6 +88,9 @@ jobs:
 
       - name: Verify actual unsigned IPA payload and Apple bundle identities
         run: python3 scripts/verify-unsigned-ipa.py ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
+
+      - name: Attach the original openGym XCUITest target without changing the committed Xcode project
+        run: ruby ios/ci/add-ui-tests.rb
 
       - name: Smoke-test native Apple tab bar and original workout routing on a booted iPhone Simulator
         run: |
