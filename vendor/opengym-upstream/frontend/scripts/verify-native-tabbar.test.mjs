@@ -9,6 +9,7 @@ const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8'
 const swift = read('ios/App/App/MainViewController.swift')
 const react = read('src/components/TabBar.jsx')
 const css = read('src/index.css')
+const uiTests = read('ios/App/AppUITests/OpenGymUITests.swift')
 
 test('native iPhone uses the unmodified Apple UITabBar component', () => {
   assert.match(swift, /let bar = UITabBar\(\)/)
@@ -55,4 +56,12 @@ test('keyboard/sheet visibility and non-iPhone web fallback remain supported', (
   assert.match(react, /#modal-root/)
   assert.match(react, /contenteditable="true"/)
   assert.match(css, /:root\[data-redfit-native-dock\] #tabbar/)
+})
+
+test('native dock smoke test skips only optional permission explanations behind a test-only launch argument', () => {
+  assert.match(uiTests, /app\.launchArguments = \["-REDFitUITestSkipOnboardingPermissions"\]/)
+  assert.match(swift, /ProcessInfo\.processInfo\.arguments\.contains\("-REDFitUITestSkipOnboardingPermissions"\)/)
+  assert.match(swift, /WKUserScript\(source: source, injectionTime: \.atDocumentStart, forMainFrameOnly: true\)/)
+  assert.match(swift, /localStorage\.setItem\('gym_onboard_perms_seen'/)
+  assert.match(uiTests, /func test0REDFitNativeTabBarKeepsOriginalNavigation\(\)/)
 })
