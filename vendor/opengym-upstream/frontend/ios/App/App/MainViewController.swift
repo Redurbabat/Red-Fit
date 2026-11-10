@@ -93,7 +93,8 @@ class MainViewController: CAPBridgeViewController {
         }
         if let start = bar.items?.first(where: { $0.tag == 2 }) {
             start.title = redFitDockModel.startLabel
-            start.accessibilityLabel = redFitDockModel.running ? "Resume workout" : "Start workout"
+            // UIKit announces the same localized and state-accurate title as the visible tab.
+            // A separate English-only accessibilityLabel would misread Edit/Workout/Resume.
         }
         bar.isHidden = !redFitDockModel.visible
     }
