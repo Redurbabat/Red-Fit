@@ -55,10 +55,10 @@ export default function TabBar({ onStart }) {
     nav('/workout')
   }
 
-  // RED Fit iOS 26: the actual visible dock lives in MainViewController.swift
-  // as a single native SwiftUI glass surface (RED-Bit material reference).
-  // React Router continues to own navigation and workout state: no second
-  // WKWebView, no alternative workout store, no re-mounting of the original app.
+  // RED Fit on iOS 26 uses Apple's original UIKit UITabBar in
+  // MainViewController.swift, not an HTML/SwiftUI imitation.
+  // React Router remains the sole navigation and workout state owner.
+  // Keep the original single WKWebView and all saved workout data.
   // This event is sent only by the native dock; desktop/Android keep this bar.
   useEffect(() => {
     if (!nativeDock) return
@@ -89,7 +89,8 @@ export default function TabBar({ onStart }) {
   useEffect(() => {
     if (!nativeDock) return
     const bridge = window.webkit.messageHandlers.redFitDock
-    const selected = on('home') ? 'home' : on('plan') ? 'plan' : on('stats') ? 'stats' : 'library'
+    const selected = on('home') ? 'home' : on('plan') ? 'plan' : on('stats') ? 'stats'
+      : on('library') ? 'library' : cur === 'workout' ? 'start' : 'home'
     const startLabel = S.active
       ? (cur === 'workout' ? t('Workout') : S.active.editingWorkoutId ? t('Edit workout') : t('Resume'))
       : t('Start')
