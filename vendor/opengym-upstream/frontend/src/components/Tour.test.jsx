@@ -510,7 +510,9 @@ describe('Create your own exercise', () => {
   it('the form’s own Create makes it, and the tour follows', async () => {
     await toForm()
     for (let k = 0; k < 3; k++) await click(btn('Next'))
-    expect(step()).toBe('c-save')
+    // Skipping an absent optional media anchor is asynchronous. Keep the
+    // behavioural assertion, but wait for its configured anchor timeout.
+    await vi.waitFor(() => expect(step()).toBe('c-save'), { timeout: 5000 })
     await click(anchor('cx-save'))
     await settle(300)
     expect(useStore.getState().S.customEx.map(c => c.id)).toEqual(['cmine'])
