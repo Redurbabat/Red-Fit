@@ -193,3 +193,11 @@ Nächster konkreter Schritt:
 
 
 - **Nachtrag für den neuen Vendor-Baum:** `eslint.config.js` ignoriert nun `vendor/` beim regulären RED-Fit-Lint-Lauf; der gesonderte `tools/opengym-progression.selftest.mjs` bleibt über `tools/offline-regressions.mjs` ausführbar. Änderung `3d6155e` auf `main`; kein vollständiger ESLint-/Vite-Build durchgeführt.
+
+
+## 2026-11-10 — Agent 04: iPhone-IPA erfolgreich gebaut und direkt geprüft
+
+- **Aktiver Produktpfad:** Original-openGym als RED Fit unter `vendor/opengym-upstream/frontend/`, **keine** neue Legacy-Root-PWA als iPhone-App. Branch `agent/redfit-04-ios-android`, bestehende Draft-PR #13 gegen `main`.
+- **Belegt:** macOS/Xcode-GitHub-Run [42718097186](https://github.com/Redurbabat/Red-Fit/actions/runs/42718097186) ist **vollständig erfolgreich**, inkl. iOS-Simulator, iPhone-arm64-Device, Swift-Assetgenerator, aller eingebetteten originalen Watch-/Widget-/Background-Asset-Ziele und IPA-Paketvalidator. Root-CI [42718096994](https://github.com/Redurbabat/Red-Fit/actions/runs/42718096994) **erfolgreich**.
+- **Echtes heruntergeladenes IPA geprüft:** GitHub-Artifact [13718993845](https://github.com/Redurbabat/Red-Fit/actions/runs/42718097186/artifacts/13718993845); `RED-Fit-UNSIGNED.ipa` **217875794 Bytes**, SHA-256 `95e46cb065a0d9bae5e01d593732f5aa42c002351979656a750dd7ba4cff963c`. 13668 ZIP-Einträge, CRC vollständig bestanden, alle fünf nativen Apple-`Info.plist`-Bundles konsistent, iPhone/Watch/Widgets = `RED Fit`; Asset-Downloader = `RED Fit animations`. Für Details siehe `docs/agent-runs/04-iphone-first.md`.
+- **Offen:** Apple-Signierung und Provisioning aller 5 Targets, noch Upstream-IDs `ch.opengym.app*` und App Group `group.ch.opengym.app`; keine Behauptung einer Installation am iPhone, von funktionierender HealthKit-/Background-/Watch-Nutzung oder von Offline-/Sperr-/Wiederaufnahme-Abnahme. Eigentümerentscheidung zur eigenen Bundle-ID/Team-Signing und reale Gerätetests nötig. **Nicht** unüberlegt umbenennen oder App Group/Keychain-Datenzugriff zerstören. Keine Geheimnisse teilen.

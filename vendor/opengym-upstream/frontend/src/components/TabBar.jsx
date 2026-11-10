@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { effectiveRoutineIds, effectiveRoutines } from '../lib/history.js'
@@ -29,7 +30,8 @@ export default function TabBar({ onStart }) {
   // With the connection banner switched off, a sync problem shows as a dot on Home, the tab
   // Settings lives under (#369, #330).
   const trouble = useConnectionTrouble()
-  if (!user && !isGuest) return null
+  const canShow = !!user || isGuest
+  const nativeDock = typeof window !== 'undefined' && !!window.webkit?.messageHandlers?.redFitDock
   const cur = loc.pathname.split('/')[1] || 'home'
   // A screen without a tab of its own lights the tab it is opened from (Muscles from both).
   const PARENT = { history: 'stats', 'structural-balance': 'stats', 'progress-photos': 'stats', measurements: 'stats', settings: 'home', checkin: 'home', muscles: 'library' }
@@ -53,6 +55,79 @@ export default function TabBar({ onStart }) {
     nav('/workout')
   }
 
+  // RED Fit on iOS 26 uses Apple's original UIKit UITabBar in
+  // MainViewController.swift, not an HTML/SwiftUI imitation.
+  // React Router remains the sole navigation and workout state owner.
+  // Keep the original single WKWebView and all saved workout data.
+  // This event is sent only by the native dock; desktop/Android keep this bar.
+  useEffect(() => {
+    if (!nativeDock) return
+    const onNativeTap = (event) => {
+      const tab = event.detail?.tab
+      if (tab === 'start') startWorkout()
+      else if (tab === 'home') switchTab('/home')
+      else if (tab === 'plan') switchTab('/plan')
+      else if (tab === 'stats') switchTab('/stats')
+      else if (tab === 'library') switchTab('/library')
+    }
+    window.addEventListener('redfit:native-dock', onNativeTap)
+    return () => window.removeEventListener('redfit:native-dock', onNativeTap)
+  })
+
+  useEffect(() => {
+    if (!nativeDock) return
+    const bridge = window.webkit.messageHandlers.redFitDock
+    // The native dock is installed only on supported iPhones. Never suppress
+    // the original HTML bar unless the native message channel exists.
+    document.documentElement.dataset.redfitNativeDock = 'true'
+    return () => {
+      bridge.postMessage({ visible: false })
+      delete document.documentElement.dataset.redfitNativeDock
+    }
+  }, [nativeDock])
+
+  useEffect(() => {
+    if (!nativeDock) return
+    const bridge = window.webkit.messageHandlers.redFitDock
+    const selected = on('home') ? 'home' : on('plan') ? 'plan' : on('stats') ? 'stats'
+      : on('library') ? 'library' : cur === 'workout' ? 'start' : 'home'
+    const startLabel = S.active
+      ? (cur === 'workout' ? t('Workout') : S.active.editingWorkoutId ? t('Edit workout') : t('Resume'))
+      : t('Start')
+    let lastVisible
+    const send = () => {
+      // Modals.jsx creates #modal-root only when a sheet opens; observing an
+      // initially missing portal would leave native buttons over Save/Close.
+      const modal = !!document.querySelector('#modal-root .mback, #modal-root .sheet, #modal-root [role="dialog"]')
+      // RED-Bit's native bar stays clear of the iPhone keyboard.
+      const typing = document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]')
+      const visible = canShow && !modal && !typing
+      // Body observation sees new portals and their removal. Deduplicate
+      // updates: scrolling exercise lists can change many DOM nodes.
+      if (visible === lastVisible) return
+      lastVisible = visible
+      bridge.postMessage({
+        visible, selected, running: !!S.active, startLabel,
+        // The native UIKit bar uses the original openGym translations and
+        // system badge, never a parallel iOS-only language or sync state.
+        labels: { home: t('Home'), plan: t('Plan'), stats: t('Stats'), library: t('Exercises') },
+        connectionTrouble: !!trouble,
+      })
+    }
+    send()
+    const observer = new MutationObserver(send)
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'role'] })
+    const onFocusOut = () => queueMicrotask(send) // activeElement changes after blur dispatch
+    document.addEventListener('focusin', send, true)
+    document.addEventListener('focusout', onFocusOut, true)
+    return () => {
+      observer.disconnect()
+      document.removeEventListener('focusin', send, true)
+      document.removeEventListener('focusout', onFocusOut, true)
+    }
+  }, [nativeDock, canShow, cur, parent, S.active, trouble])
+
+  if (!canShow) return null
   return (
     <nav id="tabbar">
       <Tab active={on('home')} icon="house" label={t('Home')} dot={trouble} onClick={() => switchTab('/home')} tour="tab-home" />

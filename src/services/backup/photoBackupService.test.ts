@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { Blob as NodeBlob } from "node:buffer";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "../storage/database";
 import { progressPhotoRepository } from "../storage/progressPhotoRepository";
 import { collectBackupData } from "./backupService";
@@ -10,6 +11,11 @@ import {
   parsePhotoBackupJson,
   PHOTO_BACKUP_FORMAT,
 } from "./photoBackupService";
+
+// happy-dom's Blob does not implement arrayBuffer()/text(), unlike browser Blob.
+// Use Node's native Blob only in this suite; production photo data code is unchanged.
+beforeAll(() => vi.stubGlobal("Blob", NodeBlob));
+afterAll(() => vi.unstubAllGlobals());
 
 beforeEach(async () => {
   await db.transaction("rw", [db.mediaAssets, db.progressPhotos], async () => {

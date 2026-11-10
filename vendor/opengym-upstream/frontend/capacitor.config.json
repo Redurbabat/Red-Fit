@@ -1,6 +1,6 @@
 {
-  "appId": "ch.duartesantos.opengym",
-  "appName": "openGym",
+  "appId": "ch.opengym.app",
+  "appName": "RED Fit",
   "webDir": "dist",
   "backgroundColor": "#0c0e12",
   "android": {

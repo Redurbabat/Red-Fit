@@ -1,0 +1,60 @@
+# Private manual alternative to GitHub-hosted macOS runners.
+# Builds the ORIGINAL openGym iOS Xcode project from vendor/opengym-upstream/frontend.
+# Produces an UNSIGNED IPA for QA; this cannot be installed on a physical iPhone.
+# No App Store publishing, credentials or automatic deployment.
+workflows:
+  red-fit-iphone-unsigned:
+    name: RED Fit – Original iPhone (private, unsigned)
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    working_directory: vendor/opengym-upstream/frontend
+    environment:
+      node: v22.11.0
+      xcode: 26.5
+      cocoapods: default
+    scripts:
+      - name: Test original iPhone bundle guard
+        script: npm run test:ios-bundle
+      - name: Test RED Fit native identity and entitlement guard
+        script: npm run test:ios-identity-unit
+      - name: Verify Apple system dock with original Capacitor session
+        script: node --test scripts/verify-native-tabbar.test.mjs
+      - name: Self-test native IPA payload verifier
+        script: python3 scripts/verify-unsigned-ipa.py --selftest
+      - name: Install locked original frontend dependencies
+        script: npm ci
+      - name: Test native RED Fit glass dock interactions
+        script: npx vitest run src/components/TabBar.native-dock.test.jsx
+      - name: Build original mobile app, sync iOS and apply RED Fit assets
+        script: npm run build:ios
+      - name: Add original native Apple extensions
+        script: |
+          ruby ios/ci/add-asset-downloader.rb
+          ruby ios/ci/add-watch-app.rb
+          ruby ios/ci/add-widgets.rb
+      - name: Build original iPhone app without signing
+        script: |
+          set -euo pipefail
+          mkdir -p ios/App/build
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath ios/App/build/dd-device \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tee ios/App/build/device.log
+          test -d ios/App/build/dd-device/Build/Products/Debug-iphoneos/App.app
+      - name: Archive unsigned device IPA (not installable without signing)
+        script: |
+          set -euo pipefail
+          app="ios/App/build/dd-device/Build/Products/Debug-iphoneos/App.app"
+          mkdir -p ios/App/build/unsigned/Payload
+          ditto "$app" ios/App/build/unsigned/Payload/App.app
+          (cd ios/App/build/unsigned && zip -qry RED-Fit-UNSIGNED.ipa Payload)
+          test -s ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
+      - name: Verify produced IPA includes iPhone, Watch, Widgets and downloader
+        script: python3 scripts/verify-unsigned-ipa.py ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
+    artifacts:
+      - $CM_BUILD_DIR/vendor/opengym-upstream/frontend/ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
+      - $CM_BUILD_DIR/vendor/opengym-upstream/frontend/ios/App/build/device.log
