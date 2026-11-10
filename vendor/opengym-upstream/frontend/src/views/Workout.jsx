@@ -60,6 +60,7 @@ import { bestSetFor } from '../lib/exercise-history.js'
 import { bindLiveActions } from '../lib/live-activity.js'
 import { isWarmupRow, isFailureSet, toggleFailure, isDropSet, isRestPauseSet, dropsOf, clustersOf, addDrop, addCluster, removeDropAt, removeClusterAt, setDropAt, setClusterAt, nextDropWeight, nextBurstReps, isSideSet, makeSideSet, setSideField, toggleSide, addSideDrop, removeSideDropAt, setSideDropAt, addSideCluster, removeSideClusterAt, setSideClusterAt, WEIGHT_ORIGIN_MANUAL, markWarmupEdited } from '../lib/workout-model.js'
 import { canMoveActiveWorkoutUnit, moveActiveWorkoutUnit, canMoveActiveWorkoutEntry, moveActiveWorkoutEntry } from '../lib/active-workout-order.js'
+import { captureUndoSetOccurrence, locateUndoSetOccurrence } from '../lib/active-set-undo.js'
 import { nextOpenSet, workoutKeyAction } from '../lib/workout-keys.js'
 import { MUSCLE_NAME } from '../lib/muscles.js'
 import FocusView from './FocusView.jsx'
@@ -977,6 +978,8 @@ export function deleteActiveSet(idx, i, { editing = false } = {}) {
     if (editing) en.sets.splice(start, count)
     else en.sets = removeRowAt(en.sets, i)
   }, true)
+  // Capture the post-delete occurrence map, not just its reusable exercise id.
+  token.occurrence = captureUndoSetOccurrence(useStore.getState().S.active, idx)
   const msg = warm ? t('Warm-up gone.') : stopped ? t('Set {0} gone. Its timer stopped too.', n) : t('Set {0} gone.', n)
   ui.toast(msg, { action: t('Undo'), onAction: () => undoDeleteSet(token) })
   return true
@@ -987,9 +990,9 @@ export function deleteActiveSet(idx, i, { editing = false } = {}) {
 export function undoDeleteSet(token) {
   const A = useStore.getState().S.active
   const ui = useUI.getState()
-  const at = !A || A.id !== token.activeId ? -1
-    : A.entries[token.idx]?.id === token.entryId ? token.idx
-      : A.entries.findIndex(en => en.id === token.entryId)
+  // Exercise ids are not occurrence ids. If a duplicate moves into the old slot,
+  // an id-only match would insert the deleted row into the wrong exercise.
+  const at = locateUndoSetOccurrence(A, token)
   if (at < 0) { ui.toast(t('Too late, that one’s gone')); return false }
   const rows = token.rows || [token.row]
   const i = Math.min(token.i, A.entries[at].sets.length)

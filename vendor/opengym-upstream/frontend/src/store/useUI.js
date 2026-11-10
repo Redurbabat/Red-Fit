@@ -165,7 +165,7 @@ const runWork = (set, get) => {
         alertBuzz([200, 100, 200]); get().flashTimer()
       }
       if (wk.overtime && left > -MAX_WORK_OVERTIME_SEC) { set({ work: { ...wk, left, alerted: true } }); return }
-      const done = workDone || ownerDone(wk)
+      const done = currentWorkDone(wk)
       get().stopWork()
       // `chimed` tells the set's own tick that this end has already sounded and buzzed — not
       // so when overtime ran out, whose end chime played when the target was reached.
@@ -186,7 +186,11 @@ const stopWorkTicking = () => {
 // The set a hold belongs to, while it still is that one: the same exercise at that place in the
 // running workout, not ticked off yet.
 const ownerSet = o => {
-  const e = useStore.getState().S?.active?.entries?.[o?.idx]
+  const active = useStore.getState().S?.active
+  // A restored hold must never write to a different workout just because it has the
+  // same exercise at the same index. Older saved owners have no sessionId.
+  if (o?.sessionId != null && active?.id !== o.sessionId) return null
+  const e = active?.entries?.[o?.idx]
   const st = e && e.id === o.id ? e.sets?.[o.i] : null
   return st && !st.done ? st : null
 }
@@ -206,6 +210,10 @@ const ownerDone = wk => !wk?.owner ? null : (elapsed, { abandoned = false } = {}
     st.at = Date.now()
   }, true)
 }
+// A running hold may still carry its original screen callback after another workout was
+// restored or started. Checking only the fallback ownerDone is not enough: workDone wins
+// whenever the old Workout screen registered a closure. Never invoke that stale closure.
+const currentWorkDone = wk => (wk?.owner && !ownerSet(wk.owner)) ? null : (workDone || ownerDone(wk))
 const stopRestTicking = () => {
   if (timerInt) clearInterval(timerInt); timerInt = null
   if (timerTick) document.removeEventListener('visibilitychange', timerTick); timerTick = null
@@ -362,7 +370,8 @@ export const useUI = create((set, get) => ({
     // `autoNext`: the hold that counts in once this rest is over (lib/auto-holds.js), for the bar.
     const next = get().countIn ? null : autoPeek()
     get().stopCountIn()
-    set({ timer: { left: sec, total: sec, endsAt, forIdx, ...(forSet != null ? { forSet } : {}), ...(kind === 'switch' ? { kind } : {}), ...(next ? { autoNext: next.label } : {}) } })
+    const sessionId = useStore.getState().S?.active?.id
+    set({ timer: { left: sec, total: sec, endsAt, forIdx, ...(sessionId != null ? { sessionId } : {}), ...(forSet != null ? { forSet } : {}), ...(kind === 'switch' ? { kind } : {}), ...(next ? { autoNext: next.label } : {}) } })
     bookRestEnd(endsAt, sec, kind)
     runRest(set, get)
     // Spoken cues: the next set, said as the rest begins (lib/spoken-cues.js).
@@ -387,6 +396,12 @@ export const useUI = create((set, get) => ({
   resumeRest() {
     const tm = get().timer
     if (!tm?.paused) return
+    // A paused rest can survive an in-memory workout switch. Do not re-arm an old
+    // iPhone/Android alarm under the new active workout when Resume is tapped.
+    if (tm.sessionId != null && tm.sessionId !== useStore.getState().S?.active?.id) {
+      get().stopRest()
+      return
+    }
     const { paused, ...rest } = tm
     // As in startRest: the page may have been hidden and shown while paused, and that is no
     // catch-up of a countdown that was not running.
@@ -428,8 +443,17 @@ export const useUI = create((set, get) => ({
   // already called Ready opens it again. Nothing is sent back: the notification already shows it.
   followNativeRest({ endsAt, left, total, paused }) {
     const tm = get().timer
-    const forIdx = tm?.forIdx
-    const kind = { ...(tm?.kind === 'switch' ? { kind: 'switch' } : {}), ...(tm?.forSet != null ? { forSet: tm.forSet } : {}), ...(tm?.autoNext ? { autoNext: tm.autoNext } : {}) }
+    // An Android notification can report a late button press after its rest was skipped,
+    // expired, or discarded with another workout. Never recreate a rest from that event.
+    // The persisted timer is restored before the native listener is registered at boot.
+    if (!tm) return
+    if (tm.sessionId != null && tm.sessionId !== useStore.getState().S?.active?.id) {
+      get().stopRest()
+      return
+    }
+    const forIdx = tm.forIdx
+    const sessionId = tm.sessionId ?? useStore.getState().S?.active?.id
+    const kind = { ...(sessionId != null ? { sessionId } : {}), ...(tm?.kind === 'switch' ? { kind: 'switch' } : {}), ...(tm?.forSet != null ? { forSet: tm.forSet } : {}), ...(tm?.autoNext ? { autoNext: tm.autoNext } : {}) }
     if (paused) {
       stopRestTicking()
       set({ timer: { left, total, endsAt, forIdx, ...kind, paused: true } })
@@ -487,8 +511,10 @@ export const useUI = create((set, get) => ({
     const endsAt = from + total * 1000
     workDone = onDone
     pageHiddenAt = document.hidden ? Date.now() : null   // see startRest: a stale hide is not a catch-up
-    set({ work: { left: total, total, endsAt, label, overtime: useStore.getState().S.timedSetOvertime === true, ...(owner ? { owner } : {}), ...(auto ? { auto: true } : {}) } })
-    if (auto && owner) bookAutoChain('hold', endsAt, { ...owner, label, plan: total })
+    const sessionId = useStore.getState().S?.active?.id
+    const boundOwner = owner && sessionId != null ? { ...owner, sessionId } : owner
+    set({ work: { left: total, total, endsAt, label, overtime: useStore.getState().S.timedSetOvertime === true, ...(boundOwner ? { owner: boundOwner } : {}), ...(auto ? { auto: true } : {}) } })
+    if (auto && boundOwner) bookAutoChain('hold', endsAt, { ...boundOwner, label, plan: total })
     runWork(set, get)
     // Started late (the phone was locked through the count-in): caught up now, not in a second.
     if (from < Date.now() - 1000) workTick?.()
@@ -507,7 +533,7 @@ export const useUI = create((set, get) => ({
     if (!wk) return
     // Paused time is not held time: the end moved out by it, and a paused hold holds its seconds.
     const elapsed = heldSec(wk, Math.min(at, Date.now()), { early: true, overtimeMax: wk.overtime ? MAX_WORK_OVERTIME_SEC : 0 })
-    const done = workDone || ownerDone(wk)
+    const done = currentWorkDone(wk)
     vibrate(30)
     get().stopWork()
     if (done) done(elapsed)
@@ -522,7 +548,7 @@ export const useUI = create((set, get) => ({
     const wk = get().work
     if (!wk) { get().stopWork(); return }
     const elapsed = wk.total - wk.left
-    const done = workDone || ownerDone(wk)
+    const done = currentWorkDone(wk)
     get().stopWork()
     // Under two seconds there is nothing to keep: that is a play button tapped by accident, or
     // tapped and thought better of, and rounding it up to one second the way an early finish does
@@ -552,6 +578,12 @@ export const useUI = create((set, get) => ({
   resumeWork() {
     const wk = get().work
     if (!wk?.paused) return
+    // A hold left paused in memory must not begin counting down for another
+    // session or for a set which was already removed/completed while suspended.
+    if (wk.owner && !ownerSet(wk.owner)) {
+      get().stopWork()
+      return
+    }
     const { paused, ...rest } = wk
     pageHiddenAt = document.hidden ? Date.now() : null
     const endsAt = resumedEnd(wk)
@@ -565,7 +597,10 @@ export const useUI = create((set, get) => ({
      rest ended to start it, and it ends by starting the hold. Like them it runs from its end time,
      so a phone that was locked through it starts the hold from when it ended. */
   startCountIn(owner, { from = Date.now() } = {}) {
-    if (!owner) return
+    const sessionId = useStore.getState().S?.active?.id
+    // A delayed automatic hold must never target an identical row in a new workout.
+    if (!owner || sessionId == null || (owner.sessionId != null && owner.sessionId !== sessionId)) return
+    owner = { ...owner, sessionId }
     stopCountInTicking()
     try { autoHooks?.focus?.(owner) } catch { /* the marker just stays */ }
     const endsAt = from + COUNT_IN_SEC * 1000
@@ -593,6 +628,7 @@ export const useUI = create((set, get) => ({
   resumeCountIn() {
     const ci = get().countIn
     if (!ci?.paused) return
+    if (!currentAutoOwner(ci.owner)) { get().stopCountIn(); if (MOBILE) disarmRestAlert(); return }
     const endsAt = resumedEnd(ci)
     set({ countIn: { owner: ci.owner, total: ci.total, left: null, endsAt } })
     bookAutoChain('countin', endsAt, ci.owner)
@@ -602,6 +638,7 @@ export const useUI = create((set, get) => ({
   goNow() {
     const ci = get().countIn
     if (!ci) return
+    if (!currentAutoOwner(ci.owner)) { get().stopCountIn(); if (MOBILE) disarmRestAlert(); return }
     stopCountInTicking()
     set({ countIn: null, autoSay: t('Go!') })
     try { autoHooks?.startHold?.(ci.owner, Date.now()) } catch { /* the play button still works */ }
@@ -610,6 +647,12 @@ export const useUI = create((set, get) => ({
   // one that starts by itself. True when it did, for the rest to end without its Ready.
   autoAfterRest(at = Date.now()) {
     if (get().work || get().countIn) return false
+    const rest = get().timer
+    if (rest?.sessionId != null && rest.sessionId !== useStore.getState().S?.active?.id) {
+      // Report as handled: runRest must not revive this foreign timer as Ready.
+      get().stopRest()
+      return true
+    }
     const owner = autoPeek()
     if (!owner) return false
     stopRestTicking()
@@ -627,8 +670,9 @@ export const useUI = create((set, get) => ({
   // next hold counts in when it starts by itself.
   skipRest(at = Date.now()) {
     const tm = get().timer
+    const sameSession = tm?.sessionId == null || tm.sessionId === useStore.getState().S?.active?.id
     get().stopRest()
-    if (tm && !tm.ready) get().autoAfterRest(at)
+    if (tm && !tm.ready && sameSession) get().autoAfterRest(at)
   },
   // One button for whichever clock of the chain is running.
   pauseAuto() {
@@ -649,7 +693,7 @@ export const useUI = create((set, get) => ({
     if (s.countIn) { s.startCountIn(s.countIn.owner); return }
     const wk = s.work
     if (!wk?.owner) return
-    const owner = { idx: wk.owner.idx, i: wk.owner.i, id: wk.owner.id, plan: wk.total, label: wk.label }
+    const owner = { idx: wk.owner.idx, i: wk.owner.i, id: wk.owner.id, plan: wk.total, label: wk.label, ...(wk.owner.sessionId != null ? { sessionId: wk.owner.sessionId } : {}) }
     s.stopWork()
     get().startCountIn(owner)
   },
@@ -674,6 +718,9 @@ export const useUI = create((set, get) => ({
 // The count-in's tick: 3, 2, 1 with a beep and a short buzz each (the Timer alerts' sound and
 // vibration), then go, which starts the hold. Read from its end time, so one that ran out while
 // the app was away starts the hold from then, quietly: a number only sounds while it is on screen.
+// Every new count-in carries a workout ID. Guard tick, Go Now and Resume because
+// a sync/restore can replace the active session while its timer is still visible.
+const currentAutoOwner = owner => owner?.sessionId != null && useStore.getState().S?.active?.id === owner.sessionId
 let ciInt = null
 let ciTick = null
 const stopCountInTicking = () => {
@@ -685,6 +732,12 @@ const runCountIn = (set, get) => {
   ciTick = () => {
     const ci = get().countIn
     if (!ci || ci.paused) return
+    if (!currentAutoOwner(ci.owner)) {
+      stopCountInTicking()
+      set({ countIn: null, autoSay: '' })
+      if (MOBILE) disarmRestAlert()
+      return
+    }
     const now = Date.now()
     const left = phaseLeft(ci, now)
     if (left === ci.left) return
@@ -715,7 +768,15 @@ const autoResumeWhenFree = () => {
 }
 useUI.subscribe((s, prev) => { if (s.sheets !== prev.sheets && s.countIn?.waiting) setTimeout(autoResumeWhenFree, 0) })
 // A workout finished or discarded mid count-in takes the count-in with it.
-try { useStore.subscribe?.(st => { if (!st?.S?.active && useUI.getState().countIn) useUI.getState().stopCountIn() }) } catch { /* a test's stand-in store */ }
+try {
+  useStore.subscribe?.(st => {
+    const ci = useUI.getState().countIn
+    if (ci && !currentAutoOwner(ci.owner)) {
+      useUI.getState().stopCountIn()
+      if (MOBILE) disarmRestAlert()
+    }
+  })
+} catch { /* a test's stand-in store */ }
 if (typeof document !== 'undefined') document.addEventListener('focusout', () => { if (useUI.getState().countIn?.waiting) setTimeout(autoResumeWhenFree, 0) })
 
 // A reload in the middle of a rest (pull to refresh, a WebView restart, an update) used to drop
@@ -739,7 +800,7 @@ const saveRest = tm => {
   if (!ss) return
   try {
     if (!tm || tm.ready) { savedRestKey = null; ss.removeItem(REST_KEY); return }
-    const v = { endsAt: tm.endsAt, total: tm.total, forIdx: tm.forIdx ?? null, forSet: tm.forSet ?? null, kind: tm.kind || null, paused: !!tm.paused, left: tm.left }
+    const v = { endsAt: tm.endsAt, total: tm.total, forIdx: tm.forIdx ?? null, forSet: tm.forSet ?? null, kind: tm.kind || null, paused: !!tm.paused, left: tm.left, ...(tm.sessionId != null ? { sessionId: tm.sessionId } : {}) }
     const key = JSON.stringify({ ...v, left: v.paused ? v.left : null })
     if (key === savedRestKey && ss.getItem(REST_KEY) !== null) return
     ss.setItem(REST_KEY, JSON.stringify(v))
@@ -752,9 +813,10 @@ export function restoreRest(now = Date.now()) {
   try { saved = JSON.parse(ss?.getItem(REST_KEY) || 'null') } catch { saved = null }
   if (!saved || useUI.getState().timer) return false
   const total = Math.round(Number(saved.total))
-  const ok = useStore.getState().S?.active && total > 0 && (saved.paused ? saved.left > 0 : saved.endsAt > now)
+  const active = useStore.getState().S?.active
+  const ok = active && (saved.sessionId == null || active.id === saved.sessionId) && total > 0 && (saved.paused ? saved.left > 0 : saved.endsAt > now)
   if (!ok) { try { ss.removeItem(REST_KEY) } catch { /* nothing to drop */ } return false }
-  const base = { total, forIdx: saved.forIdx ?? undefined, ...(saved.forSet != null ? { forSet: saved.forSet } : {}), ...(saved.kind === 'switch' ? { kind: 'switch' } : {}) }
+  const base = { total, forIdx: saved.forIdx ?? undefined, ...(saved.sessionId != null ? { sessionId: saved.sessionId } : {}), ...(saved.forSet != null ? { forSet: saved.forSet } : {}), ...(saved.kind === 'switch' ? { kind: 'switch' } : {}) }
   if (saved.paused) {
     useUI.setState({ timer: { ...base, left: Math.round(saved.left), endsAt: saved.endsAt, paused: true } })
     if (MOBILE) holdRestAlert(Math.round(saved.left), total)
