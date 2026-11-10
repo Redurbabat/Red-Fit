@@ -131,4 +131,96 @@ describe('RED Fit selection material in the existing openGym navigation', () => 
     expect(gesture.sample(10, 10)).toBe(null)
   })
 
+  // Real React/Happy DOM integration, rather than checking only the pure
+  // gesture utilities or a separately evaluated copy of the effect.
+  const withMobileEvents = run => {
+    const originalMatchMedia = window.matchMedia
+    const scrollDescriptor = Object.getOwnPropertyDescriptor(window, 'scrollY')
+    const makeMedia = matches => {
+      const listeners = new Set()
+      return {
+        matches,
+        addEventListener: (type, cb) => { if (type === 'change') listeners.add(cb) },
+        removeEventListener: (type, cb) => { if (type === 'change') listeners.delete(cb) },
+        change(value) {
+          this.matches = value
+          act(() => { for (const listener of [...listeners]) listener({ matches: value }) })
+        },
+        get listenerCount() { return listeners.size },
+      }
+    }
+    const phone = makeMedia(true)
+    const reduce = makeMedia(false)
+    window.matchMedia = query => query.includes('prefers-reduced-motion') ? reduce : phone
+    Object.defineProperty(window, 'scrollY', { configurable: true, writable: true, value: 80 })
+    const touch = (type, x, y, count = 1) => {
+      const event = new Event(type, { bubbles: true, cancelable: true })
+      Object.defineProperty(event, 'touches', {
+        value: Array.from({ length: count }, () => ({ clientX: x, clientY: y })),
+      })
+      act(() => { document.body.dispatchEvent(event) })
+    }
+    const scroll = y => {
+      act(() => { window.scrollY = y; window.dispatchEvent(new Event('scroll')) })
+    }
+    try { run({ phone, reduce, touch, scroll }) } finally {
+      window.matchMedia = originalMatchMedia
+      if (scrollDescriptor) Object.defineProperty(window, 'scrollY', scrollDescriptor)
+      else delete window.scrollY
+    }
+  }
+
+  it('renders compact on a vertical finger gesture, restores on the same touch and ignores carousels', () => {
+    withMobileEvents(({ touch, scroll }) => {
+      const nav = renderRoute('/home')
+      expect(nav.getAttribute('data-redfit-compact')).toBe('false')
+      touch('touchstart', 30, 420)
+      touch('touchmove', 32, 370)
+      scroll(125)
+      expect(nav.getAttribute('data-redfit-compact')).toBe('true')
+      expect(nav.querySelectorAll('button')).toHaveLength(5)
+      expect([...nav.querySelectorAll('button')].map(b => b.getAttribute('aria-label')))
+        .toEqual(['Home', 'Plan', 'Start', 'Stats', 'Exercises'].map(label => t(label)))
+      touch('touchmove', 32, 402)
+      scroll(85)
+      expect(nav.getAttribute('data-redfit-compact')).toBe('false')
+      touch('touchend', 32, 402)
+
+      // A long horizontal swipe may generate minor vertical scroll noise.
+      touch('touchstart', 20, 400)
+      touch('touchmove', 160, 405)
+      scroll(155)
+      expect(nav.getAttribute('data-redfit-compact')).toBe('false')
+      touch('touchend', 160, 405)
+    })
+  })
+
+  it('keeps the mounted mobile dock expanded under Reduce Motion and on wider touch screens', () => {
+    withMobileEvents(({ phone, reduce, touch, scroll }) => {
+      const nav = renderRoute('/home')
+      touch('touchstart', 30, 420)
+      touch('touchmove', 30, 360)
+      scroll(130)
+      expect(nav.getAttribute('data-redfit-compact')).toBe('true')
+      reduce.change(true)
+      expect(nav.getAttribute('data-redfit-compact')).toBe('false')
+      touch('touchend', 30, 360)
+      touch('touchstart', 30, 420)
+      touch('touchmove', 30, 360)
+      scroll(170)
+      expect(nav.getAttribute('data-redfit-compact')).toBe('false')
+      reduce.change(false)
+      touch('touchend', 30, 360)
+      touch('touchstart', 30, 420)
+      touch('touchmove', 30, 360)
+      scroll(220)
+      expect(nav.getAttribute('data-redfit-compact')).toBe('true')
+      phone.change(false)
+      expect(nav.getAttribute('data-redfit-compact')).toBe('false')
+      expect(nav.querySelectorAll('button')).toHaveLength(5)
+      expect(phone.listenerCount).toBe(1)
+      expect(reduce.listenerCount).toBe(1)
+    })
+  })
+
 })
