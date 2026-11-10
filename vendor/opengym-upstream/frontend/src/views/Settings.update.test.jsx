@@ -194,33 +194,23 @@ describe('Settings → About: which APK this is', () => {
   })
 })
 
-// Google Play's payments policy: no links to pay outside Play billing for anything but a
-// registered charity, so the Play build has no coffee links, only its own rating row.
-describe('Settings: support links', () => {
-  const row = text => [...host.querySelectorAll('.lrow')].find(r => r.textContent.includes(text))
-  it('the APK keeps the donation links and has no Play rating row', async () => {
-    mocks.MOBILE = true
-    mocks.android = true
+// RED Fit has no verified store listing or upstream donation account of its own.
+describe('Settings: RED Fit project links', () => {
+  it.each([
+    ['APK', true, true, 'sideload'],
+    ['Play-flavour shell', true, true, 'play'],
+    ['web', false, false, 'sideload'],
+    ['iPhone', true, false, 'sideload'],
+  ])('links %s users to the actual project without misattributing upstream accounts', async (_, mobile, android, channel) => {
+    mocks.MOBILE = mobile
+    mocks.android = android
+    mocks.channel = channel
     await mount()
-    expect(row('Buy me a coffee')).toBeTruthy()
-    expect(row('Ko-fi')).toBeTruthy()
-    expect(row('GitHub Sponsors')).toBeTruthy()
-    expect(row('Rate RED Fit on Google Play')).toBeUndefined()
-  })
-  it('the Google Play build shows only the rating row', async () => {
-    mocks.MOBILE = true
-    mocks.android = true
-    mocks.channel = 'play'
-    await mount()
-    expect(row('Buy me a coffee')).toBeUndefined()
-    expect(row('Ko-fi')).toBeUndefined()
-    expect(row('GitHub Sponsors')).toBeUndefined()
-    expect(row('Rate RED Fit on Google Play')).toBeTruthy()
-    expect(host.textContent).not.toContain('A coffee keeps it that way')
-  })
-  it('the web keeps the donation links', async () => {
-    await mount()
-    expect(row('Buy me a coffee')).toBeTruthy()
-    expect(row('Rate RED Fit on Google Play')).toBeUndefined()
+    const source = [...host.querySelectorAll('a')].find(a => a.textContent === 'Source code')
+    expect(source?.getAttribute('href')).toBe('https://github.com/Redurbabat/Red-Fit')
+    expect(host.textContent).not.toContain('Buy me a coffee')
+    expect(host.textContent).not.toContain('GitHub Sponsors')
+    expect(host.textContent).not.toContain('Rate RED Fit on Google Play')
+    expect(host.textContent).not.toContain('Rate RED Fit on the App Store')
   })
 })

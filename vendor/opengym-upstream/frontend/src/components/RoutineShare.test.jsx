@@ -126,7 +126,7 @@ describe('an incoming routine link', () => {
     expect(await openRoutinePayload('1.j.bm9wZQ')).toBe(false)
     expect(m.toasts.at(-1)).toBe('This routine link is broken or cut off.')
     expect(await openRoutinePayload('9.d.abc')).toBe(false)
-    expect(m.toasts.at(-1)).toMatch(/newer openGym/)
+    expect(m.toasts.at(-1)).toMatch(/newer RED Fit/)
     expect(m.sheets).toHaveLength(0)
   })
 })

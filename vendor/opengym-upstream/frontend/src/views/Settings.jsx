@@ -1147,10 +1147,6 @@ export default function Settings({ page = null, find = null, via = null, entryKe
             onClick={() => (useStore.getState().S.active ? toast(t('Finish your workout first, then the tour is all yours.')) : startTour(null, f))} />
         })}
       </Section>
-      <Section title="RED Fit">
-        <Row icon="code" iconTint="var(--acc-ink)" title={t('Source code')} subtitle="Redurbabat/Red-Fit" accessory="chevron"
-          onClick={() => window.open('https://github.com/Redurbabat/Red-Fit', '_blank', 'noopener')} />
-      </Section>
       {/* "Add to Home screen": not inside the phone app, and not once it is installed. Safari's
           Share menu only on Apple (an iPad says Macintosh too); Windows and Linux get Chrome's
           install icon instead of an iPhone tip. */}
@@ -1167,7 +1163,7 @@ export default function Settings({ page = null, find = null, via = null, entryKe
         <a href="https://github.com/Redurbabat/Red-Fit" target="_blank" rel="noopener">{t('Source code')}</a><br />
         {/* Attribution the media licence asks for word for word (agreement §8c), so it is not translated */}
         Exercise media © Aliaksandr Makatserchyk, <a href="https://gymvisual.com/" target="_blank" rel="noopener">Gym visual</a>, gymvisual.com.
-        Media licensed for use in RED Fit only; see <a href="https://github.com/Redurbabat/Red-Fit/blob/main/NOTICE.md" target="_blank" rel="noopener">NOTICE.md</a>
+        Media licensed for use in openGym only; see <a href="https://github.com/Redurbabat/Red-Fit/blob/main/vendor/opengym-upstream/NOTICE.md" target="_blank" rel="noopener">NOTICE.md</a>
       </div>
     </>,
 

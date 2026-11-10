@@ -149,9 +149,10 @@ describe('Settings — photos and videos', () => {
     await mount()
     act(() => { row('Export with photos & videos (.zip)').click() })
     await until(() => created.mock.calls.length > 0)
+    await until(() => mocks.toast.mock.calls.length > 0)
     expect(created).toHaveBeenCalled()
     const names = (await readZip(blob)).map(e => e.name)
-    expect(names).toEqual(['opengym-backup.json', `media/${HASH}.jpg`, 'README.txt'])
+    expect(names).toEqual(['red-fit-backup.json', `media/${HASH}.jpg`, 'README.txt'])
     expect(mocks.toast).toHaveBeenCalledWith('Backup exported')
     vi.restoreAllMocks()
   })
@@ -163,6 +164,7 @@ describe('Settings — photos and videos', () => {
       await mount()   // the photo is not on this device, and a guest has nowhere to fetch it from
       act(() => { row('Export with photos & videos (.zip)').click() })
       await until(() => created.mock.calls.length > 0)
+    await until(() => mocks.toast.mock.calls.length > 0)
       expect(mocks.toast).toHaveBeenCalledWith('1 file could not be included')
     } finally { vi.restoreAllMocks() }
   })
