@@ -40,7 +40,7 @@ function nativeTap(tab) {
   return act(async () => window.dispatchEvent(new CustomEvent('redfit:native-dock', { detail: { tab } })))
 }
 
-describe('RED Fit iOS 26 native SwiftUI glass dock handoff', () => {
+describe('RED Fit iOS 26 original UIKit tab bar handoff', () => {
   it('announces real selected tab and hides only the duplicate web presentation', () => {
     expect(document.documentElement.dataset.redfitNativeDock).toBe('true')
     expect(nativeMessages.at(-1)).toMatchObject({
@@ -59,6 +59,14 @@ describe('RED Fit iOS 26 native SwiftUI glass dock handoff', () => {
     }
     await act(async () => router.navigate(-1))
     expect(router.state.location.pathname).toBe('/home')
+  })
+
+  it('selects the real native Start tab when React Router shows an active workout screen', async () => {
+    await act(async () => router.navigate('/workout'))
+    expect(nativeMessages.at(-1)).toMatchObject({ selected: 'start', visible: true })
+    await nativeTap('plan')
+    expect(router.state.location.pathname).toBe('/plan')
+    expect(nativeMessages.at(-1).selected).toBe('plan')
   })
 
   it('native Start keeps the existing workout picker / session path', async () => {
