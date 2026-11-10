@@ -17,6 +17,8 @@ workflows:
         script: npm run test:ios-bundle
       - name: Test RED Fit native identity and entitlement guard
         script: npm run test:ios-identity-unit
+      - name: Verify Apple system dock with original Capacitor session
+        script: node --test scripts/verify-native-tabbar.test.mjs
       - name: Self-test native IPA payload verifier
         script: python3 scripts/verify-unsigned-ipa.py --selftest
       - name: Install locked original frontend dependencies
