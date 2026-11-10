@@ -62,6 +62,7 @@ test('native dock smoke test skips only optional permission explanations behind 
   assert.match(uiTests, /app\.launchArguments = \["-REDFitUITestSkipOnboardingPermissions"\]/)
   assert.match(swift, /ProcessInfo\.processInfo\.arguments\.contains\("-REDFitUITestSkipOnboardingPermissions"\)/)
   assert.match(swift, /WKUserScript\(source: source, injectionTime: \.atDocumentStart, forMainFrameOnly: true\)/)
-  assert.match(swift, /localStorage\.setItem\('gym_onboard_perms_seen'/)
+  assert.match(swift, /window\.__REDFitUITestSkipOnboardingPermissions = true/)
+  assert.match(read('src/lib/onboarding-perms.js'), /window\.__REDFitUITestSkipOnboardingPermissions === true/)
   assert.match(uiTests, /func test0REDFitNativeTabBarKeepsOriginalNavigation\(\)/)
 })

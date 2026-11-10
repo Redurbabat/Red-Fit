@@ -133,11 +133,10 @@ class MainViewController: CAPBridgeViewController {
         // permission explanations; NEVER grant OS permissions or change
         // the onboarding path for a normally launched RED Fit app.
         if ProcessInfo.processInfo.arguments.contains("-REDFitUITestSkipOnboardingPermissions") {
-            let source = """
-            try {
-              localStorage.setItem('gym_onboard_perms_seen', '["notifications","appleHealth"]');
-            } catch (error) { /* The test will fail visibly if storage is unavailable. */ }
-            """
+            // A test-only in-memory marker works at document start, even before
+            // the Capacitor origin makes localStorage available. The regular app
+            // never sets this marker, nor does it grant OS permissions.
+            let source = "window.__REDFitUITestSkipOnboardingPermissions = true;"
             config.userContentController.addUserScript(
                 WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
             )
