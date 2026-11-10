@@ -45,6 +45,8 @@ describe('RED Fit iOS 26 original UIKit tab bar handoff', () => {
     expect(document.documentElement.dataset.redfitNativeDock).toBe('true')
     expect(nativeMessages.at(-1)).toMatchObject({
       visible: true, selected: 'home', running: false, startLabel: 'Start',
+      labels: { home: 'Home', plan: 'Plan', stats: 'Stats', library: 'Exercises' },
+      connectionTrouble: false,
     })
     expect(host.querySelectorAll('#tabbar button')).toHaveLength(5)
   })
