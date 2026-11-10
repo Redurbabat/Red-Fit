@@ -72,6 +72,9 @@ Local evidence on Linux/Node 24:
 - 89 focused brand/backup/Health/dock tests passed and 28 additional export tests passed.
 - Original web and mobile-flavour production builds passed; Safari 15.5 syntax gate passed.
 - Chromium smoke passed for first launch, 320/390/430/1024px layouts and >=44px dock targets, all five routes, a food/80g meal yielding 296kcal, persistence after reload, Home selection from Nutrition, offline navigation, reduced motion and no page exceptions. This tests the mobile-flavour browser bundle, not UIKit rendering or an offline native cold launch.
-- Full original frontend and legacy-root verification: final result recorded in the accompanying Obsidian status update.
+- Legacy root: 268 tests, typecheck, lint and build passed.
+- Complete original frontend run: 7983 passed; one obsolete FIT filename expectation failed. Updated that expectation to the already-correct RED Fit export name and reran both full affected suites: 36/36 passed. No production change after that run; do not misreport this as a single all-green full-suite execution.
+- Final integration follow-ups: 45/45 focused tests and 9/9 QA-harness fixture tests passed; the harness accepts the renamed original package while still refusing the legacy root app.
+- macOS run [42851915523](https://github.com/Redurbabat/Red-Fit/actions/runs/42851915523) at production revision `b3d58a99` passed simulator, unsigned device build and actual IPA validation. Its UI test was cancelled when superseded by a new branch head; no native UI pass claimed. Later differences are test/harness/docs only.
 
 Release boundaries: Linux has no Xcode. The new native onboarding assertion and icon compilation still require the macOS workflow; native minimization, real iPhone/Watch UX, signing/install, Android and Windows installers remain unverified. PR #17 remains Draft; no main merge, no release, no manual deployment and no IPA uploaded. Existing external Cloudflare build failures are not treated as a successful deployment.
