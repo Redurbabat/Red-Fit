@@ -106,7 +106,13 @@ export default function TabBar({ onStart }) {
       // updates: scrolling exercise lists can change many DOM nodes.
       if (visible === lastVisible) return
       lastVisible = visible
-      bridge.postMessage({ visible, selected, running: !!S.active, startLabel })
+      bridge.postMessage({
+        visible, selected, running: !!S.active, startLabel,
+        // The native UIKit bar uses the original openGym translations and
+        // system badge, never a parallel iOS-only language or sync state.
+        labels: { home: t('Home'), plan: t('Plan'), stats: t('Stats'), library: t('Exercises') },
+        connectionTrouble: !!trouble,
+      })
     }
     send()
     const observer = new MutationObserver(send)
@@ -119,7 +125,7 @@ export default function TabBar({ onStart }) {
       document.removeEventListener('focusin', send, true)
       document.removeEventListener('focusout', onFocusOut, true)
     }
-  }, [nativeDock, canShow, cur, parent, S.active])
+  }, [nativeDock, canShow, cur, parent, S.active, trouble])
 
   if (!canShow) return null
   return (
