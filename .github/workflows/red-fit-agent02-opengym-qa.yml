@@ -43,7 +43,7 @@ jobs:
 
       - name: Agent 02 actual React and CSS Vitest tests
         if: ${{ always() && steps.install.outcome == 'success' }}
-        run: npm run test -- src/components/TabBar.red-fit.test.jsx src/components/red-fit-dock.styles.test.js src/views/Home.red-fit-a11y.test.js
+        run: npm run test -- src/components/TabBar.red-fit.test.jsx src/components/TabBar.test.jsx src/components/red-fit-dock.styles.test.js src/views/Home.red-fit-a11y.test.js
 
       - name: Full original openGym Vitest suite
         if: ${{ always() && steps.install.outcome == 'success' }}
