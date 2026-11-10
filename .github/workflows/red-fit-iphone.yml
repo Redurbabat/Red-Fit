@@ -62,6 +62,9 @@ jobs:
           ruby ios/ci/add-watch-app.rb
           ruby ios/ci/add-widgets.rb
 
+      - name: Attach the original openGym XCUITest target without changing the committed Xcode project
+        run: ruby ios/ci/add-ui-tests.rb
+
       - name: Build unsigned iPhone Simulator app
         run: |
           set -o pipefail
@@ -89,6 +92,29 @@ jobs:
       - name: Verify actual unsigned IPA payload and Apple bundle identities
         run: python3 scripts/verify-unsigned-ipa.py ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
 
+      - name: Smoke-test native Apple tab bar and original workout routing on a booted iPhone Simulator
+        run: |
+          set -o pipefail
+          simulator="$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          found = [d["udid"] for runtime, group in sorted(devices.items(), reverse=True)
+                   if ".iOS-" in runtime
+                   for d in group
+                   if d.get("isAvailable", True) and d["name"].startswith("iPhone")]
+          print(found[0] if found else "")
+          ')"
+          if [ -z "$simulator" ]; then
+            echo "::error::No bootable iPhone Simulator is installed on this macOS runner"
+            exit 1
+          fi
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme AppUITests -configuration Debug \
+            -destination "platform=iOS Simulator,id=$simulator" \
+            -derivedDataPath ios/App/build/dd-uitest \
+            -parallel-testing-enabled NO \
+            -only-testing:AppUITests/OpenGymUITests/test0REDFitNativeTabBarKeepsOriginalNavigation \
+            CODE_SIGNING_ALLOWED=NO test | tee ios/App/build/native-dock-smoke.log
+
       - name: Keep private QA evidence
         # Exercise media are separately licensed; never upload a downloadable IPA from a public repository.
         if: always() && github.event.repository.private
@@ -100,4 +126,5 @@ jobs:
           path: |
             vendor/opengym-upstream/frontend/ios/App/build/simulator.log
             vendor/opengym-upstream/frontend/ios/App/build/device.log
+            vendor/opengym-upstream/frontend/ios/App/build/native-dock-smoke.log
             vendor/opengym-upstream/frontend/ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
