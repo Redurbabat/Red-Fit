@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { configDefaults } from 'vitest/config'
 import { lazyAssets, stampSw } from './scripts/sw-stamp.mjs'
 import { mobileViewport } from './src/lib/viewport-zoom.js'
 
@@ -125,5 +126,16 @@ export default defineConfig({
   // lower, scripts/check-bundle-syntax.mjs catches (its test builds the bundle).
   build: { chunkSizeWarningLimit: 1500, target: ['safari15', 'chrome100', 'firefox100', 'edge100'] },
   // Gives happy-dom tests a working localStorage on Node 24+ (#733).
-  test: { setupFiles: ['./src/test-setup.js'] }
+  // Dedicated native iOS guards use Node's built-in test runner. They are
+  // executed by their own CI steps (node --test), not by the Vitest frontend suite.
+  // Preserve Vitest defaults so normal frontend coverage remains unchanged.
+  test: {
+    setupFiles: ['./src/test-setup.js'],
+    exclude: [
+      ...configDefaults.exclude,
+      '**/scripts/check-ios-mobile-bundle.test.mjs',
+      '**/scripts/verify-ios-identity.test.mjs',
+      '**/scripts/verify-native-tabbar.test.mjs',
+    ],
+  }
 })
