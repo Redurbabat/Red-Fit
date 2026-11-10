@@ -1,0 +1,100 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { verify } from './verify.mjs'
+import { checkMobileWebDist } from './mobile-web.mjs'
+
+const fixture = (t, name = 'opengym-frontend') => {
+  const root = mkdtempSync(join(tmpdir(), 'openGym-qa-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  const frontend = join(root, 'vendor', 'opengym-upstream', 'frontend')
+  mkdirSync(frontend, { recursive: true })
+  writeFileSync(join(frontend, 'package.json'), JSON.stringify({ name, version: '1.4.4', scripts: { test: 'vitest run', build: 'vite build' }, devDependencies: { vite: '^8.3.4', vitest: '^4.1.12' } }))
+  writeFileSync(join(frontend, 'package-lock.json'), '{}')
+  // A stand-in for the npm executable, not a mock of any app test passing.
+  const mock = join(root, 'fake-npm.mjs')
+  writeFileSync(mock, "#!/usr/bin/env node\nimport { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'\nimport { join } from 'node:path'\nappendFileSync(process.env.QA_CALLS, process.cwd() + '|' + process.argv.slice(2).join(' ') + '|' + (process.env.VITE_MOBILE || '') + '\\n')\nif (process.argv[2] === process.env.QA_FAIL) process.exit(17)\nif (process.argv[2] === 'run' && process.argv[3] === process.env.QA_FAIL) process.exit(17)\nif (process.argv[2] === 'run' && process.argv[3] === 'build' && process.env.VITE_MOBILE === '1') {\n  const dist = join(process.cwd(), 'dist')\n  mkdirSync(join(dist, 'assets'), { recursive: true })\n  writeFileSync(join(dist, 'assets', 'app.js'), 'console.log(1)')\n  writeFileSync(join(dist, 'index.html'), '<meta name=\"opengym-flavor\" content=\"' + (process.env.QA_BAD_MOBILE === '1' ? 'web' : 'mobile') + '\"><script src=\"./assets/app.js\"></script>')\n}\n")
+  return { root, frontend, mock, calls: join(root, 'calls.txt') }
+}
+
+test('runs npm ci, original tests and build in the ORIGINAL frontend; records JSON and logs', async (t) => {
+  const x = fixture(t)
+  const result = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock], env: { ...process.env, QA_CALLS: x.calls } })
+  assert.equal(result.status, 'passed')
+  assert.deepEqual(result.steps.map(s => s.id), ['install', 'test', 'build', 'mobile-web-build'])
+  assert.ok(result.steps.every(s => s.status === 'passed'))
+  const calls = readFileSync(x.calls, 'utf8').trim().split('\n')
+  assert.equal(calls.length, 4)
+  assert.ok(calls.every(s => s.startsWith(x.frontend + '|')))
+  assert.match(calls[0], /ci --ignore-scripts --no-audit --no-fund/)
+  assert.match(calls[1], /run test/)
+  assert.match(calls[2], /run build/)
+  assert.match(calls[3], /run build\|1$/)
+  assert.equal(result.steps[3].buildMode, 'mobile')
+  assert.equal(JSON.parse(readFileSync(join(x.root, 'artifacts', 'opengym-qa', 'report.json'))).status, 'passed')
+})
+
+test('records a test failure, then still builds for independent diagnosis', async (t) => {
+  const x = fixture(t);
+  const report = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock], env: { ...process.env, QA_CALLS: x.calls, QA_FAIL: 'test' } })
+  assert.equal(report.status, 'failed')
+  assert.deepEqual(report.steps.map(s => s.status), ['passed', 'failed', 'passed', 'passed'])
+  assert.equal(report.steps[1].exitCode, 17)
+})
+
+test('failed installation stops dependent checks and labels them skipped', async (t) => {
+  const x = fixture(t);
+  const report = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock], env: { ...process.env, QA_CALLS: x.calls, QA_FAIL: 'ci' } })
+  assert.equal(report.status, 'failed')
+  assert.deepEqual(report.steps.map(s => s.status), ['failed', 'skipped', 'skipped', 'skipped'])
+  assert.equal(readFileSync(x.calls, 'utf8').trim().split('\n').length, 1)
+})
+
+test('refuses to accidentally verify the legacy RED Fit PWA', async (t) => {
+  const x = fixture(t, 'red-fit')
+  const report = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock] })
+  assert.equal(report.status, 'failed')
+  assert.match(report.preflightError, /non-original/)
+  assert.equal(report.steps.length, 0)
+})
+
+test('skip-install does not invoke npm ci and records why it was skipped', async (t) => {
+  const x = fixture(t)
+  const report = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock], skipInstall: true, env: { ...process.env, QA_CALLS: x.calls } })
+  assert.equal(report.status, 'passed')
+  assert.deepEqual(report.steps.map(s => s.status), ['skipped', 'passed', 'passed', 'passed'])
+  assert.equal(report.steps[0].reason, '--skip-install')
+  assert.equal(readFileSync(x.calls, 'utf8').trim().split('\n').length, 3)
+})
+
+test('missing npm executable produces a failed, auditable report rather than false success', async (t) => {
+  const x = fixture(t)
+  const report = await verify({ repoRoot: x.root, npmBinary: join(x.root, 'missing-npm'), env: process.env })
+  assert.equal(report.status, 'failed')
+  assert.deepEqual(report.steps.map(s => s.status), ['failed', 'skipped', 'skipped', 'skipped'])
+  assert.match(report.steps[0].error, /ENOENT|not found/i)
+  assert.equal(JSON.parse(readFileSync(join(x.root, 'artifacts', 'opengym-qa', 'report.json'))).status, 'failed')
+})
+
+test('mobile build fails if Vite emitted the web flavour, even when npm exits 0', async (t) => {
+  const x = fixture(t)
+  const report = await verify({ repoRoot: x.root, npmBinary: process.execPath, npmArgsPrefix: [x.mock], env: { ...process.env, QA_CALLS: x.calls, QA_BAD_MOBILE: '1' } })
+  assert.equal(report.status, 'failed')
+  assert.deepEqual(report.steps.map(s => s.status), ['passed', 'passed', 'passed', 'failed'])
+  assert.equal(report.steps[3].exitCode, 0)
+  assert.match(report.steps[3].validationErrors.join(' '), /Mobile build marker missing/)
+})
+
+test('mobile artefact validator rejects missing JS, unstamped worker and missing index', (t) => {
+  const x = fixture(t)
+  const { frontend } = x
+  const dist = join(frontend, 'dist')
+  assert.match(checkMobileWebDist(dist)[0], /missing mobile index/)
+  mkdirSync(dist)
+  writeFileSync(join(dist, 'index.html'), '<meta name="opengym-flavor" content="mobile"><script src="./assets/missing.js"></script>')
+  writeFileSync(join(dist, 'sw.js'), '__BUILD__')
+  assert.match(checkMobileWebDist(dist).join(' | '), /Missing mobile asset/)
+  assert.match(checkMobileWebDist(dist).join(' | '), /Unstamped service worker/)
+})

@@ -1,0 +1,61 @@
+name: RED Fit Agent 02 - combined iOS Simulator
+
+on:
+  pull_request:
+    paths:
+      - 'vendor/opengym-upstream/frontend/**'
+      - '.github/workflows/red-fit-agent02-combined-ios.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  combined-ios:
+    runs-on: macos-26
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fadfe5301c85183a5667cf1390d11cbf791ca900
+          path: native
+      - uses: actions/checkout@v4
+        with:
+          ref: 9f1052aaf80c1e5b4155f0d2d589c3ea1bbcff4d
+          path: morph
+      - name: Compose original Apple shell and RED Morph React sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          app=native/vendor/opengym-upstream/frontend
+          ui=morph/vendor/opengym-upstream/frontend
+          grep -q 'redFitDock' "$app/ios/App/App/MainViewController.swift"
+          for file in src/components/TabBar.jsx src/components/TabBar.red-fit.test.jsx src/components/TabBar.test.jsx src/components/red-fit-dock-direction.js src/components/red-fit-dock-route.js src/components/red-fit-dock.css src/components/red-fit-dock.styles.test.js src/views/Home.jsx src/views/Home.red-fit-a11y.test.js src/views/home-week-status.js src/views/red-fit-home.css src/views/scroll-home-week.js scripts/check-red-fit-dock-event-integration.mjs; do
+            test -f "$ui/$file"
+            cp "$ui/$file" "$app/$file"
+          done
+          sed -i '' "s/'openGym'}/'RED Fit'}/g" "$app/src/views/Home.jsx"
+          grep -q 'redfit:native-dock' "$app/src/components/TabBar.jsx"
+          grep -q 'redFitDock' "$app/src/components/TabBar.jsx"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test combined original native and RED Morph React routing
+        working-directory: native/vendor/opengym-upstream/frontend
+        run: |
+          npm ci --no-audit --no-fund
+          node scripts/check-red-fit-dock-event-integration.mjs
+          npx vitest run src/components/TabBar.native-dock.test.jsx src/components/TabBar.red-fit.test.jsx src/components/TabBar.test.jsx src/components/red-fit-dock.styles.test.js src/views/Home.red-fit-a11y.test.js
+      - name: Build Capacitor iOS assets and attach original Apple integrations
+        working-directory: native/vendor/opengym-upstream/frontend
+        run: |
+          npm run build:ios
+          ruby ios/ci/add-asset-downloader.rb
+          ruby ios/ci/add-watch-app.rb
+          ruby ios/ci/add-widgets.rb
+      - name: Compile combined native iPhone Simulator app without signing
+        working-directory: native/vendor/opengym-upstream/frontend
+        run: |
+          set -o pipefail
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/App/build/combo-sim CODE_SIGNING_ALLOWED=NO build | tail -n 80
+          test -d ios/App/build/combo-sim/Build/Products/Debug-iphonesimulator/App.app

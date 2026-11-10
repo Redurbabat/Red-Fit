@@ -1,7 +1,13 @@
 import { supersetUnits, unitOf } from './history.js'
+import { hasCompletedWork } from './workout-model.js'
 
-function hasLoggedSet(entry) {
-  return Array.isArray(entry?.sets) && entry.sets.some(set => set?.done === true)
+/**
+ * Match history/finish semantics: a unilateral row is real logged work when
+ * EITHER limb has been completed, even though its aggregate done stays false.
+ * The swap picker and the actual mutation must use the same guard.
+ */
+export function hasLoggedWork(entry) {
+  return Array.isArray(entry?.sets) && entry.sets.some(hasCompletedWork)
 }
 
 /**
@@ -18,7 +24,7 @@ export function swapActiveExercise(active, index, replacement, {
   if (!active || !Array.isArray(active.entries) || !replacement || index < 0 || index >= active.entries.length) return null
 
   const current = active.entries[index]
-  if (!hasLoggedSet(current)) {
+  if (!hasLoggedWork(current)) {
     const metadata = Object.fromEntries(Object.entries(current).filter(([key]) => (
       !['id', 'target', 'plan', 'planned', 'carried', 'sets', 'sg'].includes(key)
     )))

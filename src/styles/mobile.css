@@ -101,7 +101,8 @@
   transition: background 180ms var(--ease), color 180ms var(--ease), transform 120ms var(--ease);
 }
 
-.bottom-nav__item:active,\n.bottom-nav__item[data-pressed="true"] {
+.bottom-nav__item:active,
+.bottom-nav__item[data-pressed="true"] {
   transform: scale(0.96);
 }
 
@@ -195,6 +196,9 @@
 :root[data-reduced-motion="true"] .bottom-nav__label,
 :root[data-reduced-motion="true"] .bottom-nav__selection {
   transition: none;
+}
+:root[data-reduced-motion="true"] .bottom-nav__item[data-pressed="true"] {
+  transform: none;
 }
 
 /* Sticky action area above the bottom nav (e.g. workout controls). */

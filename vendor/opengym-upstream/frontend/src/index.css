@@ -3272,3 +3272,24 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
   .kpis .tile{padding:10px 11px}
   .kpis .tile .v{font-size:var(--fs-title3)}
 }
+
+/* RED Fit iPhone 26+: the *real* glass dock is SwiftUI in MainViewController,
+   following RED-Bit's system glass material. Keep this original React bar in
+   the DOM for router semantics but never draw a duplicate or intercept taps.
+   Android, browsers, and older iOS retain the original cross-platform bar. */
+:root[data-redfit-native-dock] #tabbar{
+  visibility:hidden;
+  pointer-events:none;
+}
+:root[data-redfit-native-dock] #app{
+  padding-bottom:calc(120px + var(--sab));
+}
+:root[data-redfit-native-dock] body.resting #app{
+  padding-bottom:calc(188px + var(--sab));
+}
+:root[data-redfit-native-dock] #toast{
+  bottom:calc(120px + var(--sab));
+}
+:root[data-redfit-native-dock] #totop{
+  bottom:calc(116px + var(--sab));
+}

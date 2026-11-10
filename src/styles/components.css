@@ -17,7 +17,8 @@
   width: 100%;
 }
 
-.btn:active,\n.btn[data-pressed="true"] {
+.btn:active,
+.btn[data-pressed="true"] {
   transform: scale(0.98);
   filter: brightness(1.1);
 }
@@ -73,7 +74,8 @@
   transition: background 140ms var(--ease), color 140ms var(--ease);
 }
 
-.icon-btn:active,\n.icon-btn[data-pressed="true"] {
+.icon-btn:active,
+.icon-btn[data-pressed="true"] {
   background: var(--surface-2);
   color: var(--text);
 }
@@ -666,6 +668,8 @@ textarea.input {
     filter: none;
   }
 }
-:root[data-reduced-motion="true"] .btn[data-pressed="true"] {
+:root[data-reduced-motion="true"] .btn[data-pressed="true"],
+:root[data-reduced-motion="true"] .icon-btn[data-pressed="true"] {
   transform: none;
+  filter: none;
 }

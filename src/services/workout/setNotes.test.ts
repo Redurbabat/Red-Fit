@@ -7,6 +7,10 @@ describe("per-set workout notes", () => {
     expect(normalizeSetNote("erste\nzweite Zeile")).toBe("erste zweite Zeile");
   });
 
+  it("replaces NUL, DEL and tab while retaining emoji and umlauts", () => {
+    expect(normalizeSetNote("A\u0000B\u007fC\t💪 ä")).toBe("A B C 💪 ä");
+  });
+
   it("removes a cleared note instead of storing empty text", () => {
     expect(normalizeSetNote("")).toBeUndefined();
     expect(normalizeSetNote(" \t\n ")).toBeUndefined();

@@ -1,0 +1,22 @@
+/* Original openGym Home: seven accessible weekdays with full-size iPhone targets.
+ * Only this week's strip scrolls on narrow viewports; other .week users are untouched. */
+.week.redfit-home-week {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  padding-block: 3px;
+}
+
+.week.redfit-home-week > .wday {
+  flex: 1 0 44px;
+  min-inline-size: 44px;
+  scroll-snap-align: start;
+}
+
+/* The strip clips horizontal overflow: keep the keyboard focus ring inside each day,
+ * including the first and last visible cell in LTR and RTL. */
+.week.redfit-home-week > .wday:focus-visible {
+  outline-offset: -3px;
+}

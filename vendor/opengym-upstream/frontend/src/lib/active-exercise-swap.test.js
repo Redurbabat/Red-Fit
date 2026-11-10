@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { swapActiveExercise } from './active-exercise-swap.js'
+import { hasLoggedWork, swapActiveExercise } from './active-exercise-swap.js'
+import { makeSideSet, toggleSide } from './workout-model.js'
+import { buildCompletedWorkout } from './finish-workout.js'
 
 const entry = (id, { sg, done = false, target, sets } = {}) => ({
   id,
@@ -84,5 +86,74 @@ describe('safe active exercise swap', () => {
     expect(active.entries.includes(partner)).toBe(true)
     expect(active.entries.at(-1)).toBe(unrelated)
     expect(active.cur).toBe(cursor)
+  })
+
+  it('treats one finished limb as logged work even when the aggregate row is incomplete', () => {
+    const partiallyDone = toggleSide(makeSideSet({ w: 30, r: 16 }), 'L')
+    expect(partiallyDone.done).toBe(false)
+    expect(partiallyDone.sides.L).toMatchObject({ w: 30, r: 8, done: true })
+    expect(partiallyDone.sides.R.done).toBe(false)
+
+    const logged = entry('bench', { sets: [partiallyDone] })
+    const active = { cur: 0, entries: [logged, entry('row')] }
+    expect(hasLoggedWork(logged)).toBe(true)
+    expect(swapActiveExercise(active, 0, replacement())).toEqual({
+      needsConfirmation: true, grouped: false, index: 0
+    })
+    expect(active.entries[0]).toBe(logged)
+    expect(active.entries).toHaveLength(2)
+
+    expect(swapActiveExercise(active, 0, replacement(), { loggedConfirmed: true }))
+      .toEqual({ inserted: true, index: 1 })
+    expect(active.entries[0]).toBe(logged)
+    expect(active.entries[0].sets[0].sides).toEqual(partiallyDone.sides)
+    expect(active.entries[1].id).toBe('incline')
+
+    // The original partly-completed exercise must remain in persisted history,
+    // not be silently renamed or lost on completing the workout.
+    const history = buildCompletedWorkout({
+      ...active, id: 'session-with-one-limb', d: '2026-11-09', start: 1000
+    }, { end: 2000 })
+    expect(history.entries).toHaveLength(1)
+    expect(history.entries[0].id).toBe('bench')
+    expect(history.entries[0].sets[0].sides.L.done).toBe(true)
+    expect(history.entries[0].sets[0].sides.R.done).toBe(false)
+  })
+
+  it.each(['keep', 'detach'])('keeps partial unilateral work when swapping a superset member (%s)', groupDisposition => {
+    const row = toggleSide(makeSideSet({ w: 20, r: 12 }), 'R')
+    const logged = entry('bench', { sg: 'pair', sets: [row] })
+    const partner = entry('row', { sg: 'pair' })
+    const active = { cur: 0, entries: [logged, partner, entry('curl')] }
+
+    expect(swapActiveExercise(active, 0, replacement(), { loggedConfirmed: true }))
+      .toEqual({ needsConfirmation: true, grouped: true, index: 0 })
+    expect(active.entries).toHaveLength(3)
+    const result = swapActiveExercise(active, 0, replacement(), {
+      loggedConfirmed: true, groupDisposition
+    })
+    expect(result).toMatchObject({ inserted: true })
+    expect(active.entries.includes(logged)).toBe(true)
+    expect(active.entries.includes(partner)).toBe(true)
+    expect(logged.sets[0].sides.R.done).toBe(true)
+    expect(logged.sets[0].sides.L.done).toBe(false)
+    expect(active.entries[result.index].id).toBe('incline')
+    expect(active.entries[result.index].sg).toBe(groupDisposition === 'keep' ? 'pair' : undefined)
+  })
+
+  it('still replaces an entirely unlogged unilateral row in place', () => {
+    const untouched = entry('bench', { sets: [makeSideSet({ w: 20, r: 12 })] })
+    const active = { cur: 0, entries: [untouched, entry('row')] }
+    expect(hasLoggedWork(untouched)).toBe(false)
+    expect(swapActiveExercise(active, 0, replacement())).toEqual({ inserted: false, index: 0 })
+    expect(active.entries.map(item => item.id)).toEqual(['incline', 'row'])
+  })
+
+  it('does not confuse a cancelled unilateral tick with completed work', () => {
+    let row = makeSideSet({ w: 20, r: 12 })
+    row = toggleSide(row, 'L')
+    row = toggleSide(row, 'L')
+    expect(row.done).toBe(false)
+    expect(hasLoggedWork(entry('bench', { sets: [row] }))).toBe(false)
   })
 })

@@ -1,8 +1,30 @@
 ---
 tags: [red-fit, status, verification]
-updated: 2026-11-08
+updated: 2026-11-09
 ---
 # Gesicherter Projektstand / Testprotokoll
+
+## 2026-11-10 — Agents 01–05: gemeinsame Integrations-PR (Quelle, kein Release)
+
+- Integrationsbranch `integration/red-fit-opengym-iphone-20261110` sammelt PRs #11, #12, #13, #14 und #15 in einem einzigen Draft gegen `main`. Original-openGym ist die Produktbasis. Bei Integration wurden native TabBar/React-Bridge, RED-Morph-Home und Ernährungskarte bewusst kombiniert.
+- Separate Evidenz: der letzte Agent-04-iOS-XCUITest `42733050029` scheiterte am Onboarding/Home-Übergang. Kein integrierter iPhone-Gerätetest oder signiertes IPA nachgewiesen. GitHub-Sichtbarkeit zur Prüfung `public`.
+- Gesamt-CI, Sicherheits-/Datenmigration, Apple-Signing und tatsächliche Installation sind nach Integration offen; siehe `docs/agent-runs/00-consolidated-integration.md`.
+
+
+## 2026-11-09 — Agent 03: volle original-openGym-Tests bestanden
+
+- GitHub Actions `42711524409` **completed/success**: `npm test` im vollständigen originalen openGym-Frontend `vendor/opengym-upstream/frontend/` ergibt **657/657 Testdateien mit 7'893/7'893 bestandenen Tests**. Zusätzlich isolierte Ernährungs-Vitest-Suite **61/61**, mobiler Vite-Build und Bundle-Flavour-Kontrolle **success**. Alle Angaben gegen den tatsächlichen Runner-Log und Job-Steps überprüft.
+- Neue getrennte CI-Nachprüfung auf dem Agent-03-Branch: alter Kompatibilitätstester `scripts/check-bundle-syntax.mjs` für Safari 15.5, `npx cap copy ios` (nur Webdateien in das bestehende iOS-Capacitor-Verzeichnis auf dem CI-Runner kopieren, **kein iOS-Build**) und `scripts/check-mobile-bundle.mjs` plus Prüfung des kopierten Nutrition-JS. Neue Schritte bei Dokumentation **noch in progress**, nicht als erfolgreich markieren.
+- **Offen:** echte iPhone-IPA/Xcode-Signierung, Betrieb auf iPhone, WKWebView-IndexedDB-v1→v2-Migration und Datenbackup-Roundtrip, zusammengeführtes Workout-/Nutrition-Backup sowie separater alter Root-App-Lintfehler. Kein Merge in `main`.
+- Detailprotokoll: `docs/agent-runs/03-opengym-nutrition.md`. PR #15.
+
+## 2026-11-09 — Agent 03: original-openGym Ernährung auf echter CI geprüft (nur PR #15)
+
+- **Neu eingerichtete Original-Frontend-CI**: `.github/workflows/opengym-nutrition.yml` führt ausschliesslich unter `vendor/opengym-upstream/frontend` `npm ci`, `npx vitest run src/nutrition` und `VITE_MOBILE=1 npm run build` aus; eigene Prüfung des mobilen `dist/index.html`.
+- **Tatsächlich erfolgreicher GitHub-Actions-Run `42710935902`**: Vitest **61/61 Tests (6 Dateien) bestanden**, Vite v8.3.5 **475 Module**, mobile Browser-/WebView-Bundle erfolgreich erzeugt und Mobile-Flavour bestätigt. Logs und einzelne Steps eingesehen. Keine erfolgreiche iOS-IPA-/Xcode-/Capacitor-Sync-/Geräte-QA behauptet.
+- Nutrition enthält Lebensmittel, Rezepte mit gekochtem Gesamtgewicht, Ernährungstagebuch, v2-IDB-Mahlzeitenplanung, daraus abgeleitete 7-Tage-Einkaufsliste, native Dokumentensicherungen und additive v1/v2-JSON-Wiederherstellung. Details und verbleibende Risiken: `docs/agent-runs/03-opengym-nutrition.md`.
+- **Weiter offen:** Root-`.github/workflows/ci.yml` blockiert durch vorhandenes Lint-`no-control-regex` in `src/services/workout/setNotes.ts` (auf main und Agent-03-Branch identisch); getrennte originale openGym-Gesamttests, nativer iPhone-/Dateisystem-/IndexedDB-Roundtrip und gemeinsames Workout-/Nutrition-Backup.
+- PR #15 gegen `main` bleibt **offen**. Kein eigener Merge/kein direkter Push auf `main`.
 
 ## Bereits im vorhandenen RED-Fit-Code dokumentiert
 - React/TypeScript-PWA mit Navigation, Training, Ernährung, Körper, Plänen, Backup und Einstellungen.
@@ -193,3 +215,10 @@ Nächster konkreter Schritt:
 
 
 - **Nachtrag für den neuen Vendor-Baum:** `eslint.config.js` ignoriert nun `vendor/` beim regulären RED-Fit-Lint-Lauf; der gesonderte `tools/opengym-progression.selftest.mjs` bleibt über `tools/offline-regressions.mjs` ausführbar. Änderung `3d6155e` auf `main`; kein vollständiger ESLint-/Vite-Build durchgeführt.
+
+## 2026-11-10 — Agent 04: iPhone-IPA erfolgreich gebaut und direkt geprüft
+
+- **Aktiver Produktpfad:** Original-openGym als RED Fit unter `vendor/opengym-upstream/frontend/`, **keine** neue Legacy-Root-PWA als iPhone-App. Branch `agent/redfit-04-ios-android`, bestehende Draft-PR #13 gegen `main`.
+- **Belegt:** macOS/Xcode-GitHub-Run [42718097186](https://github.com/Redurbabat/Red-Fit/actions/runs/42718097186) ist **vollständig erfolgreich**, inkl. iOS-Simulator, iPhone-arm64-Device, Swift-Assetgenerator, aller eingebetteten originalen Watch-/Widget-/Background-Asset-Ziele und IPA-Paketvalidator. Root-CI [42718096994](https://github.com/Redurbabat/Red-Fit/actions/runs/42718096994) **erfolgreich**.
+- **Echtes heruntergeladenes IPA geprüft:** GitHub-Artifact [13718993845](https://github.com/Redurbabat/Red-Fit/actions/runs/42718097186/artifacts/13718993845); `RED-Fit-UNSIGNED.ipa` **217875794 Bytes**, SHA-256 `95e46cb065a0d9bae5e01d593732f5aa42c002351979656a750dd7ba4cff963c`. 13668 ZIP-Einträge, CRC vollständig bestanden, alle fünf nativen Apple-`Info.plist`-Bundles konsistent, iPhone/Watch/Widgets = `RED Fit`; Asset-Downloader = `RED Fit animations`. Für Details siehe `docs/agent-runs/04-iphone-first.md`.
+- **Offen:** Apple-Signierung und Provisioning aller 5 Targets, noch Upstream-IDs `ch.opengym.app*` und App Group `group.ch.opengym.app`; keine Behauptung einer Installation am iPhone, von funktionierender HealthKit-/Background-/Watch-Nutzung oder von Offline-/Sperr-/Wiederaufnahme-Abnahme. Eigentümerentscheidung zur eigenen Bundle-ID/Team-Signing und reale Gerätetests nötig. **Nicht** unüberlegt umbenennen oder App Group/Keychain-Datenzugriff zerstören. Keine Geheimnisse teilen.

@@ -74,7 +74,7 @@ import { shareRoutineSheet } from './components/RoutineShare.jsx'
 import { youtubeSearchUrl } from './lib/youtube.js'
 import { openExternal } from './components/CustomMedia.jsx'
 import { repeatSessionEntries } from './lib/session-repeat.js'
-import { swapActiveExercise } from './lib/active-exercise-swap.js'
+import { swapActiveExercise, hasLoggedWork } from './lib/active-exercise-swap.js'
 import WarmupConfig from './components/WarmupConfig.jsx'
 import { warmupModeOf, ownRowsOf } from './lib/warmup-ramp.js'
 import { useSheetKeyboard, useRevealActiveChip, tappable } from './lib/use-sheet-keyboard.js'
@@ -1885,6 +1885,11 @@ export const exercisePicker = (onPick, { title, like, actionIcon, backups } = {}
 export function swapActiveWorkoutExercise(index) {
   const active = S().active
   if (!active?.entries?.[index]) return
+  // The picker/configuration sheet may stay open while a background resume or sync
+  // changes the workout. Do not let its old index silently target a new exercise.
+  const pickedSessionId = active.id
+  // The whole list matters: an identical duplicate may shift into this index after deletion.
+  const pickedEntries = JSON.stringify(active.entries)
 
   // The "+" on a picker row commits with the default config, exactly as it does in the add
   // flows; tapping the row still opens the config sheet first.
@@ -1894,6 +1899,11 @@ export function swapActiveWorkoutExercise(index) {
     // The picker is a chooser here, not a stack you keep adding from: one swap, then back to
     // the workout. (The add flow deliberately leaves it open.)
     picker.close()
+    const live = S().active
+    if (!live || live.id !== pickedSessionId || JSON.stringify(live.entries) !== pickedEntries) {
+      ui().toast(t('Something went wrong'))
+      return
+    }
     commitActiveSwap(index, ex, cfg)
   }
 }
@@ -1933,15 +1943,27 @@ function commitActiveSwap(index, ex, cfg) {
     ...(current.noProg === true ? { noProg: true } : {}),
   }
 
+  // A confirmation can be accepted later, after a sync, background restore, or another
+  // workout edit changed the entry at this index. The store clones active on every update, so
+  // compare its persisted content (not object identity) before touching timers or logged data.
+  const originalSessionId = st.active.id
+  // Compare the full list so deleting a selected duplicate cannot masquerade as the same slot.
+  const originalEntries = JSON.stringify(st.active.entries)
   const apply = options => {
+    const live = S().active
+    if (!live || live.id !== originalSessionId || JSON.stringify(live.entries) !== originalEntries) {
+      ui().toast(t('Something went wrong'))
+      return
+    }
     // A timed callback closes over entry/set indexes. Invalidate it, and the current rest,
     // before the selected occurrence can be replaced or a new entry shifts those indexes.
     ui().stopWork()
     ui().stopRest()
     update(state => { swapActiveExercise(state.active, index, replacement, options) }, true)
   }
-  const logged = (current.sets || []).some(set => set.done === true)
-  if (!logged) { apply(); return }
+  // A unilateral set with only one completed limb already holds real training data.
+  // Use the same guard as swapActiveExercise so this confirmation cannot be bypassed.
+  if (!hasLoggedWork(current)) { apply(); return }
 
   if (current.sg) {
     swapGroupSheet(groupDisposition => apply({ loggedConfirmed: true, groupDisposition }))

@@ -1,0 +1,77 @@
+# Agent 02: independently verify the ORIGINAL openGym frontend, not legacy root/src.
+# Never signs iOS binaries, publishes, or mutates the project.
+name: RED Fit Agent 02 - openGym Frontend QA
+
+on:
+  pull_request:
+    paths:
+      - 'vendor/opengym-upstream/frontend/**'
+      - '.github/workflows/red-fit-agent02-opengym-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original-opengym-frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: vendor/opengym-upstream/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: vendor/opengym-upstream/frontend/package-lock.json
+
+      - name: Dependency-free dock and Home regressions
+        run: |
+          node scripts/check-red-fit-dock-direction.mjs
+          node scripts/check-red-fit-dock-event-integration.mjs
+          node scripts/check-red-fit-dock-layout.mjs
+          node scripts/check-red-fit-dock-route.mjs
+          node scripts/check-red-fit-home-week.mjs
+          node scripts/check-red-fit-week-reveal.mjs
+          node scripts/check-red-fit-week-status.mjs
+
+      - name: Install original openGym dependencies
+        id: install
+        run: npm ci --no-audit --no-fund
+
+      - name: Agent 02 actual React and CSS Vitest tests
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: npm run test -- src/components/TabBar.red-fit.test.jsx src/components/TabBar.test.jsx src/components/red-fit-dock.styles.test.js src/views/Home.red-fit-a11y.test.js
+
+      # Cross-branch integration evidence: run Agent 04's original native handoff
+      # tests against THIS branch's combined RED Morph React TabBar. Neither branch
+      # is merged or modified. The pinned upstream test is removed after the run.
+      - name: Agent 04 native UIKit dock tests against Agent 02 integrated TabBar
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          native_test=src/components/TabBar.agent04-native-integration.test.jsx
+          trap 'rm -f "$native_test"' EXIT
+          git fetch --no-tags --depth=1 origin fadfe5301c85183a5667cf1390d11cbf791ca900
+          git show fadfe5301c85183a5667cf1390d11cbf791ca900:vendor/opengym-upstream/frontend/src/components/TabBar.native-dock.test.jsx > "$native_test"
+          npm run test -- "$native_test"
+
+      - name: Full original openGym Vitest suite
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: npm run test
+
+      - name: Original openGym production Vite build
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: npm run build
+
+      # This is the actual iOS/Android web asset flavor used before Capacitor
+      # copies files into the native shells. It never signs or modifies Xcode.
+      - name: Mobile-flavor Vite build for iPhone and Android
+        id: mobile_build
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: VITE_MOBILE=1 npm run build
+
+      - name: Verify mobile flavor tag, referenced assets and service worker
+        if: ${{ always() && steps.mobile_build.outcome == 'success' }}
+        run: node scripts/check-mobile-bundle.mjs

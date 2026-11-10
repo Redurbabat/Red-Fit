@@ -3,7 +3,7 @@ import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import Workout, { removeActiveExercise } from './Workout.jsx'
+import Workout, { deleteActiveSet, removeActiveExercise } from './Workout.jsx'
 import { DEF, useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { LANGS, DERIVED_LOCALES } from '../lib/i18n-core.js'
@@ -193,6 +193,61 @@ describe('active-session exercise removal', () => {
   it('hides the remove control for an empty freestyle session', () => {
     renderWorkout([])
     expect(removeButton()).toBeUndefined()
+  })
+})
+
+describe('Undo of active sets with duplicate exercise ids', () => {
+  const duplicate = marker => {
+    const e = entry('1001')
+    e.target.marker = marker
+    e.sets.push({ w: 45, r: 6, done: false })
+    return e
+  }
+
+  it('restores the deleted set to the selected duplicate when the list did not change', () => {
+    setActive([duplicate('first'), duplicate('middle'), duplicate('last')], 1)
+    act(() => { expect(deleteActiveSet(1, 0)).toBe(true) })
+    expect(useStore.getState().S.active.entries[1].sets).toHaveLength(1)
+
+    act(() => useUI.getState().runToastAction())
+    const entries = useStore.getState().S.active.entries
+    expect(entries[1].target.marker).toBe('middle')
+    expect(entries.map(e => e.sets.length)).toEqual([2, 2, 2])
+  })
+
+  it('rejects Undo after two identical post-delete exercises swap in an immutable Store update', () => {
+    // The first entry loses one set. Afterwards its remaining content is exactly
+    // the same as the second exercise: JSON alone cannot identify the occurrence.
+    const first = entry('1001')
+    first.sets = [{ w: 0, r: 1, done: false }, { w: 0, r: 1, done: false }]
+    setActive([first, entry('1001'), entry('1002')], 0)
+    act(() => { expect(deleteActiveSet(0, 0)).toBe(true) })
+    expect(useStore.getState().S.active.entries[0]).toEqual(useStore.getState().S.active.entries[1])
+
+    act(() => useStore.getState().update(s => {
+      const [a, b] = s.active.entries
+      s.active.entries[0] = b
+      s.active.entries[1] = a
+    }, false))
+    act(() => useUI.getState().runToastAction())
+
+    const active = useStore.getState().S.active
+    expect(active.entries.map(e => e.sets.length)).toEqual([1, 1, 1])
+    expect(useUI.getState().toastMsg).toBe('Too late, that one’s gone')
+  })
+
+  it('does not restore into a different duplicate shifted into the deleted exercise slot', () => {
+    setActive([duplicate('first'), duplicate('middle'), duplicate('last')], 1)
+    act(() => { expect(deleteActiveSet(1, 0)).toBe(true) })
+    act(() => removeActiveExercise(1))
+    // The last occurrence now has the same id and occupies the old index.
+    expect(useStore.getState().S.active.entries[1].target.marker).toBe('last')
+    act(() => useUI.getState().runToastAction())
+
+    const entries = useStore.getState().S.active.entries
+    expect(entries).toHaveLength(2)
+    expect(entries[1].target.marker).toBe('last')
+    expect(entries.map(e => e.sets.length)).toEqual([2, 2])
   })
 })
 

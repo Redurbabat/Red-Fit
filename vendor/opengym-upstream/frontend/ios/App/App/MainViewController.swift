@@ -11,10 +11,137 @@ import WebKit
 class MainViewController: CAPBridgeViewController {
     /// The downloaded animation packs, read through Background Assets (AnimationPacksPlugin.swift).
     private let packFiles = AnimationPackSchemeHandler()
+    private let redFitDockModel = REDFitDockState()
+    private var redFitSystemBar: UITabBar?
+    private var redFitSystemBarHeight: NSLayoutConstraint?
+    private var redFitSystemBarDelegate: REDFitSystemBarDelegate?
+    private lazy var redFitDockHandler = REDFitDockMessageHandler(owner: self)
+
+    private var supportsREDNativeDock: Bool {
+        if #available(iOS 26.0, *) {
+            return UIDevice.current.userInterfaceIdiom == .phone
+        }
+        return false
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        installREDNativeDockIfNeeded()
+    }
+
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        // Keep the Home-indicator space in the native bar after rotation or
+        // a system inset change; WKWebView is never replaced or reparented.
+        redFitSystemBarHeight?.constant = max(83, view.safeAreaInsets.bottom + 56)
+    }
+
+    private func installREDNativeDockIfNeeded() {
+        guard supportsREDNativeDock, redFitSystemBar == nil else { return }
+
+        // The actual UIKit system tab bar, not a hand-drawn SwiftUI/HTML
+        // imitation of Apple's iOS 26 navigation material. UIKit determines
+        // Liquid Glass, selection feedback, icons and accessibility behavior.
+        // The original Capacitor WKWebView remains the only content owner.
+        let bar = UITabBar()
+        let definitions: [(String, String)] = [
+            ("Home", "house"),
+            ("Plan", "calendar"),
+            ("Start", "play.fill"),
+            ("Stats", "chart.bar"),
+            ("Exercises", "dumbbell"),
+        ]
+        bar.items = definitions.enumerated().map { index, item in
+            UITabBarItem(title: item.0, image: UIImage(systemName: item.1), tag: index)
+        }
+        let delegate = REDFitSystemBarDelegate(owner: self)
+        bar.delegate = delegate
+        redFitSystemBarDelegate = delegate  // UITabBar.delegate is weak.
+        bar.selectedItem = bar.items?.first
+        bar.tintColor = .systemGreen
+        bar.accessibilityIdentifier = "redfit-system-tabbar"
+        bar.isHidden = !redFitDockModel.visible
+        bar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(bar)
+        let height = bar.heightAnchor.constraint(equalToConstant: max(83, view.safeAreaInsets.bottom + 56))
+        NSLayoutConstraint.activate([
+            bar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            height,
+        ])
+        redFitSystemBarHeight = height
+        redFitSystemBar = bar
+        applyREDNativeDockState()
+    }
+
+    private func applyREDNativeDockState() {
+        guard let bar = redFitSystemBar else { return }
+        let identifiers = ["home", "plan", "start", "stats", "library"]
+        if let index = identifiers.firstIndex(of: redFitDockModel.selected) {
+            bar.selectedItem = bar.items?.first(where: { $0.tag == index })
+        }
+        for (index, key) in ["home", "plan", "stats", "library"].enumerated() {
+            let tabIndex = index < 2 ? index : index + 1 // Skip the Start action.
+            if let title = redFitDockModel.labels[key], !title.isEmpty {
+                bar.items?.first(where: { $0.tag == tabIndex })?.title = title
+            }
+        }
+        if let home = bar.items?.first(where: { $0.tag == 0 }) {
+            home.badgeValue = redFitDockModel.connectionTrouble ? "!" : nil
+            home.badgeColor = .systemOrange
+        }
+        if let start = bar.items?.first(where: { $0.tag == 2 }) {
+            start.title = redFitDockModel.startLabel
+            // UIKit announces the same localized and state-accurate title as the visible tab.
+            // A separate English-only accessibilityLabel would misread Edit/Workout/Resume.
+        }
+        bar.isHidden = !redFitDockModel.visible
+    }
+
+    fileprivate func receiveREDNativeDockState(_ message: Any) {
+        guard supportsREDNativeDock, let state = message as? [String: Any] else { return }
+        if let selected = state["selected"] as? String,
+           ["home", "plan", "start", "stats", "library"].contains(selected) {
+            redFitDockModel.selected = selected
+        }
+        if let running = state["running"] as? Bool { redFitDockModel.running = running }
+        if let label = state["startLabel"] as? String { redFitDockModel.startLabel = label }
+        if let labels = state["labels"] as? [String: String] { redFitDockModel.labels = labels }
+        if let trouble = state["connectionTrouble"] as? Bool { redFitDockModel.connectionTrouble = trouble }
+        if let visible = state["visible"] as? Bool { redFitDockModel.visible = visible }
+        applyREDNativeDockState()
+    }
+
+    fileprivate func openREDNativeTab(_ tab: String) {
+        guard ["home", "plan", "start", "stats", "library"].contains(tab) else { return }
+        // React Router and the existing startWorkout function remain the only
+        // navigation/workout owners. The native surface sends an intention, never
+        // recreates the WKWebView or changes its saved workout state.
+        let script = "window.dispatchEvent(new CustomEvent('redfit:native-dock', {detail: {tab: '" + tab + "'}}))"
+        webView?.evaluateJavaScript(script, completionHandler: nil)
+    }
 
     override open func webViewConfiguration(for instanceConfiguration: InstanceConfiguration) -> WKWebViewConfiguration {
         let config = super.webViewConfiguration(for: instanceConfiguration)
         config.setURLSchemeHandler(packFiles, forURLScheme: AnimationPackSchemeHandler.scheme)
+        if supportsREDNativeDock {
+            config.userContentController.add(redFitDockHandler, name: "redFitDock")
+        }
+        // The dedicated dock-navigation XCTest must not wait on an optional
+        // iOS Health authorization sheet. Skip only the app's introductory
+        // permission explanations; NEVER grant OS permissions or change
+        // the onboarding path for a normally launched RED Fit app.
+        if ProcessInfo.processInfo.arguments.contains("-REDFitUITestSkipOnboardingPermissions") {
+            let source = """
+            try {
+              localStorage.setItem('gym_onboard_perms_seen', '["notifications","appleHealth"]');
+            } catch (error) { /* The test will fail visibly if storage is unavailable. */ }
+            """
+            config.userContentController.addUserScript(
+                WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+            )
+        }
         return config
     }
 
@@ -81,5 +208,47 @@ class MainViewController: CAPBridgeViewController {
                 }
             }
         }
+    }
+}
+
+
+// A weak message proxy avoids retaining the Capacitor controller through the
+// WKUserContentController. Only native iPhone iOS 26 registers this handler.
+private final class REDFitDockMessageHandler: NSObject, WKScriptMessageHandler {
+    weak var owner: MainViewController?
+
+    init(owner: MainViewController) {
+        self.owner = owner
+    }
+
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.name == "redFitDock" else { return }
+        owner?.receiveREDNativeDockState(message.body)
+    }
+}
+
+private final class REDFitDockState {
+    var visible = false
+    var selected = "home"
+    var running = false
+    var startLabel = "Start"
+    var connectionTrouble = false
+    var labels: [String: String] = [:]
+}
+
+// UITabBarDelegate forwards the original five navigation intentions to the
+// existing React Router. The controller never creates another web view or
+// a second workout store. Repeated taps retain openGym's scroll-to-top behavior.
+private final class REDFitSystemBarDelegate: NSObject, UITabBarDelegate {
+    weak var owner: MainViewController?
+    private let tabs = ["home", "plan", "start", "stats", "library"]
+
+    init(owner: MainViewController) {
+        self.owner = owner
+    }
+
+    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        guard tabs.indices.contains(item.tag) else { return }
+        owner?.openREDNativeTab(tabs[item.tag])
     }
 }
