@@ -36,3 +36,14 @@ Alle übrigen geänderten Pfade aus fünf Agentenbranches als unveränderte Git-
 ## Schutzmassnahmen
 
 GitHub meldet Repository-Sichtbarkeit `public`, die Projektdoku verlangt `private`; vor Weitergabe von Installationsartefakten klären. Keine Secrets, persönlichen Daten, öffentlichen Cloudflare-/Store-Deploys oder ungeprüften Datenmigrationen. Bestehende LICENSE/NOTICE und separate Medienrechte erhalten.
+
+## Verifizierte Integrations-QA (10.11.2026)
+
+- PR #17 remains draft. Comparison of each source head against integration head 9740f4bc: behind=0 for PR #11 (8110296), #12 (af0aa0d), #13 (a100871), #14 (e433d3), #15 (db1f3b2).
+- CI at previous integration head: root CI [42769494297](https://github.com/Redurbabat/Red-Fit/actions/runs/42769494297) success, combined iOS simulator workflow [42769494490](https://github.com/Redurbabat/Red-Fit/actions/runs/42769494490) success.
+- Failed frontend runs: [42769494380](https://github.com/Redurbabat/Red-Fit/actions/runs/42769494380), [42769494569](https://github.com/Redurbabat/Red-Fit/actions/runs/42769494569), [42769494242](https://github.com/Redurbabat/Red-Fit/actions/runs/42769494242). In these logs Vitest incorrectly discovers three native node:test files in frontend/scripts and reports 'No test suite found'. The native Node tests are executed separately by node --test; they must not be deleted.
+- Fix: frontend/vite.config.js excludes precisely those three scripts from Vitest and preserves configDefaults.exclude (commit ffe2902e8a24cc348601af60d960de8edb5728d0). The next integrated CI run must verify this fix; no green claim yet.
+- Additional failure: nutrition full suite had Tour.test.jsx:513 'expected c-media to be c-save' (1 of 7980 actual Vitest tests failed). RED-Morph run completed 7980/7980 actual tests successfully; intermittent behavior suspected but not yet proven.
+- Native iPhone [42769494341](https://github.com/Redurbabat/Red-Fit/actions/runs/42769494341) failed XCUITest OpenGymUITests.test0REDFitNativeTabBarKeepsOriginalNavigation: OpenGymUITests.swift:67, 'home never showed after the onboarding choice'. Simulator/device unsigned build steps preceding the UI smoke test succeeded; not a signed/installable IPA.
+- Direct local npm/Xcode tests were not run: this environment cannot resolve github.com for git clone ('Could not resolve host'). Only linked GitHub Actions logs are independent executed test evidence.
+- Outstanding: verify CI after fix, diagnose native onboarding/Home, ensure workout/nutrition/backup integration, actual iPhone signing and install, keep repo private before releasing artifacts, then Android/Windows QA.
