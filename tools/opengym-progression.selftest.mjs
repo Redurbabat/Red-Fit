@@ -113,7 +113,7 @@ test("the complete original module/test import closure is present in vendor", ()
     }
   };
   for (const name of sourceRoots) visit(resolve(lib, name));
-  assert.equal(seen.size, 71); // Original 70 modules plus the inline brand image.
+  assert.equal(seen.size, 72); // Original modules, inline brand image and RED Fit's local-only transport policy.
 });
 
 test("original provenance and explicitly reviewed RED Fit derivative hashes match", () => {

@@ -3,6 +3,11 @@ import UIKit
 import UserNotifications
 import WebKit
 
+// Applies before JavaScript starts, including resumed background tasks from older builds.
+enum REDFitPrivacy {
+    static let localOnly = true
+}
+
 /**
  * The app's own bridge view controller (Main.storyboard). Since Capacitor 6 the bridge only loads
  * the plugins that come from npm packages (packageClassList in capacitor.config.json); plugins
@@ -52,7 +57,9 @@ class MainViewController: CAPBridgeViewController {
             ("Exercises", "dumbbell"),
         ]
         bar.items = definitions.enumerated().map { index, item in
-            UITabBarItem(title: item.0, image: UIImage(systemName: item.1), tag: index)
+            let tab = UITabBarItem(title: item.0, image: UIImage(systemName: item.1), tag: index)
+            tab.accessibilityIdentifier = "redfit-tab-" + ["home", "plan", "start", "stats", "library"][index]
+            return tab
         }
         let delegate = REDFitSystemBarDelegate(owner: self)
         bar.delegate = delegate
@@ -145,6 +152,16 @@ class MainViewController: CAPBridgeViewController {
     }
 
     override open func capacitorDidLoad() {
+        // The local training mirror, nutrition DB and custom photos must not silently enter
+        // iCloud/device backups. Directory flags cover new files too; manual exports stay explicit.
+        for directory in [FileManager.SearchPathDirectory.documentDirectory, .libraryDirectory] {
+            if var url = FileManager.default.urls(for: directory, in: .userDomainMask).first {
+                var values = URLResourceValues()
+                values.isExcludedFromBackup = true
+                do { try url.setResourceValues(values) }
+                catch { NSLog("RED Fit: could not exclude local app directory from backup: %@", error.localizedDescription) }
+            }
+        }
         bridge?.registerPluginInstance(PrintPlugin())
         bridge?.registerPluginInstance(RestAlertPlugin())
         bridge?.registerPluginInstance(DeviceAuthPlugin())

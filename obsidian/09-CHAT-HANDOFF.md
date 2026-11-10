@@ -1,4 +1,4 @@
-> **Aktueller Integrationsstand 10.11.2026:** Weiter auf PR #17 / `integration/red-fit-opengym-iphone-20261110`. Neue Marke: Bordeaux/Elfenbein, drei abstrakte fließende Formen, **keine Buchstaben/Hantel**. `docs/design/RED-FIT-BRAND-INTEGRATION.md` und den neuesten Abschnitt von `08-STATUS-UND-TESTS.md` lesen. Die Quell-PRs sind integriert; keine zweite App bauen. Native iPhone-Abnahme/Signing bleiben gesondert zu belegen.
+> **Aktueller Integrationsstand 10.11.2026:** Weiter auf PR #17 / `integration/red-fit-opengym-iphone-20261110`. **iPhone zuerst; lokale Daten ohne Drittanbieter.** `docs/LOCAL-ONLY-IOS.md` und `skills/red-fit-ios/SKILL.md` lesen: keine Reaktivierung alter Server-/KI-Konfigurationen, Tracking oder automatischer Health-Weitergabe. Vorhandene Konto-Ernährungsdaten bleiben lokal erreichbar. Neue Marke: Bordeaux/Elfenbein, drei abstrakte fließende Formen, **keine Buchstaben/Hantel**. Die Quell-PRs #11–#15 sind integriert; keine zweite App bauen. Native iPhone-Abnahme/Signing bleiben gesondert zu belegen.
 
 ---
 

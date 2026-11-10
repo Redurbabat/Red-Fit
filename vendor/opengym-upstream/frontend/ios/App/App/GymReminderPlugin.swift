@@ -232,6 +232,7 @@ final class GymReminderCenter: NSObject, CLLocationManagerDelegate {
     /// Whether the paired server says `today` was trained or excused. Calls back false without a
     /// server, offline, on any error and after 3 seconds, always on the main queue.
     func trainedElsewhere(today: String, _ done: @escaping (Bool) -> Void) {
+        guard !REDFitPrivacy.localOnly else { done(false); return }
         guard let auth = GymReminderCenter.loadServer(), var base = auth["server"] as? String, !base.isEmpty else { done(false); return }
         while base.hasSuffix("/") { base.removeLast() }
         guard var parts = URLComponents(string: base + "/api/nudge-check") else { done(false); return }

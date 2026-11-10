@@ -1,10 +1,7 @@
-name: RED Fit Agent 02 - combined iOS Simulator
+# Historical two-commit comparison only. Current integration is validated by red-fit-iphone.yml.
+name: RED Fit - historical Agent 02 iOS comparison
 
 on:
-  pull_request:
-    paths:
-      - 'vendor/opengym-upstream/frontend/**'
-      - '.github/workflows/red-fit-agent02-combined-ios.yml'
   workflow_dispatch:
 
 permissions:

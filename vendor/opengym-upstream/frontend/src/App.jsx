@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { hideBoot } from './lib/boot.js'
+import { isLocalOnly } from './lib/local-only.js'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
@@ -356,10 +357,10 @@ function Shell() {
       {/* The Coach screens gate themselves on the instance config; the routes exist whenever the
           AI Coach module is on, so a deep link from a notification lands somewhere sane rather
           than on the catch-all. With the module off, Home is the sane place. */}
-      {isOn(S, 'coach') && <Route path="/coach" element={<CoachChat />} />}
-      {isOn(S, 'coach') && <Route path="/coach/intake" element={<CoachIntake />} />}
-      {isOn(S, 'coach') && <Route path="/coach/proposal" element={<Navigate to="/coach" replace />} />}
-      {isOn(S, 'coach') && <Route path="/coach/setup" element={<CoachSetup />} />}
+      {!isLocalOnly() && isOn(S, 'coach') && <Route path="/coach" element={<CoachChat />} />}
+      {!isLocalOnly() && isOn(S, 'coach') && <Route path="/coach/intake" element={<CoachIntake />} />}
+      {!isLocalOnly() && isOn(S, 'coach') && <Route path="/coach/proposal" element={<Navigate to="/coach" replace />} />}
+      {!isLocalOnly() && isOn(S, 'coach') && <Route path="/coach/setup" element={<CoachSetup />} />}
       <Route path="/admin" element={user?.admin ? <Admin /> : <Navigate to="/home" replace />} />
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>

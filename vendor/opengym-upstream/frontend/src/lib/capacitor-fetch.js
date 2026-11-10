@@ -11,7 +11,11 @@
 //
 // Only the subset the adapters use is implemented: method, headers, a JSON body, an abort
 // signal, and a response with ok/status/text()/json().
+import { assertLocalResource } from './local-only.js'
+
 export async function nativeFetch(url, init = {}) {
+  // Native HTTP bypasses the WebView's CSP and fetch wrapper: check before importing the bridge.
+  assertLocalResource(url, init)
   let cap = null
   try { cap = await import('@capacitor/core') } catch { /* not a Capacitor build */ }
   if (!cap || !cap.Capacitor || !cap.Capacitor.isNativePlatform()) return fetch(url, init)

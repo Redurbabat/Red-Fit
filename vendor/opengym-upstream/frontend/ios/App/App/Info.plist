@@ -93,9 +93,9 @@
 	<key>BAAppGroupID</key>
 	<string>group.ch.redurbabat.redfit</string>
 	<key>BAHasManagedAssetPacks</key>
-	<true/>
+	<false/>
 	<key>BAUsesAppleHosting</key>
-	<true/>
+	<false/>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>ch.redurbabat.redfit.nudge-check</string>

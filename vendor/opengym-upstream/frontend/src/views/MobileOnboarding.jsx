@@ -1,4 +1,6 @@
 import brandIcon from '../assets/red-fit-icon.png'
+import { isLocalOnly } from '../lib/local-only.js'
+import LocalOnlyNotice from '../components/LocalOnlyNotice.jsx'
 // Mobile build only, first launch: the choice useStore.boot() couldn't make on its own — keep
 // everything on this device, or connect to a self-hosted RED Fit server instead. See
 // lib/remote.js for the pairing flow this hands off to.
@@ -87,7 +89,11 @@ export function CfAccessSheet({ close, server = '' }) {
 // `again`: a phone whose server stopped accepting it (components/ServerSync.jsx pairAgain) — the
 // address it had is filled in when it still has one, so only the new code is left to type, and
 // the sheet says that what the phone kept is merged, not replaced.
-export function ConnectSheet({ close, initialUrl = '', again = false }) {
+export function ConnectSheet(props) {
+  return isLocalOnly() ? <LocalOnlyNotice /> : <ServerConnectSheet {...props} />
+}
+
+function ServerConnectSheet({ close, initialUrl = '', again = false }) {
   const { connectToServer } = useStore()
   const [url, setUrl] = useState(initialUrl)
   const [code, setCode] = useState('')
@@ -141,6 +147,7 @@ export function ConnectSheet({ close, initialUrl = '', again = false }) {
 
 export default function MobileOnboarding() {
   const { chooseLocalMode } = useStore()
+  if (isLocalOnly()) return <div className="narrow"><LocalOnlyNotice /><Button variant="primary" onClick={() => chooseLocalMode()}>RED Fit öffnen</Button></div>
   const head = <>
     <img src={brandIcon} width="88" height="88" alt="" className="redfit-brand-icon" />
     <h1 className="t-large" style={{ fontWeight: 700, margin: '10px 0 4px' }}>RED Fit</h1>

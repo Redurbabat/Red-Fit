@@ -9,6 +9,7 @@
 //
 // The voice is the system's default for the app's language; the rate is Slow, Normal or Fast.
 import { MOBILE } from './mobile.js'
+import { isLocalOnly } from './local-only.js'
 import { speakNative, hushNative } from './rest-alert.js'
 import { dateLocale } from './i18n-core.js'
 
@@ -21,7 +22,7 @@ export const speechLang = (loc = dateLocale()) => String(loc || 'en-GB').split('
 const webSpeech = () => (typeof window !== 'undefined' && window.speechSynthesis && typeof window.SpeechSynthesisUtterance === 'function' ? window.speechSynthesis : null)
 
 /** Whether anything here can talk: the phone app always can (it falls back to the page if need be). */
-export const speechSupported = () => MOBILE || !!webSpeech()
+export const speechSupported = () => !isLocalOnly() && (MOBILE || !!webSpeech())
 
 // A voice for the language, picked once the browser has listed them: its default voice for that
 // language when it marks one, else the first that speaks it. None: the browser decides by `lang`.
@@ -53,6 +54,7 @@ function speakWeb(text, { lang, rate }) {
  * "3" is never heard after "2"; the default waits its turn. Resolves true once something took it.
  */
 export async function speak(text, { rate = 1, lang = speechLang(), onSilent = false, queue = true } = {}) {
+  if (isLocalOnly()) return false
   if (!text) return false
   if (MOBILE && await speakNative(text, { lang, rate, onSilent, flush: !queue })) return true
   if (!queue) { try { webSpeech()?.cancel() } catch { /* nothing to stop */ } }

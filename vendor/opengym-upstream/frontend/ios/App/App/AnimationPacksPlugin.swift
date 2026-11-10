@@ -79,6 +79,7 @@ public class AnimationPacksPlugin: CAPPlugin, CAPBridgedPlugin {
     /// or the extension is missing, as in an unsigned simulator build, so without them the packs
     /// are simply not offered and nothing touches AssetPackManager.
     static let supported: Bool = {
+        guard !REDFitPrivacy.localOnly else { return false }
         guard #available(iOS 26.0, *) else { return false }
         let info = Bundle.main.infoDictionary ?? [:]
         guard info["BAUsesAppleHosting"] as? Bool == true, let group = info["BAAppGroupID"] as? String else { return false }
@@ -92,6 +93,7 @@ public class AnimationPacksPlugin: CAPPlugin, CAPBridgedPlugin {
     private static let testFlight: Bool = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
 
     @objc func available(_ call: CAPPluginCall) {
+        guard !REDFitPrivacy.localOnly else { call.resolve(["available": false]); return }
         call.resolve(["available": supported, "testflight": AnimationPacksPlugin.testFlight])
     }
 
@@ -130,6 +132,7 @@ public class AnimationPacksPlugin: CAPPlugin, CAPBridgedPlugin {
 
     /// What a pack costs to download, before it is: { downloadSize } in bytes, from Apple.
     @objc func info(_ call: CAPPluginCall) {
+        guard !REDFitPrivacy.localOnly else { call.reject("RED Fit local-only", "local-only"); return }
         guard let (id, _) = packArgs(call, probe: false) else { return }
         guard supported else { call.resolve([:]); return }
         #if canImport(BackgroundAssets)
@@ -191,6 +194,7 @@ public class AnimationPacksPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func download(_ call: CAPPluginCall) {
+        guard !REDFitPrivacy.localOnly else { call.reject("RED Fit local-only", "local-only"); return }
         guard let (id, _) = packArgs(call, probe: false) else { return }
         guard supported else { call.reject("asset packs need iOS 26", "unavailable"); return }
         let wifiOnly = call.getBool("wifiOnly") ?? true

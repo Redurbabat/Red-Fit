@@ -52,7 +52,10 @@ export const ROOT_GROUPS = [['modules'], ['workout', 'alerts', 'reminders'], ['p
  * the phone's own notifications; the Coach page is the phone's Coach setup (the web app's Coach
  * runs on the server, set up by its admin).
  */
+import { isLocalOnly } from '../lib/local-only.js'
+
 export function pageVisible(page, ctx) {
+  if (isLocalOnly() && ['coach', 'integrations', 'gym', 'gym-find', 'gym-edit', 'zepp', 'apple-health', 'health-connect'].includes(page)) return false
   // A page of a module that is off (ctx.mod answers isOn for this profile; absent: all on).
   if (PAGES[page]?.mod && ctx.mod && !ctx.mod(PAGES[page].mod)) return false
   if (page === 'reminders') return !!(ctx.user || ctx.mobile)

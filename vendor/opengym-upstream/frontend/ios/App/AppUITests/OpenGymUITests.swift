@@ -55,18 +55,30 @@ final class OpenGymUITests: XCTestCase {
      * tap and pass the next one through to home underneath (CI 10-13, the gym card opened).
      */
     private func chooseLocal() {
+        // The tour is a modal and hides Home from accessibility. Dismiss its invitation
+        // before looking for Home, including when local-only boot skips the server chooser.
+        func dismissTour() {
+            if app.staticTexts["Want a 1-minute tour?"].exists, app.buttons["Skip"].exists {
+                app.buttons["Skip"].tap()
+            }
+        }
         // The body-weight "Log" action is optional (Settings > Modules), so it
         // cannot establish whether Home loaded. The original Home.jsx always
         // renders "Today"; the native navigation test checks that same stable
         // marker again after selecting the real UIKit tabs.
         let homeToday = app.webViews.firstMatch.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Today")).firstMatch
-        if homeToday.waitForExistence(timeout: 45) { return }   // chosen in an earlier test
+        for _ in 0..<15 {
+            dismissTour()
+            if homeToday.waitForExistence(timeout: 1) { return }
+            if app.buttons["Use on this device"].exists { break }
+        }
         let local = app.buttons["Use on this device"]
         XCTAssertTrue(local.waitForExistence(timeout: 60), "the onboarding choice did not show up")
         for _ in 0..<5 {
             if systemAlertUp() { allowSystemAlert(within: 20) }
             if local.exists && local.isHittable { local.tap() }
             passPermissionSteps()
+            dismissTour()
             if homeToday.waitForExistence(timeout: 20) { return }
         }
         shot("redfit-onboarding-failure")

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, forwardRef, useSyncExternalStore } from 'react'
+import { isLocalOnly } from '../lib/local-only.js'
+import LocalOnlyNotice from '../components/LocalOnlyNotice.jsx'
 import { useNavigate, useParams, useLocation, Navigate } from 'react-router-dom'
 import { useStore, DEF, hasData } from '../store/useStore.js'
 import { healthStatus, loadHealth, enableHealth, disableHealth, openHealthConnect, onHealthChange, enableRead, disableRead } from '../lib/health-sync.js'
@@ -1246,7 +1248,7 @@ export default function Settings({ page = null, find = null, via = null, entryKe
         </button>
         <h1 className="sp-title">{t(PAGES[page].title)}</h1>
       </div>
-      {pages[page]()}
+      {isLocalOnly() && ['account', 'coach', 'integrations', 'gym', 'gym-edit', 'gym-find', 'zepp'].includes(page) ? <LocalOnlyNotice /> : pages[page]()}
     </div>
   }
 
@@ -1284,6 +1286,7 @@ function SettingsRoot({ ctx, preview, open, user, sync, home, go, entryKey }) {
       <button className="sp-back" data-back="/home" onClick={home} aria-label={t('Home')}><Icon name="chevronLeft" /><span>{t('Home')}</span></button>
     </div>
     <h1 className="sp-root-title">{t('Settings')}</h1>
+    <LocalOnlyNotice />
     <div className="sp-search">
       <SearchField value={q} onChange={e => set(e.target.value)} onClear={() => set('')}
         placeholder={t('Search…')} aria-label={t('Search settings')} inputMode="search" enterKeyHint="search" autoComplete="off" />

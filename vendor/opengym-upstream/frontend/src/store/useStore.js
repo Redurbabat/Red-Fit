@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { api, setRemoteAuth } from '../lib/api.js'
 import { localTZ } from '../lib/format.js'
+import { isLocalOnly, requireNetworkFeature } from '../lib/local-only.js'
 import { t } from '../lib/i18n.js'
 import { registerCustom, healCustomEx } from '../lib/exercises.js'
 import { syncGymInventory } from '../lib/gym-inventory.js'
@@ -1387,7 +1388,7 @@ export const useStore = create((set, get) => {
   // check has to ask (lib/media-owed.js). A copy without any leaves the media store unopened.
   if (keptHashes(S0).size) loadPending()
   meta.set(S0, { base: readStoredSync(), owed: storedOwed() })
-  const user0 = (() => { try { return JSON.parse(localStorage.getItem('gym_user')) || null } catch { return null } })()
+  const user0 = isLocalOnly() ? null : (() => { try { return JSON.parse(localStorage.getItem('gym_user')) || null } catch { return null } })()
   adoptHold = !!user0 && readAdopt()?.uid === user0.id
   const sync0 = { offline: false, pending: storedOwed(), auth: false, lastError: null, lastSynced: (() => { try { return +localStorage.getItem(SYNCED_AT_KEY) || 0 } catch { return 0 } })(), server: serverBase(), held: adoptHold }
   sync0.status = statusOf(sync0, user0)
@@ -1440,6 +1441,7 @@ export const useStore = create((set, get) => {
     // provider, model, baseUrl } from lib/coach-device.js. Never the key, never a proposal.
     coachLocal: null,
     async setCoachLocal(patch) {
+      requireNetworkFeature()
       set({ coachLocal: coachDeviceSettings(await saveCoachDevice(patch)) })
     },
 
@@ -1654,6 +1656,11 @@ export const useStore = create((set, get) => {
     // Two callers that ask at once get one request: signing in re-asks (setUser) and the pairing
     // flow awaits a refresh of its own immediately after, and there is one answer to have.
     async refreshConfig() {
+      if (isLocalOnly()) {
+        const config = { allow_guest: true, coach: { enabled: false } }
+        set({ config })
+        return config
+      }
       if (configFetch) return configFetch
       configFetch = (async () => {
         try { const c = await api('/api/config'); rememberDefaultLang(c); set({ config: c }); return c }
@@ -2022,6 +2029,28 @@ export const useStore = create((set, get) => {
 
     // Boot: ask the server who we are, then pull.
     async boot() {
+      if (isLocalOnly()) {
+        const previousRemote = MOBILE ? await loadRemote() : null
+        let previousUserId = previousRemote?.user?.id || null
+        try { previousUserId ||= JSON.parse(localStorage.getItem('gym_user'))?.id || null } catch { /* no prior account */ }
+        // Restore the existing training copy without adopting, signing out, clearing
+        // pairing/credentials, deleting stashes, or contacting an earlier server.
+        if (MOBILE) {
+          const saved = await nativeLoad()
+          if (saved && (!hasData(get().S) || (saved._ts || 0) >= (get().S._ts || 0))) {
+            persist(sanitizeAccent(Object.assign(clone(DEF), saved)), false, false)
+          }
+        }
+        // Keep the old nutrition namespace readable locally; changing to the guest
+        // database would hide meals previously entered under this account.
+        set({ user: null, localProfile: { userId: previousUserId, server: previousRemote?.base || null }, coachLocal: { mode: 'off' } })
+        get().setGuest(true)
+        await get().refreshConfig()
+        setSync({ server: null, auth: false, pending: false, offline: false, lastError: null })
+        if (MOBILE) syncReminder(get().S)
+        finishBoot()
+        return
+      }
       // Mobile build: no backend by default — restore from the file mirror (the durable copy;
       // localStorage may have been evicted since the last run) and go straight in. Unless this
       // device was paired to a server ("connect to my server" mode, lib/remote.js), in which

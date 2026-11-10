@@ -37,6 +37,7 @@ public class GymMapPickerPlugin: CAPPlugin, CAPBridgedPlugin {
     private let geocoder = CLGeocoder()
 
     @objc func complete(_ call: CAPPluginCall) {
+        guard !REDFitPrivacy.localOnly else { call.reject("RED Fit local-only", "local-only"); return }
         let query = (call.getString("query") ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         var near: CLLocationCoordinate2D?
         if let lat = call.getDouble("lat"), let lng = call.getDouble("lng") {
@@ -53,6 +54,7 @@ public class GymMapPickerPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func resolve(_ call: CAPPluginCall) {
+        guard !REDFitPrivacy.localOnly else { call.reject("RED Fit local-only", "local-only"); return }
         let id = call.getString("id") ?? ""
         DispatchQueue.main.async {
             guard let completion = self.finder?.completion(id) else { call.resolve([:]); return }
@@ -73,6 +75,7 @@ public class GymMapPickerPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func reverse(_ call: CAPPluginCall) {
+        guard !REDFitPrivacy.localOnly else { call.reject("RED Fit local-only", "local-only"); return }
         guard let lat = call.getDouble("lat"), let lng = call.getDouble("lng") else { call.resolve(["address": ""]); return }
         DispatchQueue.main.async {
             // One lookup at a time (Apple throttles them): a newer spot cancels the older one,

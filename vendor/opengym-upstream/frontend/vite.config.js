@@ -7,6 +7,7 @@ import react from '@vitejs/plugin-react'
 import { configDefaults } from 'vitest/config'
 import { lazyAssets, stampSw } from './scripts/sw-stamp.mjs'
 import { mobileViewport } from './src/lib/viewport-zoom.js'
+import { localOnlyBuild } from './scripts/local-only-build.mjs'
 
 const backend = process.env.API_TARGET || 'http://127.0.0.1:3000'
 // The API refuses a state-changing request that a browser sent from anywhere other than its own
@@ -37,23 +38,7 @@ const catalogueMedia = {
   }
 }
 
-// Optional web analytics (Umami). Injected only when BOTH vars are set at build time,
-// so a plain `npm run build` — and every self-hosted install — stays telemetry-free.
-// Set for the public instance: VITE_UMAMI_SRC=https://stats.example/script.js VITE_UMAMI_ID=<uuid>
-const umamiSrc = process.env.VITE_UMAMI_SRC
-const umamiId = process.env.VITE_UMAMI_ID
-
-const umami = {
-  name: 'opengym-umami',
-  transformIndexHtml() {
-    if (!umamiSrc || !umamiId) return
-    return [{
-      tag: 'script',
-      attrs: { defer: true, src: umamiSrc, 'data-website-id': umamiId },
-      injectTo: 'head'
-    }]
-  }
-}
+// RED Fit's owner requires local-only operation. Analytics are refused by localOnlyBuild.
 
 // The service worker's cache is named after the build (public/sw.js carries a `__BUILD__`
 // placeholder): a deploy is then a new worker with its own cache, and the previous build's
@@ -106,7 +91,7 @@ const appVersion = process.env.APP_BUILD ? `${pkgVersion}+${process.env.APP_BUIL
 
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(appVersion) },
-  plugins: [react(), umami, flavor, swStamp, catalogueMedia],
+  plugins: [react(), localOnlyBuild(), flavor, swStamp, catalogueMedia],
   base: './',
   server: {
     // The Coach's core (payload, validator, prompts, HTTP adapters) lives in ../api/coach/core

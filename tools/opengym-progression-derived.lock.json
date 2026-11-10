@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "upstreamCommit": "8fb98b16861a2728652302a7e6e30c50548493a0",
-  "derivedTotalBytes": 2117827,
+  "derivedTotalBytes": 2118361,
   "overrides": {
     "accent.js": {
       "upstreamSha": "e0c2afd9e8aefa3660b290555828873e5870ed43",
@@ -10,8 +10,8 @@
     },
     "api.js": {
       "upstreamSha": "4ec876e99a5e04537c453a7ced37144a6705c26e",
-      "derivedSha": "081610ab97a60dd2d8996e752d6ee2ce0ce896c5",
-      "reason": "RED Fit product branding; existing protocol and storage compatibility retained"
+      "derivedSha": "7ad3607be77cee61872312cc906cfccaa75b1b54",
+      "reason": "Owner-approved local-only data policy; server and external provider transports are refused without deleting saved data"
     },
     "app-base.js": {
       "upstreamSha": "b747e0cc1dae1db64ad1772a91e8b119503c2b0e",
@@ -47,6 +47,11 @@
       "upstreamSha": "1605ad65d40eab421edbc18cf446e188e2cfdaba",
       "derivedSha": "630d4f2c717cc3401f04c227ad4d2af98afbf474",
       "reason": "RED Fit product branding; existing protocol and storage compatibility retained"
+    },
+    "capacitor-fetch.js": {
+      "upstreamSha": "c59c230c5bd01899a0d345526619474228dfaedd",
+      "derivedSha": "67765a301c3675dcde3f823885e6f14e69ec957d",
+      "reason": "Owner-approved local-only data policy; server and external provider transports are refused without deleting saved data"
     }
   }
 }

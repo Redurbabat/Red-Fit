@@ -19,6 +19,7 @@
 //
 // The web build never gets here (MOBILE is a build-time flag).
 import { mergeHeartRate, mergeWeighIns, lacksHeartRate } from './health-read.js'
+import { isLocalOnly } from './local-only.js'
 import { MOBILE, nativePlatform, readJsonFile, writeJsonFile } from './mobile.js'
 import { healthRecords, planSync, writtenIds, goneIds } from './health-connect.js'
 import { isOn } from './modules.js'
@@ -49,6 +50,7 @@ async function mirrorOn(on) {
 // not cost a file read, and every change to it goes through saveHealth anyway.
 let cached = null
 export async function loadHealth() {
+  if (isLocalOnly()) return { ...OFF, error: 'local-only' }
   if (cached) return cached
   const f = await readJsonFile(HEALTH_FILE)
   const map = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : {})
@@ -59,6 +61,7 @@ const saveHealth = h => { cached = h; return writeJsonFile(HEALTH_FILE, h) }
 
 /** { status: 'available' | 'update' | 'missing' | 'unsupported', granted, platform } */
 export async function healthStatus() {
+  if (isLocalOnly()) return { status: 'unsupported', granted: false, platform: null }
   if (!MOBILE) return { status: 'unsupported', granted: false, platform: null }
   try {
     const p = await plugin()
@@ -90,6 +93,7 @@ const told = h => { listeners.forEach(cb => { try { cb(h) } catch { /* a closed 
  * Health Connect refused (the user took the permission back), 'unavailable' when it is gone.
  */
 export function syncHealth(S) {
+  if (isLocalOnly()) return Promise.resolve(null)
   if (!MOBILE) return Promise.resolve(null)
   // Not read yet: initHealthSync reads it at launch and syncs then, which covers a save made
   // before that; the save path itself never waits on the file.
@@ -160,6 +164,7 @@ async function syncOnce(S, h) {
  * Health Connect is not there to ask.
  */
 export async function enableHealth(S) {
+  if (isLocalOnly()) return { ok: false, reason: 'local-only' }
   const p = await plugin()
   if (!p) return { ok: false, reason: 'unsupported' }
   const st = await p.HC.status().catch(() => ({ status: 'unsupported' }))
@@ -200,6 +205,7 @@ export async function disableHealth({ removeWritten = false } = {}) {
 // permission the user granted again in Health Connect's own settings, is picked up then.
 let started = false
 export function initHealthSync(getState, apply = null) {
+  if (isLocalOnly()) { if (MOBILE) mirrorOn(false).catch(() => {}); return }
   if (!MOBILE || started) return
   started = true
   applyRef = apply
@@ -251,6 +257,7 @@ let lastWeightRead = 0
  * then reads once. Resolves with { ok, reason }; reason 'denied' when it was not granted.
  */
 export async function enableRead(kind, getState, { apply = null } = {}) {
+  if (isLocalOnly()) return { ok: false, reason: 'local-only' }
   const p = await plugin()
   if (!p) return { ok: false, reason: 'unsupported' }
   const st = await p.HC.status().catch(() => ({ status: 'unsupported' }))

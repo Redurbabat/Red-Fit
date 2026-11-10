@@ -16,7 +16,8 @@ const newID = () => globalThis.crypto?.randomUUID?.() || Array.from(crypto.getRa
 export default function Nutrition() {
   const userId = useStore(s => s.user?.id)
   const server = useStore(s => s.sync?.server)
-  const scope = nutritionScope({ userId, server, origin: MOBILE ? null : globalThis.location?.origin })
+  const localProfile = useStore(s => s.localProfile)
+  const scope = nutritionScope({ userId: localProfile?.userId ?? userId, server: localProfile?.server ?? server, origin: MOBILE ? null : globalThis.location?.origin })
   return <NutritionForScope key={scope} scope={scope} />
 }
 
