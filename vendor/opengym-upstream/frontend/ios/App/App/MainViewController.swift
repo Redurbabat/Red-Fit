@@ -112,7 +112,7 @@ class MainViewController: CAPBridgeViewController {
         applyREDNativeDockState()
     }
 
-    private func openREDNativeTab(_ tab: String) {
+    fileprivate func openREDNativeTab(_ tab: String) {
         guard ["home", "plan", "start", "stats", "library"].contains(tab) else { return }
         // React Router and the existing startWorkout function remain the only
         // navigation/workout owners. The native surface sends an intention, never
