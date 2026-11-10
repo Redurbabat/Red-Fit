@@ -55,14 +55,19 @@ final class OpenGymUITests: XCTestCase {
      * tap and pass the next one through to home underneath (CI 10-13, the gym card opened).
      */
     private func chooseLocal() {
-        if app.buttons["Log"].waitForExistence(timeout: 45) { return }   // chosen in an earlier test
+        // The body-weight "Log" action is optional (Settings > Modules), so it
+        // cannot establish whether Home loaded. The original Home.jsx always
+        // renders "Today"; the native navigation test checks that same stable
+        // marker again after selecting the real UIKit tabs.
+        let homeToday = app.webViews.firstMatch.staticTexts["Today"]
+        if homeToday.waitForExistence(timeout: 45) { return }   // chosen in an earlier test
         let local = app.buttons["Use on this device"]
         XCTAssertTrue(local.waitForExistence(timeout: 60), "the onboarding choice did not show up")
         for _ in 0..<5 {
             if systemAlertUp() { allowSystemAlert(within: 20) }
             if local.exists && local.isHittable { local.tap() }
             passPermissionSteps()
-            if app.buttons["Log"].waitForExistence(timeout: 20) { return }
+            if homeToday.waitForExistence(timeout: 20) { return }
         }
         XCTFail("home never showed after the onboarding choice")
     }
