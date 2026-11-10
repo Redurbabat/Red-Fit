@@ -69,7 +69,7 @@ def verify_ipa(ipa: Path, app_id: str) -> list[str]:
 def selftest() -> None:
     with tempfile.TemporaryDirectory() as folder:
         path = Path(folder) / 'fixture.ipa'
-        app_id = 'ch.opengym.app'
+        app_id = 'ch.redurbabat.redfit'
         def make_zip(*, corrupt_watch: bool = False, omit_widget: bool = False, old_widget_brand: bool = False) -> None:
             with ZipFile(path, 'w', ZIP_STORED) as zf:
                 for label, (prefix, suffix) in NATIVE_BUNDLES.items():

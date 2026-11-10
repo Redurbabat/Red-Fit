@@ -8,8 +8,8 @@ import { parseProjectBundleIds, plistString, verifyIOSIdentity } from './verify-
 const plist = (entries) => '<plist><dict>\n' +
   Object.entries(entries).map(([key, value]) => '  <key>' + key + '</key>\n  <string>' + value + '</string>').join('\n') +
   '\n</dict></plist>'
-const group = 'group.ch.opengym.app'
-const xcodeID = 'ch.opengym.app'
+const group = 'group.ch.redurbabat.redfit'
+const xcodeID = 'ch.redurbabat.redfit'
 const shared = '<string>' + group + '</string>'
 
 function withFixture(check) {
@@ -28,9 +28,9 @@ function withFixture(check) {
     }),
     'ios/App/WatchWidgets/OpenGymWatchWidgets.entitlements': shared,
     'ios/App/AnimationPacksDownloader/AnimationPacksDownloader.entitlements': shared,
-    'ios/ci/add-widgets.rb': "BUNDLE_ID = 'ch.opengym.app.widgets'",
-    'ios/ci/add-watch-app.rb': "BUNDLE_ID = 'ch.opengym.app.watchkitapp'\ns['PRODUCT_BUNDLE_IDENTIFIER'] = \"#{BUNDLE_ID}.widgets\"",
-    'ios/ci/add-asset-downloader.rb': "BUNDLE_ID = 'ch.opengym.app.AnimationPacksDownloader'",
+    'ios/ci/add-widgets.rb': "BUNDLE_ID = 'ch.redurbabat.redfit.widgets'",
+    'ios/ci/add-watch-app.rb': "BUNDLE_ID = 'ch.redurbabat.redfit.watchkitapp'\ns['PRODUCT_BUNDLE_IDENTIFIER'] = \"#{BUNDLE_ID}.widgets\"",
+    'ios/ci/add-asset-downloader.rb': "BUNDLE_ID = 'ch.redurbabat.redfit.AnimationPacksDownloader'",
     'ios/App/App/App.entitlements': shared,
     'ios/App/OpenGymWidgets/OpenGymWidgets.entitlements': shared,
     'ios/App/Watch/OpenGymWatch.entitlements': shared,
@@ -53,9 +53,9 @@ function withFixture(check) {
 
 test('Xcode parser extracts actual unquoted and quoted product IDs', () => {
   assert.deepEqual(parseProjectBundleIds(
-    'PRODUCT_BUNDLE_IDENTIFIER = ch.opengym.app;\n' +
-    'PRODUCT_BUNDLE_IDENTIFIER = "ch.opengym.app";\n',
-  ), ['ch.opengym.app', 'ch.opengym.app'])
+    'PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit;\n' +
+    'PRODUCT_BUNDLE_IDENTIFIER = "ch.redurbabat.redfit";\n',
+  ), ['ch.redurbabat.redfit', 'ch.redurbabat.redfit'])
 })
 test('Xcode parser does not invent an identifier when key is absent', () => {
   assert.deepEqual(parseProjectBundleIds('PRODUCT_NAME = App;'), [])
@@ -67,6 +67,15 @@ test('Info.plist parser reads values across whitespace and escapes keys', () => 
 test('valid original native shell passes all identity and integration checks', () => {
   withFixture(({ root }) => assert.match(verifyIOSIdentity(root), /identity OK: RED Fit/))
 })
+test('old openGym bundle ID is rejected even when Xcode matches it', () => {
+  withFixture(({ root, write }) => {
+    const legacy = 'ch.opengym.app'
+    write('capacitor.config.json', JSON.stringify({ appId: legacy, appName: 'RED Fit' }))
+    write('ios/App/App.xcodeproj/project.pbxproj', 'PRODUCT_BUNDLE_IDENTIFIER = ' + legacy + ';')
+    assert.throws(() => verifyIOSIdentity(root), /RED Fit bundle ID/)
+  })
+})
+
 test('mismatched Capacitor app ID is rejected before iPhone build', () => {
   withFixture(({ root, write }) => {
     write('capacitor.config.json', JSON.stringify({ appId: 'com.example.wrong', appName: 'RED Fit' }))
@@ -88,7 +97,7 @@ test('missing native workout bridge is rejected', () => {
 
 test('all five Apple targets reject an extension bundle ID mismatch before signing', () => {
   withFixture(({ root, write }) => {
-    write('ios/ci/add-watch-app.rb', "BUNDLE_ID = 'ch.opengym.app.WRONG'\ns['PRODUCT_BUNDLE_IDENTIFIER'] = \"#{BUNDLE_ID}.widgets\"")
+    write('ios/ci/add-watch-app.rb', "BUNDLE_ID = 'ch.redurbabat.redfit.WRONG'\ns['PRODUCT_BUNDLE_IDENTIFIER'] = \"#{BUNDLE_ID}.widgets\"")
     assert.throws(() => verifyIOSIdentity(root), /Watch bundle ID mismatch/)
   })
 })

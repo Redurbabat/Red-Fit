@@ -25,8 +25,8 @@ struct WidgetState: Codable, Equatable {
     /// The app's language (the phone's), so the complications speak it too.
     var lang: String?
 
-    static let idle = WidgetState(mode: "idle", title: "openGym", detail: "", restEndsAt: nil)
-    static let groupId = "group.ch.opengym.app"
+    static let idle = WidgetState(mode: "idle", title: "RED Fit", detail: "", restEndsAt: nil)
+    static let groupId = "group.ch.redurbabat.redfit"
     private static let key = "widgetState"
 
     static func == (a: WidgetState, b: WidgetState) -> Bool {

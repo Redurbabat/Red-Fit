@@ -33,6 +33,7 @@ assert.equal(capacitor.appName, 'RED Fit', 'Capacitor brand should be RED Fit')
 const ids = parseProjectBundleIds(project)
 assert.ok(ids.length > 0, 'Xcode main target must declare a bundle identifier')
 assert.ok(ids.every((id) => id === capacitor.appId), 'Capacitor appId must match Xcode main target bundle ID')
+assert.equal(capacitor.appId, 'ch.redurbabat.redfit', 'RED Fit bundle ID must be ch.redurbabat.redfit')
 for (const [name, plist] of [['app', app], ['widget', widget], ['watch', watch], ['watch widgets', watchWidget]]) {
   assert.equal(plistString(plist, 'CFBundleDisplayName'), 'RED Fit', name + ' display name')
 }
@@ -51,6 +52,7 @@ assert.ok(read('ios/ci/add-watch-app.rb').includes('"#{BUNDLE_ID}.widgets"'),
   'Watch widgets bundle ID must derive from Watch bundle ID')
 const group = plistString(app, 'BAAppGroupID')
 assert.ok(group, 'Background asset app group must be present')
+assert.equal(group, 'group.' + capacitor.appId, 'RED Fit App Group must match bundle ID')
 for (const [name, entitlements] of [
   ['app', appEntitlements], ['widget', widgetEntitlements], ['watch', watchEntitlements],
   ['watch widgets', watchWidgetEntitlements], ['downloader', downloaderEntitlements],
