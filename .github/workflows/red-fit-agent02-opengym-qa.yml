@@ -52,3 +52,14 @@ jobs:
       - name: Original openGym production Vite build
         if: ${{ always() && steps.install.outcome == 'success' }}
         run: npm run build
+
+      # This is the actual iOS/Android web asset flavor used before Capacitor
+      # copies files into the native shells. It never signs or modifies Xcode.
+      - name: Mobile-flavor Vite build for iPhone and Android
+        id: mobile_build
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: VITE_MOBILE=1 npm run build
+
+      - name: Verify mobile flavor tag, referenced assets and service worker
+        if: ${{ always() && steps.mobile_build.outcome == 'success' }}
+        run: node scripts/check-mobile-bundle.mjs
