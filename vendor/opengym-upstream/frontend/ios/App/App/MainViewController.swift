@@ -81,6 +81,16 @@ class MainViewController: CAPBridgeViewController {
         if let index = identifiers.firstIndex(of: redFitDockModel.selected) {
             bar.selectedItem = bar.items?.first(where: { $0.tag == index })
         }
+        for (index, key) in ["home", "plan", "stats", "library"].enumerated() {
+            let tabIndex = index < 2 ? index : index + 1 // Skip the Start action.
+            if let title = redFitDockModel.labels[key], !title.isEmpty {
+                bar.items?.first(where: { $0.tag == tabIndex })?.title = title
+            }
+        }
+        if let home = bar.items?.first(where: { $0.tag == 0 }) {
+            home.badgeValue = redFitDockModel.connectionTrouble ? "!" : nil
+            home.badgeColor = .systemOrange
+        }
         if let start = bar.items?.first(where: { $0.tag == 2 }) {
             start.title = redFitDockModel.startLabel
             start.accessibilityLabel = redFitDockModel.running ? "Resume workout" : "Start workout"
@@ -96,6 +106,8 @@ class MainViewController: CAPBridgeViewController {
         }
         if let running = state["running"] as? Bool { redFitDockModel.running = running }
         if let label = state["startLabel"] as? String { redFitDockModel.startLabel = label }
+        if let labels = state["labels"] as? [String: String] { redFitDockModel.labels = labels }
+        if let trouble = state["connectionTrouble"] as? Bool { redFitDockModel.connectionTrouble = trouble }
         if let visible = state["visible"] as? Bool { redFitDockModel.visible = visible }
         applyREDNativeDockState()
     }
@@ -205,6 +217,8 @@ private final class REDFitDockState {
     var selected = "home"
     var running = false
     var startLabel = "Start"
+    var connectionTrouble = false
+    var labels: [String: String] = [:]
 }
 
 // UITabBarDelegate forwards the original five navigation intentions to the
