@@ -222,3 +222,11 @@ Nächster konkreter Schritt:
 - **Belegt:** macOS/Xcode-GitHub-Run [42718097186](https://github.com/Redurbabat/Red-Fit/actions/runs/42718097186) ist **vollständig erfolgreich**, inkl. iOS-Simulator, iPhone-arm64-Device, Swift-Assetgenerator, aller eingebetteten originalen Watch-/Widget-/Background-Asset-Ziele und IPA-Paketvalidator. Root-CI [42718096994](https://github.com/Redurbabat/Red-Fit/actions/runs/42718096994) **erfolgreich**.
 - **Echtes heruntergeladenes IPA geprüft:** GitHub-Artifact [13718993845](https://github.com/Redurbabat/Red-Fit/actions/runs/42718097186/artifacts/13718993845); `RED-Fit-UNSIGNED.ipa` **217875794 Bytes**, SHA-256 `95e46cb065a0d9bae5e01d593732f5aa42c002351979656a750dd7ba4cff963c`. 13668 ZIP-Einträge, CRC vollständig bestanden, alle fünf nativen Apple-`Info.plist`-Bundles konsistent, iPhone/Watch/Widgets = `RED Fit`; Asset-Downloader = `RED Fit animations`. Für Details siehe `docs/agent-runs/04-iphone-first.md`.
 - **Offen:** Apple-Signierung und Provisioning aller 5 Targets, noch Upstream-IDs `ch.opengym.app*` und App Group `group.ch.opengym.app`; keine Behauptung einer Installation am iPhone, von funktionierender HealthKit-/Background-/Watch-Nutzung oder von Offline-/Sperr-/Wiederaufnahme-Abnahme. Eigentümerentscheidung zur eigenen Bundle-ID/Team-Signing und reale Gerätetests nötig. **Nicht** unüberlegt umbenennen oder App Group/Keychain-Datenzugriff zerstören. Keine Geheimnisse teilen.
+
+## 10.11.2026 — Agent 05 integration QA follow-up
+
+- PR [#17](https://github.com/Redurbabat/Red-Fit/pull/17) is the single integration draft on integration/red-fit-opengym-iphone-20261110. All five source PR heads are included; no merge into main.
+- Original frontend workflows failed due to Vitest collecting three node:test-only iOS guard suites. Changed frontend/vite.config.js on integration branch in commit ffe2902e8a24cc348601af60d960de8edb5728d0; actual rerun pending.
+- Extra failures: Tour.test.jsx:513 once in nutrition full suite and OpenGymUITests.swift:67 in original iOS onboarding/Home smoke. Both remain open.
+- Root CI and combined iOS simulator workflow were green at old integration head 9740f4bc, not confirmation of real iPhone install. Github repository visibility is public.
+- Next: confirm new CI head, then fix iOS native navigation/onboarding failure; no signed IPA or secrets release.
