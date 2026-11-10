@@ -2,7 +2,6 @@ import Capacitor
 import UIKit
 import UserNotifications
 import WebKit
-import SwiftUI
 
 /**
  * The app's own bridge view controller (Main.storyboard). Since Capacitor 6 the bridge only loads
@@ -13,7 +12,9 @@ class MainViewController: CAPBridgeViewController {
     /// The downloaded animation packs, read through Background Assets (AnimationPacksPlugin.swift).
     private let packFiles = AnimationPackSchemeHandler()
     private let redFitDockModel = REDFitDockState()
-    private var redFitDockController: UIViewController?
+    private var redFitSystemBar: UITabBar?
+    private var redFitSystemBarHeight: NSLayoutConstraint?
+    private var redFitSystemBarDelegate: REDFitSystemBarDelegate?
     private lazy var redFitDockHandler = REDFitDockMessageHandler(owner: self)
 
     private var supportsREDNativeDock: Bool {
@@ -28,40 +29,75 @@ class MainViewController: CAPBridgeViewController {
         installREDNativeDockIfNeeded()
     }
 
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        // Keep the Home-indicator space in the native bar after rotation or
+        // a system inset change; WKWebView is never replaced or reparented.
+        redFitSystemBarHeight?.constant = max(83, view.safeAreaInsets.bottom + 56)
+    }
+
     private func installREDNativeDockIfNeeded() {
-        guard supportsREDNativeDock, redFitDockController == nil else { return }
-        if #available(iOS 26.0, *) {
-            let hosting = UIHostingController(rootView: REDFitGlassDock(model: redFitDockModel) { [weak self] tab in
-                self?.openREDNativeTab(tab)
-            })
-            hosting.view.backgroundColor = .clear
-            hosting.view.isOpaque = false
-            hosting.view.translatesAutoresizingMaskIntoConstraints = false
-            addChild(hosting)
-            view.addSubview(hosting.view)
-            NSLayoutConstraint.activate([
-                hosting.view.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 12),
-                hosting.view.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -12),
-                hosting.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
-            ])
-            hosting.didMove(toParent: self)
-            redFitDockController = hosting
-            hosting.view.isHidden = !redFitDockModel.visible
+        guard supportsREDNativeDock, redFitSystemBar == nil else { return }
+
+        // The actual UIKit system tab bar, not a hand-drawn SwiftUI/HTML
+        // imitation of Apple's iOS 26 navigation material. UIKit determines
+        // Liquid Glass, selection feedback, icons and accessibility behavior.
+        // The original Capacitor WKWebView remains the only content owner.
+        let bar = UITabBar()
+        let definitions: [(String, String)] = [
+            ("Home", "house"),
+            ("Plan", "calendar"),
+            ("Start", "play.fill"),
+            ("Stats", "chart.bar"),
+            ("Exercises", "dumbbell"),
+        ]
+        bar.items = definitions.enumerated().map { index, item in
+            UITabBarItem(title: item.0, image: UIImage(systemName: item.1), tag: index)
         }
+        let delegate = REDFitSystemBarDelegate(owner: self)
+        bar.delegate = delegate
+        redFitSystemBarDelegate = delegate  // UITabBar.delegate is weak.
+        bar.selectedItem = bar.items?.first
+        bar.tintColor = .systemGreen
+        bar.accessibilityIdentifier = "redfit-system-tabbar"
+        bar.isHidden = !redFitDockModel.visible
+        bar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(bar)
+        let height = bar.heightAnchor.constraint(equalToConstant: max(83, view.safeAreaInsets.bottom + 56))
+        NSLayoutConstraint.activate([
+            bar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            height,
+        ])
+        redFitSystemBarHeight = height
+        redFitSystemBar = bar
+        applyREDNativeDockState()
+    }
+
+    private func applyREDNativeDockState() {
+        guard let bar = redFitSystemBar else { return }
+        let identifiers = ["home", "plan", "start", "stats", "library"]
+        if let index = identifiers.firstIndex(of: redFitDockModel.selected) {
+            bar.selectedItem = bar.items?.first(where: { $0.tag == index })
+        }
+        if let start = bar.items?.first(where: { $0.tag == 2 }) {
+            start.title = redFitDockModel.startLabel
+            start.accessibilityLabel = redFitDockModel.running ? "Resume workout" : "Start workout"
+        }
+        bar.isHidden = !redFitDockModel.visible
     }
 
     fileprivate func receiveREDNativeDockState(_ message: Any) {
         guard supportsREDNativeDock, let state = message as? [String: Any] else { return }
         if let selected = state["selected"] as? String,
-           ["home", "plan", "stats", "library"].contains(selected) {
+           ["home", "plan", "start", "stats", "library"].contains(selected) {
             redFitDockModel.selected = selected
         }
         if let running = state["running"] as? Bool { redFitDockModel.running = running }
         if let label = state["startLabel"] as? String { redFitDockModel.startLabel = label }
-        if let visible = state["visible"] as? Bool {
-            redFitDockModel.visible = visible
-            redFitDockController?.view.isHidden = !visible
-        }
+        if let visible = state["visible"] as? Bool { redFitDockModel.visible = visible }
+        applyREDNativeDockState()
     }
 
     private func openREDNativeTab(_ tab: String) {
@@ -164,100 +200,26 @@ private final class REDFitDockMessageHandler: NSObject, WKScriptMessageHandler {
     }
 }
 
-private final class REDFitDockState: ObservableObject {
-    @Published var visible = false
-    @Published var selected = "home"
-    @Published var running = false
-    @Published var startLabel = "Start"
+private final class REDFitDockState {
+    var visible = false
+    var selected = "home"
+    var running = false
+    var startLabel = "Start"
 }
 
-// RED-Bit's reference is a system-owned SwiftUI TabView with native glass.
-// openGym is a single persistent Capacitor WKWebView, so a second TabView
-// would create/reparent web controllers and lose live workout/navigation state.
-// This single SwiftUI glass surface preserves the original React Router and
-// uses the same iOS 26 native glassEffect material as RED-Bit.
-@available(iOS 26.0, *)
-private struct REDFitGlassDock: View {
-    @ObservedObject var model: REDFitDockState
-    let selectTab: (String) -> Void
+// UITabBarDelegate forwards the original five navigation intentions to the
+// existing React Router. The controller never creates another web view or
+// a second workout store. Repeated taps retain openGym's scroll-to-top behavior.
+private final class REDFitSystemBarDelegate: NSObject, UITabBarDelegate {
+    weak var owner: MainViewController?
+    private let tabs = ["home", "plan", "start", "stats", "library"]
 
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private let green = Color(red: 48.0 / 255, green: 209.0 / 255, blue: 88.0 / 255)
-
-    var body: some View {
-        Group {
-            if reduceTransparency {
-                dockContent
-                    .background(Color(uiColor: .secondarySystemGroupedBackground), in: Capsule())
-            } else {
-                dockContent
-                    .glassEffect(.regular, in: Capsule())
-            }
-        }
-        .overlay(Capsule().strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5))
-        .shadow(color: .black.opacity(0.25), radius: 16, y: 7)
-        .accessibilityElement(children: .contain)
+    init(owner: MainViewController) {
+        self.owner = owner
     }
 
-    private var dockContent: some View {
-        HStack(spacing: 0) {
-            tab("home", symbol: "house", title: "Home")
-            tab("plan", symbol: "calendar", title: "Plan")
-            startTab
-            tab("stats", symbol: "chart.bar", title: "Stats")
-            tab("library", symbol: "dumbbell", title: "Exercises")
-        }
-        .padding(.horizontal, 6)
-        .padding(.top, 7)
-        .padding(.bottom, 8)
-    }
-
-    private func tab(_ id: String, symbol: String, title: String) -> some View {
-        let selected = model.selected == id
-        return Button {
-            selectTab(id)
-        } label: {
-            VStack(spacing: 4) {
-                Image(systemName: symbol)
-                    .font(.system(size: 22, weight: selected ? .semibold : .regular))
-                    .frame(height: 32)
-                Text(title)
-                    .font(.system(size: 10, weight: selected ? .semibold : .medium))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-            }
-            .foregroundStyle(selected ? green : Color.primary.opacity(0.80))
-            .frame(maxWidth: .infinity, minHeight: 60)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(title)
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
-    private var startTab: some View {
-        Button {
-            selectTab("start")
-        } label: {
-            VStack(spacing: 3) {
-                Image(systemName: "play.fill")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(.black)
-                    .frame(width: 52, height: 52)
-                    .background(model.running ? Color.orange : green, in: Circle())
-                    .shadow(color: (model.running ? Color.orange : green).opacity(0.28), radius: 9, y: 2)
-                Text(model.startLabel)
-                    .font(.system(size: 10, weight: .semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.65)
-                    .foregroundStyle(model.running ? Color.orange : green)
-            }
-            .frame(maxWidth: .infinity, minHeight: 65)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(model.running ? "Resume workout" : "Start workout")
+    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        guard tabs.indices.contains(item.tag) else { return }
+        owner?.openREDNativeTab(tabs[item.tag])
     }
 }
