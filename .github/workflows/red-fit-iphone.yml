@@ -110,7 +110,7 @@ jobs:
           fi
           xcodebuild -workspace ios/App/App.xcworkspace -scheme AppUITests -configuration Debug \
             -destination "platform=iOS Simulator,id=$simulator" \
-            -derivedDataPath ios/App/build/dd-uitest \
+            -derivedDataPath ios/App/build/dd-sim \
             -parallel-testing-enabled NO \
             -only-testing:AppUITests/OpenGymUITests/test0REDFitNativeTabBarKeepsOriginalNavigation \
             CODE_SIGNING_ALLOWED=NO test | tee ios/App/build/native-dock-smoke.log
