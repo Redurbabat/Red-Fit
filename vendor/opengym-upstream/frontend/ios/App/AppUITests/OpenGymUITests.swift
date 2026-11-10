@@ -131,6 +131,43 @@ final class OpenGymUITests: XCTestCase {
         XCTAssertEqual(sw.value as? String, "1", "the \(what) switch did not stay on")
     }
 
+    /**
+     * Smoke test for the REAL iOS 26 UIKit tab bar installed above the original
+     * Capacitor WKWebView. A source-level check cannot detect an invisible or
+     * untappable dock, a lost JavaScript route, or accidentally duplicated web views.
+     * Run independently via AppUITests scheme / -only-testing (no real account).
+     */
+    func test0REDFitNativeTabBarKeepsOriginalNavigation() {
+        guard #available(iOS 26.0, *) else { return }
+        app.launch()
+        chooseLocal()
+
+        let dock = app.tabBars.matching(identifier: "redfit-system-tabbar").firstMatch
+        XCTAssertTrue(dock.waitForExistence(timeout: 30), "native iPhone system tab bar is missing")
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 20), "original workout web view is missing")
+        XCTAssertEqual(app.webViews.count, 1, "navigation must not create a second web view")
+
+        // Every tab must navigate through the existing React Router, not just
+        // change the native selected item. Headers are scoped to WKWebView
+        // because the system tab bar also displays these tab titles.
+        for (tab, header) in [("Plan", "Plan"), ("Stats", "Stats"), ("Exercises", "Exercises")] {
+            tap(dock.buttons[tab], "native " + tab)
+            XCTAssertTrue(web.staticTexts[header].waitForExistence(timeout: 20),
+                "native " + tab + " did not open the original " + header + " page")
+            XCTAssertEqual(app.webViews.count, 1, "switching to " + tab + " replaced the web view")
+        }
+        tap(dock.buttons["Home"], "native Home")
+        XCTAssertTrue(web.staticTexts["Today"].waitForExistence(timeout: 20),
+            "native Home did not restore the original dashboard")
+
+        tap(dock.buttons["Start"], "native Start workout")
+        XCTAssertTrue(web.staticTexts["Start workout"].waitForExistence(timeout: 20),
+            "native Start did not open the original workout picker")
+        XCTAssertEqual(app.webViews.count, 1, "starting a workout must preserve WKWebView")
+        shot("redfit-native-system-tabbar")
+    }
+
     // XCTest runs a class's tests in name order: the keyboard check wants a plain home screen, and
     // this one leaves a workout running.
     func test2RestEndsWithANotificationInTheBackground() {
