@@ -6,11 +6,16 @@ import { readFileSync } from 'node:fs'
 import { RedFitDockDirectionTracker, RedFitDockGestureAxis, canCompactRedFitDock } from '../src/components/red-fit-dock-direction.js'
 
 const source = readFileSync(new URL('../src/components/TabBar.jsx', import.meta.url), 'utf8')
+// Select only the RED-Morph scroll effect. The native UIKit bridge adds
+// three more hooks, so "only one useEffect" is no longer a valid contract.
+const marker = '  // RED-Bit uses a native iOS 26 TabView.'
+const markerIndex = source.indexOf(marker)
+assert.ok(markerIndex >= 0, 'Cannot find RED-Morph gesture effect marker')
+assert.equal(source.indexOf(marker, markerIndex + marker.length), -1, 'Gesture marker must be unique')
 const opening = '  useEffect(() => {\n'
-const closing = '\n  }, [loc.pathname])'
-const start = source.indexOf(opening)
-assert.ok(start >= 0, 'Cannot find original dock effect')
-assert.equal(source.indexOf(opening, start + opening.length), -1, 'Expected one dock effect')
+const closing = '\n  }, [loc.pathname, nativeDock])'
+const start = source.indexOf(opening, markerIndex)
+assert.ok(start >= 0, 'Cannot find RED-Morph scroll effect')
 const end = source.indexOf(closing, start + opening.length)
 assert.ok(end > start, 'Cannot find effect end')
 const effectBody = source.slice(start + opening.length, end)
@@ -43,9 +48,9 @@ const setCompact = value => {
   changes.push(compact)
 }
 const makeEffect = new Function('window', 'document', 'setCompact', 'RedFitDockDirectionTracker',
-  'RedFitDockGestureAxis', 'canCompactRedFitDock', effectBody)
+  'RedFitDockGestureAxis', 'canCompactRedFitDock', 'nativeDock', effectBody)
 const cleanup = makeEffect(windowStub, documentStub, setCompact, RedFitDockDirectionTracker,
-  RedFitDockGestureAxis, canCompactRedFitDock)
+  RedFitDockGestureAxis, canCompactRedFitDock, false)
 assert.equal(typeof cleanup, 'function', 'Effect must supply its own cleanup')
 const normalTarget = { closest: () => null }
 const excludedTarget = { closest: () => '#tabbar' }
@@ -107,4 +112,10 @@ const before = changes.length
 emit('touchstart', touch(20, 400)); emit('touchmove', touch(25, 320)); scroll(210)
 assert.equal(changes.length, before, 'No DOM updates after unmount')
 tests++
+// UIKit iPhones have the same TabBar component, but should NEVER attach the
+// web-only touch/scroll listeners underneath the native system bar.
+const nativeCleanup = makeEffect(windowStub, documentStub, setCompact, RedFitDockDirectionTracker,
+  RedFitDockGestureAxis, canCompactRedFitDock, true)
+assert.equal(nativeCleanup, undefined, 'Native dock must skip web gesture listeners')
+checkListeners(0, 'with native iOS UIKit dock')
 console.log('RED Fit dock: ' + tests + ' production-effect DOM event contracts passed')
