@@ -1,5 +1,7 @@
 # RED Fit — agent entry point
 
+> **Owner cost/privacy constraint 11.11.2026:** Do not change budget, payment or spending settings to permit charges. Do not change repository visibility. iOS excludes ML Kit/Google scanner telemetry and uses the existing local QR/1D reader; preserve the post-sync dependency guard. A public CI run may export an IPA only encrypted to the owner's public recipient key; private key and decrypted IPA stay local. See `docs/LOCAL-ONLY-IOS.md`.
+
 > **Owner instruction 10.11.2026:** Continue integration in PR #17; iPhone/iOS first, genuine Apple dock, local app data with no third-party services. Read [skills/red-fit-ios/SKILL.md](skills/red-fit-ios/SKILL.md) and [docs/LOCAL-ONLY-IOS.md](docs/LOCAL-ONLY-IOS.md). RED Morph and RED Bit supply relevant design, accessibility and native testing ideas; do not copy unrelated audio/streaming features. Do not re-enable tracking, server sync or external AI through build settings or old credentials.
 
 > **NEUE VERBINDLICHE ENTSCHEIDUNG (09.11.2026):** Original-openGym wird direkt als **RED Fit** weiterentwickelt. **Priorität 1 iPhone-App.** Nicht die eigenständige Root-RED-Fit-PWA neu bauen. Zuerst [docs/OPEN-GYM-IS-RED-FIT.md](docs/OPEN-GYM-IS-RED-FIT.md) lesen. Der komplette Originalbaum (21'977 Dateien) liegt in `vendor/opengym-upstream/`; ältere Aussagen zu fehlenden Dateien/ausgeschlossenen Dateien sind historisch. Die 5 Agents arbeiten nur in ihren eigenen Branches, kein direkter Merge nach main.

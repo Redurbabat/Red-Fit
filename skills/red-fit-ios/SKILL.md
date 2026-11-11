@@ -13,6 +13,8 @@ Work in `vendor/opengym-upstream/frontend/`. Read the root `AGENTS.md` and curre
 - The owner requires local operation. `src/main.jsx` must import `local-only-bootstrap.js` before the app. Do not add a build flag, imported setting, analytics script or stored account that disables the one-way policy. Native HTTP and background tasks need their own checks because CSP cannot govern them.
 - Keep account-scoped nutrition readable through `localProfile`; turning off server authentication must not switch existing meals to an empty guest database. Preserve former credentials/files without using them or exporting them.
 - Native iOS excludes Documents and Library from system backup. Manual file exports remain explicit. Do not promise control over the user's OS, Siri, Health, iCloud settings or destinations they select in a share sheet. No app-data upload in CI; test only synthetic profiles.
+- iOS excludes Google ML Kit through its plugin allowlist and CocoaPods; QR/1D codes use the existing local camera/photo decoder. Keep the post-sync native dependency guard and IPA checks; JavaScript transport guards cannot stop an SDK's own telemetry. Never restore ML Kit to fix a scan UI.
+- Never change budgets, payment methods, spending limits or runner tiers to enable a bill. The owner explicitly prohibits that. Read current visibility; do not change it. Standard public-repository CI is the currently used route. Only encrypted owner-recipient IPA exports may leave a public run; no plaintext IPA.
 
 ## Apple dock and RED Morph
 

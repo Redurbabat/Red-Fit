@@ -6,6 +6,7 @@ provisioning, installation, or runtime validation.
 """
 import json
 import plistlib
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -32,6 +33,11 @@ def verify_ipa(ipa: Path, app_id: str) -> list[str]:
             errors: list[str] = []
             if len(names) != len(available):
                 errors.append('IPA contains duplicate ZIP member names')
+            if any(re.search(r'/Frameworks/(?:CapacitorMlkit|MLKit|Google|GTMSessionFetcher|MLImage)[^/]*\.framework/', name) for name in names):
+                errors.append('IPA contains an excluded Google/ML Kit native SDK')
+            native_config = APP + 'capacitor.config.json'
+            if native_config in available and b'BarcodeScannerPlugin' in zip_file.read(native_config):
+                errors.append('IPA registers the excluded ML Kit scanner plugin')
             for name in names:
                 if name.startswith('/') or '..' in Path(name).parts:
                     errors.append(f'Unsafe archive member: {name}')
@@ -70,7 +76,7 @@ def selftest() -> None:
     with tempfile.TemporaryDirectory() as folder:
         path = Path(folder) / 'fixture.ipa'
         app_id = 'ch.redurbabat.redfit'
-        def make_zip(*, corrupt_watch: bool = False, omit_widget: bool = False, old_widget_brand: bool = False) -> None:
+        def make_zip(*, corrupt_watch: bool = False, omit_widget: bool = False, old_widget_brand: bool = False, google_sdk: bool = False, scanner_registered: bool = False) -> None:
             with ZipFile(path, 'w', ZIP_STORED) as zf:
                 for label, (prefix, suffix) in NATIVE_BUNDLES.items():
                     if omit_widget and label == 'Watch widgets':
@@ -85,6 +91,10 @@ def selftest() -> None:
                     zf.writestr(prefix + 'Info.plist', plistlib.dumps(info))
                 for p in (APP + 'App', APP + 'Assets.car', APP + 'public/index.html', APP + 'public/assets/app.js'):
                     zf.writestr(p, b'minimal-fixture-data')
+                if google_sdk:
+                    zf.writestr(APP + 'Frameworks/MLKitBarcodeScanning.framework/MLKitBarcodeScanning', b'excluded-sdk-fixture')
+                if scanner_registered:
+                    zf.writestr(APP + 'capacitor.config.json', b'{"packageClassList":["BarcodeScannerPlugin"]}')
         make_zip()
         assert verify_ipa(path, app_id) == [], 'Valid IPA bundle fixture must pass'
         make_zip(corrupt_watch=True)
@@ -93,9 +103,13 @@ def selftest() -> None:
         assert any('Watch widgets: missing' in x for x in verify_ipa(path, app_id))
         make_zip(old_widget_brand=True)
         assert any('Watch widgets: CFBundleDisplayName' in x for x in verify_ipa(path, app_id))
+        make_zip(google_sdk=True)
+        assert any('excluded Google/ML Kit' in x for x in verify_ipa(path, app_id))
+        make_zip(scanner_registered=True)
+        assert any('registers the excluded ML Kit' in x for x in verify_ipa(path, app_id))
         path.write_bytes(b'not a zip')
         assert any('Cannot read IPA as ZIP' in x for x in verify_ipa(path, app_id))
-    print('IPA verifier self-tests: 5/5 passed')
+    print('IPA verifier self-tests: 7/7 passed')
 
 
 def main() -> int:

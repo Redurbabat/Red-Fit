@@ -289,3 +289,10 @@ Nächster konkreter Schritt:
 - Handler und Startskript in späteres `webView(with:configuration:)` verschoben; dieses gibt weiterhin `super.webView` zurück. Ein neuer Guard prüft genau diese Lebenszyklusgrenze (**8/8 native Dock-Guards** bestanden). Keine zweite WebView, keine neue Fachlogik und keine Aufweichung des lokalen Datenmodus.
 - Simulator-Hierarchie enthält mehrere virtuelle AX-WebView-Knoten für dieselbe WKWebView. Test prüft deshalb die tatsächliche Anzahl nativer WKWebView-Instanzen über eine nur beim Teststart sichtbare Diagnose, einschließlich nach Tabwechseln. Die native Tab-Bar selbst muss weiterhin als echte UIKit-TabBar existieren.
 - Überholten PR-Mac-Lauf `43001236680` abgebrochen; korrigierten nativen Lauf mit verschlüsseltem IPA-Empfänger starten. Xcode-`-quiet` verhindert, dass Routine-Kompilierausgabe die aktuellen UI-Testzeilen im Live-Log verdrängt.
+
+### Native SDK-Datenschutz beim iPhone-Paket
+
+- Google ML Kit für den ursprünglichen Barcode-Scanner dokumentiert eigene Diagnose-/Nutzungsdaten (https://developers.google.com/ml-kit/ios-data-disclosure). Das wird durch JavaScript-CSP nicht verhindert. Kein tatsächlich beobachteter persönlicher Datentransfer behauptet; das SDK wird vorsorglich vollständig aus dem iOS-Plugin-Allowlist/Podfile genommen.
+- Bestehender lokaler `CameraScan`/`scan-web`-QR-/1D-Leser verarbeitet Kamera und Bilder; manuelle Eingabe bleibt erhalten. Lokaler Modus verweigert auch direkte Aufrufe des ML-Kit-Pfads vor dem Plugin-Import. Android-Paket separat prüfen, bevor es ausgeliefert wird.
+- `build:ios` prüft die tatsächlich synchronisierten Pods, Pod-Lock und Plugin-Registry. IPA-Verifier prüft das echte Archiv auf ausgeschlossene SDK-Frameworks und Scanner-Registrierung; Selbsttest **7/7** bestanden.
+- **69/69** Tests für lokalen Scanner, Channel, QR/Barcode-Decodierung und Check-In bestanden. Mobiler Vite-Produktionsbuild ebenfalls bestanden. Gesamttests auf neuem Commit erneut per CI; bisheriger voller 8.006er-Lauf bezieht sich auf den vorigen Produktionsstand.

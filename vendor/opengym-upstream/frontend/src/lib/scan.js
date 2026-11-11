@@ -20,6 +20,7 @@
 import { MOBILE } from './mobile.js'
 import { normalizeFmt } from './qr.js'
 import { nativeScanner } from './channel.js'
+import { isLocalOnly, localOnlyError } from './local-only.js'
 
 /** True where scanning goes the browser's way (CameraScan + lib/scan-web.js): the web, and the
  *  F-Droid build, which has no ML Kit. */
@@ -42,6 +43,7 @@ function toCode(barcode) {
 // the user backed out without scanning. Throws if scanning isn't supported or permission is hard-
 // denied so the caller can explain why.
 export async function scanCode() {
+  if (isLocalOnly()) throw localOnlyError()
   if (!MOBILE) throw new Error('Scanning is only available in the app')
   const { BarcodeScanner } = await import('@capacitor-mlkit/barcode-scanning')
 

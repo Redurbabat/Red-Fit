@@ -8,6 +8,7 @@
 // Android says which build it is (ChannelPlugin.java, the build flavour). An APK from before the
 // plugin existed is a sideloaded one: the Play build never shipped without it.
 import { MOBILE } from './mobile.js'
+import { isLocalOnly } from './local-only.js'
 
 // The Android answer also says whether this build may ask for background location: a Play build
 // made with -PplayWithoutBackgroundLocation (app/build.gradle, Google Play's plan B) can't, so it
@@ -44,10 +45,10 @@ export async function selfUpdates() {
   return (await getChannel()) === 'sideload'
 }
 
-/** Whether the native (ML Kit) barcode scanner is in this build. The F-Droid build leaves it out
- *  (closed source) and scans with the WebView's camera, like the browser (lib/scan.js). */
+/** iPhone and local-only builds use the existing on-device QR/1D web decoder.
+ *  iOS excludes ML Kit itself because that SDK collects diagnostic telemetry. */
 export async function nativeScanner() {
-  if (!MOBILE) return false
-  return (await getChannel()) !== 'fdroid'
+  if (!MOBILE || isLocalOnly()) return false
+  return !['fdroid', 'appstore'].includes(await getChannel())
 }
 
