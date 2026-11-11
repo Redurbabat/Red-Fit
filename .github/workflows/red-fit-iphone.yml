@@ -76,7 +76,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p ios/App/build
-          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
+          xcodebuild -quiet -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath ios/App/build/dd-sim CODE_SIGNING_ALLOWED=NO \
             build | tee ios/App/build/simulator.log
@@ -85,7 +85,7 @@ jobs:
       - name: Build device binary and package unsigned IPA
         run: |
           set -o pipefail
-          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
+          xcodebuild -quiet -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
             -destination 'generic/platform=iOS' \
             -derivedDataPath ios/App/build/dd-device CODE_SIGNING_ALLOWED=NO \
             build | tee ios/App/build/device.log
@@ -135,7 +135,7 @@ jobs:
             echo "::error::No bootable iPhone Simulator is installed on this macOS runner"
             exit 1
           fi
-          xcodebuild -workspace ios/App/App.xcworkspace -scheme AppUITests -configuration Debug \
+          xcodebuild -quiet -workspace ios/App/App.xcworkspace -scheme AppUITests -configuration Debug \
             -destination "platform=iOS Simulator,id=$simulator" \
             -derivedDataPath ios/App/build/dd-sim \
             -resultBundlePath ios/App/build/native-dock.xcresult \

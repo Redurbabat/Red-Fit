@@ -60,8 +60,15 @@ class MainViewController: CAPBridgeViewController {
     override open func webViewConfiguration(for instanceConfiguration: InstanceConfiguration) -> WKWebViewConfiguration {
         let config = super.webViewConfiguration(for: instanceConfiguration)
         config.setURLSchemeHandler(packFiles, forURLScheme: AnimationPackSchemeHandler.scheme)
+        return config
+    }
+
+    override open func webView(with frame: CGRect, configuration: WKWebViewConfiguration) -> WKWebView {
+        // Capacitor replaces config.userContentController AFTER webViewConfiguration.
+        // Install on its final controller here, before the original WKWebView loads.
+        // Otherwise both the dock channel and the test-only startup script are lost.
         if supportsREDNativeDock {
-            config.userContentController.add(redFitDockHandler, name: "redFitDock")
+            configuration.userContentController.add(redFitDockHandler, name: "redFitDock")
         }
         // The dedicated dock-navigation XCTest must not wait on an optional
         // iOS Health authorization sheet. Skip only the app's introductory
@@ -72,11 +79,13 @@ class MainViewController: CAPBridgeViewController {
             // the Capacitor origin makes localStorage available. The regular app
             // never sets this marker, nor does it grant OS permissions.
             let source = "window.__REDFitUITestSkipOnboardingPermissions = true;"
-            config.userContentController.addUserScript(
+            configuration.userContentController.addUserScript(
                 WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
             )
         }
-        return config
+        let original = super.webView(with: frame, configuration: configuration)
+        original.accessibilityIdentifier = "redfit-workout-webview"
+        return original
     }
 
     override open func capacitorDidLoad() {
@@ -189,6 +198,7 @@ final class REDFitNativeTabController: UITabBarController, UITabBarControllerDel
     private var hosts: [REDFitRouteHost] = []
     private var dockVisible = false
     private var reservedBottom: CGFloat = 0
+    private var testStructureLabel: UILabel?
 
     init(bridge: MainViewController) {
         bridgeController = bridge
@@ -237,6 +247,27 @@ final class REDFitNativeTabController: UITabBarController, UITabBarControllerDel
             "window.__REDFitNativeDockReady = true; window.dispatchEvent(new Event('redfit:native-dock-ready'))",
             completionHandler: nil
         )
+        updateTestStructure()
+    }
+
+    private func updateTestStructure() {
+        guard ProcessInfo.processInfo.arguments.contains("-REDFitUITestSkipOnboardingPermissions"),
+              let window = view.window else { return }
+        // WKWebView exposes several nested WebView accessibility nodes on iOS.
+        // Count the real UIKit objects, not those virtual accessibility wrappers.
+        func countWebViews(_ view: UIView) -> Int {
+            (view is WKWebView ? 1 : 0) + view.subviews.reduce(0) { $0 + countWebViews($1) }
+        }
+        if testStructureLabel == nil {
+            let label = UILabel(frame: CGRect(x: 2, y: 2, width: 230, height: 12))
+            label.accessibilityIdentifier = "redfit-native-structure"
+            label.font = .systemFont(ofSize: 8)
+            label.textColor = .secondaryLabel
+            label.isUserInteractionEnabled = false
+            window.addSubview(label)
+            testStructureLabel = label
+        }
+        testStructureLabel?.text = "webviews:\(countWebViews(window)); native-tabs:\(hosts.count)"
     }
 
     private func moveBridge(to host: REDFitRouteHost) {
@@ -278,6 +309,7 @@ final class REDFitNativeTabController: UITabBarController, UITabBarControllerDel
             dockVisible = state.visible
             if #available(iOS 18.0, *) { setTabBarHidden(!state.visible, animated: false) }
         }
+        updateTestStructure()
     }
 
     override func viewDidLayoutSubviews() {

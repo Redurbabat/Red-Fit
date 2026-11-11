@@ -282,3 +282,10 @@ Nächster konkreter Schritt:
 - Alter temporärer Agent-04/Nutrition-Merge-Job entfernt; die native Prüfung gehört zum integrierten `red-fit-iphone.yml`. Die Linux-Ernährungs-/Safari-Prüfungen bleiben bestehen.
 - Manueller iPhone-Export ergänzt: nur öffentlicher RSA-Empfängerschlüssel an CI, IPA mit AES-256-GCM und RSA-OAEP/SHA-256 verschlüsselt. Privater Schlüssel bleibt lokal unter ignoriertem `.red-fit-qa/`; keine öffentliche Klartext-IPA. Artefakt max. ein Tag. Lokaler Rundlauf, falscher Schlüssel, manipuliertes Chiffrat und Überschreibschutz bestanden; zusammen mit vorhandenen QA-Harness-/iOS-Baseline-Tests **15/15**.
 - Noch offen: tatsächliches natives UI-Ergebnis, lokaler Download und erneute Paketprüfung der verschlüsselten IPA, gültiges Signing sowie Installation auf dem echten iPhone. Keine neuen Zahlungs-/Signierungsdaten angefordert oder gespeichert.
+
+### Native Diagnose nach Laufabschluss
+
+- Lauf `42998639557`: UIKit-Root und beide Builds kompilieren; nativer Test findet trotzdem nur den Web-Dock. Ursache im tatsächlich installierten Capacitor-Quellcode nachvollzogen: `prepareWebView` ersetzt `userContentController` **nach** `webViewConfiguration(for:)`. Damit gingen Nachrichtenkanal und Test-Startskript verloren.
+- Handler und Startskript in späteres `webView(with:configuration:)` verschoben; dieses gibt weiterhin `super.webView` zurück. Ein neuer Guard prüft genau diese Lebenszyklusgrenze (**8/8 native Dock-Guards** bestanden). Keine zweite WebView, keine neue Fachlogik und keine Aufweichung des lokalen Datenmodus.
+- Simulator-Hierarchie enthält mehrere virtuelle AX-WebView-Knoten für dieselbe WKWebView. Test prüft deshalb die tatsächliche Anzahl nativer WKWebView-Instanzen über eine nur beim Teststart sichtbare Diagnose, einschließlich nach Tabwechseln. Die native Tab-Bar selbst muss weiterhin als echte UIKit-TabBar existieren.
+- Überholten PR-Mac-Lauf `43001236680` abgebrochen; korrigierten nativen Lauf mit verschlüsseltem IPA-Empfänger starten. Xcode-`-quiet` verhindert, dass Routine-Kompilierausgabe die aktuellen UI-Testzeilen im Live-Log verdrängt.

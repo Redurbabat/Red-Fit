@@ -42,6 +42,17 @@ test('original Capacitor plugins and native dock appearance gates survive', () =
   }
 })
 
+test('dock channel and document-start script attach after Capacitor replaces its content controller', () => {
+  const configurationHook = swift.slice(swift.indexOf('override open func webViewConfiguration'), swift.indexOf('override open func webView(with'))
+  const creationHook = swift.slice(swift.indexOf('override open func webView(with'), swift.indexOf('override open func capacitorDidLoad'))
+  assert.doesNotMatch(configurationHook, /userContentController\.add/)
+  assert.match(creationHook, /configuration\.userContentController\.add\(redFitDockHandler, name: "redFitDock"\)/)
+  assert.match(creationHook, /configuration\.userContentController\.addUserScript/)
+  assert.match(creationHook, /super\.webView\(with: frame, configuration: configuration\)/)
+  assert.match(swift, /view is WKWebView/)
+  assert.doesNotMatch(uiTests, /XCTAssertEqual\(app\.webViews\.count, 1/)
+})
+
 test('native callback is visible to its file-local delegate and VoiceOver names are localized', () => {
   // The iOS simulator build previously failed when this method was private:
   // The native tab controller is a separate type in the same Swift source file.

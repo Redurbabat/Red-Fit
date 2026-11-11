@@ -203,9 +203,11 @@ final class OpenGymUITests: XCTestCase {
 
         let dock = app.tabBars.matching(identifier: "redfit-system-tabbar").firstMatch
         XCTAssertTrue(dock.waitForExistence(timeout: 30), "native iPhone system tab bar is missing")
-        let web = app.webViews.firstMatch
+        let web = app.webViews.matching(identifier: "redfit-workout-webview").firstMatch
         XCTAssertTrue(web.waitForExistence(timeout: 20), "original workout web view is missing")
-        XCTAssertEqual(app.webViews.count, 1, "navigation must not create a second web view")
+        let structure = app.staticTexts["redfit-native-structure"]
+        XCTAssertTrue(structure.waitForExistence(timeout: 10), "native view structure probe is missing")
+        XCTAssertEqual(structure.label, "webviews:1; native-tabs:5", "navigation must preserve one actual WKWebView")
         XCTAssertEqual(app.tabBars.count, 1, "exactly one real UIKit tab bar must own the dock")
         XCTAssertEqual(dock.buttons.count, 5, "all five native destinations must be accessible")
         // Crop only our native dock on an empty synthetic Home screen. The CI
@@ -219,7 +221,7 @@ final class OpenGymUITests: XCTestCase {
             tap(dock.buttons[tab], "native " + tab)
             XCTAssertTrue(web.staticTexts[header].waitForExistence(timeout: 20),
                 "native " + tab + " did not open the original " + header + " page")
-            XCTAssertEqual(app.webViews.count, 1, "switching to " + tab + " replaced the web view")
+            XCTAssertEqual(structure.label, "webviews:1; native-tabs:5", "switching to " + tab + " replaced the web view")
         }
         tap(dock.buttons["Home"], "native Home")
         XCTAssertTrue(web.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Today")).firstMatch.waitForExistence(timeout: 20),
@@ -228,7 +230,7 @@ final class OpenGymUITests: XCTestCase {
         tap(dock.buttons["Start"], "native Start workout")
         XCTAssertTrue(web.staticTexts["Start workout"].waitForExistence(timeout: 20),
             "native Start did not open the original workout picker")
-        XCTAssertEqual(app.webViews.count, 1, "starting a workout must preserve WKWebView")
+        XCTAssertEqual(structure.label, "webviews:1; native-tabs:5", "starting a workout must preserve WKWebView")
         shot("redfit-native-system-tabbar")
     }
 
