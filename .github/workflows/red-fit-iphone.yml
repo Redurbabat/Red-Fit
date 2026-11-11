@@ -54,7 +54,7 @@ jobs:
         run: npx vitest run src/components/TabBar.native-dock.test.jsx src/lib/local-only.test.js src/store/useStore.local-only.test.jsx src/store/useStore.local-only.mobile.test.jsx
 
       - name: Build and brand existing Capacitor app
-        run: npm run build:ios
+        run: APP_BUILD="${GITHUB_SHA:0:8}" npm run build:ios
 
       - name: Attach original Apple integrations
         run: |
@@ -111,9 +111,45 @@ jobs:
           xcodebuild -workspace ios/App/App.xcworkspace -scheme AppUITests -configuration Debug \
             -destination "platform=iOS Simulator,id=$simulator" \
             -derivedDataPath ios/App/build/dd-sim \
+            -resultBundlePath ios/App/build/native-dock.xcresult \
             -parallel-testing-enabled NO \
             -only-testing:AppUITests/OpenGymUITests/test0REDFitNativeTabBarKeepsOriginalNavigation \
             CODE_SIGNING_ALLOWED=NO test | tee ios/App/build/native-dock-smoke.log
+
+      - name: Export only the synthetic native dock crop
+        if: always()
+        run: |
+          if [ -d ios/App/build/native-dock.xcresult ]; then
+            xcrun xcresulttool export attachments --path ios/App/build/native-dock.xcresult --output-path ios/App/build/raw-attachments
+            python3 - <<'PY'
+          import json, pathlib, shutil
+          root = pathlib.Path('ios/App/build/raw-attachments')
+          out = pathlib.Path('ios/App/build/dock-evidence')
+          out.mkdir(exist_ok=True)
+          def visit(value):
+              if isinstance(value, dict):
+                  names = [v for v in value.values() if isinstance(v, str)]
+                  label = next((v for v in names if v.startswith('redfit-glass-home')), None)
+                  if label:
+                      for name in names:
+                          candidate = root / pathlib.Path(name).name
+                          if candidate.suffix.lower() == '.png' and candidate.is_file():
+                              shutil.copyfile(candidate, out / 'redfit-glass-home.png')
+                  for child in value.values(): visit(child)
+              elif isinstance(value, list):
+                  for child in value: visit(child)
+          for manifest in root.rglob('manifest.json'): visit(json.loads(manifest.read_text()))
+          PY
+          fi
+
+      - name: Keep synthetic Apple dock screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: red-fit-native-dock-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: vendor/opengym-upstream/frontend/ios/App/build/dock-evidence/*.png
 
       - name: Keep private QA evidence
         # Exercise media are separately licensed; never upload a downloadable IPA from a public repository.

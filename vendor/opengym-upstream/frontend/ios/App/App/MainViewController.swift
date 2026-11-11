@@ -17,9 +17,6 @@ class MainViewController: CAPBridgeViewController {
     /// The downloaded animation packs, read through Background Assets (AnimationPacksPlugin.swift).
     private let packFiles = AnimationPackSchemeHandler()
     private let redFitDockModel = REDFitDockState()
-    private var redFitSystemBar: UITabBar?
-    private var redFitSystemBarHeight: NSLayoutConstraint?
-    private var redFitSystemBarDelegate: REDFitSystemBarDelegate?
     private lazy var redFitDockHandler = REDFitDockMessageHandler(owner: self)
 
     private var supportsREDNativeDock: Bool {
@@ -29,85 +26,16 @@ class MainViewController: CAPBridgeViewController {
         return false
     }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        installREDNativeDockIfNeeded()
-    }
-
-    override func viewSafeAreaInsetsDidChange() {
-        super.viewSafeAreaInsetsDidChange()
-        // Keep the Home-indicator space in the native bar after rotation or
-        // a system inset change; WKWebView is never replaced or reparented.
-        redFitSystemBarHeight?.constant = max(83, view.safeAreaInsets.bottom + 56)
-    }
-
-    private func installREDNativeDockIfNeeded() {
-        guard supportsREDNativeDock, redFitSystemBar == nil else { return }
-
-        // The actual UIKit system tab bar, not a hand-drawn SwiftUI/HTML
-        // imitation of Apple's iOS 26 navigation material. UIKit determines
-        // Liquid Glass, selection feedback, icons and accessibility behavior.
-        // The original Capacitor WKWebView remains the only content owner.
-        let bar = UITabBar()
-        let definitions: [(String, String)] = [
-            ("Home", "house"),
-            ("Plan", "calendar"),
-            ("Start", "play.fill"),
-            ("Stats", "chart.bar"),
-            ("Exercises", "dumbbell"),
-        ]
-        bar.items = definitions.enumerated().map { index, item in
-            let tab = UITabBarItem(title: item.0, image: UIImage(systemName: item.1), tag: index)
-            tab.accessibilityIdentifier = "redfit-tab-" + ["home", "plan", "start", "stats", "library"][index]
-            return tab
-        }
-        let delegate = REDFitSystemBarDelegate(owner: self)
-        bar.delegate = delegate
-        redFitSystemBarDelegate = delegate  // UITabBar.delegate is weak.
-        bar.selectedItem = bar.items?.first
-        bar.tintColor = .systemRed
-        bar.accessibilityIdentifier = "redfit-system-tabbar"
-        bar.isHidden = !redFitDockModel.visible
-        bar.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(bar)
-        let height = bar.heightAnchor.constraint(equalToConstant: max(83, view.safeAreaInsets.bottom + 56))
-        NSLayoutConstraint.activate([
-            bar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            bar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            height,
-        ])
-        redFitSystemBarHeight = height
-        redFitSystemBar = bar
-        applyREDNativeDockState()
-    }
-
     private func applyREDNativeDockState() {
-        guard let bar = redFitSystemBar else { return }
-        let identifiers = ["home", "plan", "start", "stats", "library"]
-        if let index = identifiers.firstIndex(of: redFitDockModel.selected) {
-            bar.selectedItem = bar.items?.first(where: { $0.tag == index })
-        }
-        for (index, key) in ["home", "plan", "stats", "library"].enumerated() {
-            let tabIndex = index < 2 ? index : index + 1 // Skip the Start action.
-            if let title = redFitDockModel.labels[key], !title.isEmpty {
-                bar.items?.first(where: { $0.tag == tabIndex })?.title = title
-            }
-        }
-        if let home = bar.items?.first(where: { $0.tag == 0 }) {
-            home.badgeValue = redFitDockModel.connectionTrouble ? "!" : nil
-            home.badgeColor = .systemOrange
-        }
-        if let start = bar.items?.first(where: { $0.tag == 2 }) {
-            start.title = redFitDockModel.startLabel
-            // UIKit announces the same localized and state-accurate title as the visible tab.
-            // A separate English-only accessibilityLabel would misread Edit/Workout/Resume.
-        }
-        bar.isHidden = !redFitDockModel.visible
+        (tabBarController as? REDFitNativeTabController)?.apply(redFitDockModel)
     }
 
     fileprivate func receiveREDNativeDockState(_ message: Any) {
         guard supportsREDNativeDock, let state = message as? [String: Any] else { return }
+        if state["type"] as? String == "hello" {
+            (tabBarController as? REDFitNativeTabController)?.announceReady()
+            return
+        }
         if let selected = state["selected"] as? String,
            ["home", "plan", "start", "stats", "library"].contains(selected) {
             redFitDockModel.selected = selected
@@ -243,7 +171,7 @@ private final class REDFitDockMessageHandler: NSObject, WKScriptMessageHandler {
     }
 }
 
-private final class REDFitDockState {
+fileprivate final class REDFitDockState {
     var visible = false
     var selected = "home"
     var running = false
@@ -252,19 +180,137 @@ private final class REDFitDockState {
     var labels: [String: String] = [:]
 }
 
-// UITabBarDelegate forwards the original five navigation intentions to the
-// existing React Router. The controller never creates another web view or
-// a second workout store. Repeated taps retain RED Fit's scroll-to-top behavior.
-private final class REDFitSystemBarDelegate: NSObject, UITabBarDelegate {
-    weak var owner: MainViewController?
-    private let tabs = ["home", "plan", "start", "stats", "library"]
+// The window owns Apple's complete tab container. A standalone UITabBar added
+// inside CAPBridgeViewController.view is nested *inside WKWebView*, which both
+// hides it from native accessibility and misses the system's floating glass layout.
+// Five native route hosts share ONE existing Capacitor controller, WKWebView and store.
+final class REDFitNativeTabController: UITabBarController, UITabBarControllerDelegate {
+    private let bridgeController: MainViewController
+    private var hosts: [REDFitRouteHost] = []
+    private var dockVisible = false
+    private var reservedBottom: CGFloat = 0
 
-    init(owner: MainViewController) {
-        self.owner = owner
+    init(bridge: MainViewController) {
+        bridgeController = bridge
+        super.init(nibName: nil, bundle: nil)
     }
 
-    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
-        guard tabs.indices.contains(item.tag) else { return }
-        owner?.openREDNativeTab(tabs[item.tag])
+    required init?(coder: NSCoder) { fatalError("Created around the existing storyboard bridge") }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        delegate = self
+        let definitions = [
+            ("home", "Home", "house"), ("plan", "Plan", "calendar"),
+            ("start", "Start", "play.fill"), ("stats", "Stats", "chart.bar"),
+            ("library", "Exercises", "dumbbell"),
+        ]
+        hosts = definitions.enumerated().map { index, definition in
+            let host = REDFitRouteHost(route: definition.0)
+            host.tabBarItem = UITabBarItem(title: definition.1, image: UIImage(systemName: definition.2), tag: index)
+            host.tabBarItem.accessibilityIdentifier = "redfit-tab-" + definition.0
+            return host
+        }
+        setViewControllers(hosts, animated: false)
+        customizableViewControllers = nil
+        tabBar.accessibilityIdentifier = "redfit-system-tabbar"
+        tabBar.tintColor = .systemRed
+        // Keep UIKit's default material, floating shape, selection and accessibility.
+        // No custom background image, opaque appearance, blur layer or fixed bar frame.
+        if #available(iOS 26.0, *) {
+            tabBarMinimizeBehavior = UIAccessibility.isReduceMotionEnabled ? .never : .onScrollDown
+        }
+        moveBridge(to: hosts[0])
+        if #available(iOS 18.0, *) { setTabBarHidden(true, animated: false) }
     }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        announceReady()
+    }
+
+    fileprivate func announceReady() {
+        // The bridge's storyboard view may load before SceneDelegate wraps it.
+        // A channel alone must not hide the web dock: acknowledge the real root
+        // container, including after a page reload or a late React mount.
+        bridgeController.webView?.evaluateJavaScript(
+            "window.__REDFitNativeDockReady = true; window.dispatchEvent(new Event('redfit:native-dock-ready'))",
+            completionHandler: nil
+        )
+    }
+
+    private func moveBridge(to host: REDFitRouteHost) {
+        guard bridgeController.parent !== host else { return }
+        if let previous = bridgeController.parent {
+            previous.setContentScrollView(nil, for: .all)
+            bridgeController.willMove(toParent: nil)
+            bridgeController.view.removeFromSuperview()
+            bridgeController.removeFromParent()
+        }
+        host.addChild(bridgeController)
+        host.view.addSubview(bridgeController.view)
+        bridgeController.view.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            bridgeController.view.leadingAnchor.constraint(equalTo: host.view.leadingAnchor),
+            bridgeController.view.trailingAnchor.constraint(equalTo: host.view.trailingAnchor),
+            bridgeController.view.topAnchor.constraint(equalTo: host.view.topAnchor),
+            bridgeController.view.bottomAnchor.constraint(equalTo: host.view.bottomAnchor),
+        ])
+        bridgeController.didMove(toParent: host)
+        // Explicitly identify the real WK scroll view so system glass edge effects
+        // and onScrollDown observe the original app, including its long library list.
+        host.setContentScrollView(bridgeController.webView?.scrollView, for: .all)
+    }
+
+    fileprivate func apply(_ state: REDFitDockState) {
+        guard isViewLoaded, !hosts.isEmpty else { return }
+        if let index = hosts.firstIndex(where: { $0.route == state.selected }) {
+            moveBridge(to: hosts[index])
+            if selectedIndex != index { selectedIndex = index }
+        }
+        for host in hosts {
+            if let label = state.labels[host.route], !label.isEmpty { host.tabBarItem.title = label }
+        }
+        hosts[2].tabBarItem.title = state.startLabel
+        hosts[0].tabBarItem.badgeValue = state.connectionTrouble ? "!" : nil
+        hosts[0].tabBarItem.badgeColor = .systemOrange
+        if dockVisible != state.visible {
+            dockVisible = state.visible
+            if #available(iOS 18.0, *) { setTabBarHidden(!state.visible, animated: false) }
+        }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        guard dockVisible, let parent = tabBar.superview else { return }
+        let frame = bridgeController.view.convert(tabBar.frame, from: parent)
+        let overlap = max(0, bridgeController.view.bounds.maxY - frame.minY)
+        // Reserve the expanded bar's space rather than reflowing HTML on every
+        // frame of the system's minimization animation.
+        if overlap > reservedBottom + 1 {
+            reservedBottom = overlap
+            let pixels = Int(ceil(overlap))
+            bridgeController.webView?.evaluateJavaScript("document.documentElement.style.setProperty('--rf-native-dock-inset', '\(pixels)px')", completionHandler: nil)
+        }
+    }
+
+    func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
+        guard dockVisible, let host = viewController as? REDFitRouteHost else { return false }
+        moveBridge(to: host)
+        return true
+    }
+
+    func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
+        guard let host = viewController as? REDFitRouteHost else { return }
+        bridgeController.openREDNativeTab(host.route)
+    }
+}
+
+private final class REDFitRouteHost: UIViewController {
+    let route: String
+    init(route: String) { self.route = route; super.init(nibName: nil, bundle: nil) }
+    required init?(coder: NSCoder) { fatalError("Created by the native tab controller") }
+    override var childForStatusBarStyle: UIViewController? { children.first }
+    override var childForStatusBarHidden: UIViewController? { children.first }
+    override func viewDidLoad() { super.viewDidLoad(); view.backgroundColor = .systemBackground }
 }

@@ -16,9 +16,9 @@ Work in `vendor/opengym-upstream/frontend/`. Read the root `AGENTS.md` and curre
 
 ## Apple dock and RED Morph
 
-- iOS 26 iPhone uses the real `UITabBar` in `MainViewController.swift` with the existing WKWebView. Route/workout state stays in React; native taps send intentions. Do not replace it with a CSS imitation or create additional WebViews.
+- iOS 26 iPhone uses `REDFitNativeTabController: UITabBarController` as the window root, wrapping the original storyboard bridge. Its five route hosts retain one shared Capacitor controller/WKWebView. Route/workout state stays in React; native taps send intentions. Do not put a standalone bar inside the WKWebView or create a WebView per tab.
 - Keep stable native accessibility identifiers, localized labels, VoiceOver selection and touch targets of at least 44 pt. Hide native navigation during modal, keyboard and permission flows.
-- Apple system minimization belongs to `UITabBarController`; a standalone `UITabBar` does not prove that behavior. Do not claim native shrinking without actual implementation and simulator/device evidence.
+- System minimization is configured with `tabBarMinimizeBehavior` and the actual WK scroll view is identified through `setContentScrollView`. Preserve UIKit's default glass appearance and layout. Do not claim native shrinking without simulator/device evidence.
 - Use existing Bordeaux/ivory brand assets and semantic tokens. Opaque content, glass on floating chrome; calm at rest. Respect reduced motion/transparency and avoid idle loops. Read the relevant reference before changing gestures, layering or motion.
 - Inventory existing components as KEEP / REWORK / ARCHIVE / DELETE-CANDIDATE before substantial design edits. Avoid copying music/streaming subsystems into a fitness app.
 

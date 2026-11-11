@@ -19,7 +19,7 @@ The local [RED Fit iOS skill](../skills/red-fit-ios/SKILL.md) adapts the relevan
 | Existing component | Decision | Reason |
 | --- | --- | --- |
 | Original training store, file mirror, history and import identifiers | KEEP | Preserve workouts, in-progress sessions and old backups |
-| Native iOS 26 iPhone `UITabBar` and single WKWebView | KEEP | Real Apple navigation; React owns routes and workouts |
+| Native iOS 26 iPhone navigation | REWORK | Root `UITabBarController` outside the single retained WKWebView; React owns routes and workouts |
 | Browser/older-platform RED Morph dock | KEEP | Accessible fallback; no claim of native material |
 | Optional server, AI, web analytics, online maps, Health sharing and system speech | REWORK | Present build operates locally and refuses these transfers |
 | Nutrition account namespace | KEEP | Former account meals stay readable without authenticating |
@@ -40,9 +40,11 @@ Scope of the claim: RED Fit does not automatically send training/nutrition data 
 
 ## Apple dock and first launch
 
-The native dock keeps `UITabBar`, SF Symbols, localized titles, the existing `redfit:native-dock` event and one original WKWebView. Stable `redfit-tab-*` identifiers supplement its accessibility. Apple's automatic tab minimization is an API of `UITabBarController`; this standalone-bar integration is not described as having that unverified behavior.
+The native dock now uses the complete `UITabBarController` as the iPhone window root. The old standalone `UITabBar` was a subview of the bridge's root WKWebView and the actual simulator failed to find it as a native bar. Five native route hosts retain and move the same original Capacitor controller, preserving one WKWebView and its training/nutrition state. UIKit owns glass material, shape, selection, safe-area layout and the configured `.onScrollDown` behavior; `setContentScrollView` points at the real WK scroll view. No CSS glass is substituted for the native control. SF Symbols, localized titles, `redfit-tab-*` identifiers and the existing `redfit:native-dock` event remain.
 
-The former iPhone run `42862422488` built the simulator app and unsigned device IPA and passed IPA integrity, then failed while waiting for Home after onboarding. The optional tour is modal and can hide Home from accessibility. The test now dismisses that invitation before looking for Home. Local-only startup directly restores local data instead of offering a server connection.
+The iPhone workflow includes the short source commit in the app's About/version text. An already installed IPA does not change after a Git push; install the corresponding new signed build to receive the new native root controller. The user reports iOS 26.6.1, which is above the API floor.
+
+The former iPhone run `42862422488` built the simulator app and unsigned device IPA and passed IPA integrity, then failed while waiting for Home after onboarding. The next run `42877430917` passed those builds again and reached Home, but failed with **native iPhone system tab bar is missing**. The root-container change addresses that second failure. The test retains native screenshots and logs its accessibility hierarchy on failure; a cropped empty-profile Home dock image can be exported without an IPA, exercise thumbnails or real records. Local-only startup directly restores local data instead of offering a server connection.
 
 ## Verification and remaining delivery work
 

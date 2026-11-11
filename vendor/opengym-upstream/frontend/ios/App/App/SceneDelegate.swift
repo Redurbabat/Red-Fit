@@ -14,6 +14,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     // in openURLContexts: handed on the same way, Capacitor keeps it as the launch URL the page
     // asks for (lib/widget-links.js, App.getLaunchUrl).
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        if #available(iOS 26.0, *), UIDevice.current.userInterfaceIdiom == .phone,
+           let bridge = window?.rootViewController as? MainViewController {
+            // Retain the original storyboard bridge; UIKit owns the visible tab
+            // container outside WKWebView. Never instantiate a second bridge.
+            window?.rootViewController = REDFitNativeTabController(bridge: bridge)
+        }
         if let url = connectionOptions.urlContexts.first?.url {
             _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: url, options: [:])
         }

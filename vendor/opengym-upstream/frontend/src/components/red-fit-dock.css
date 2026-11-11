@@ -136,16 +136,16 @@
   pointer-events: none;
 }
 :root[data-redfit-native-dock] #app {
-  padding-bottom: calc(120px + var(--sab));
+  padding-bottom: calc(max(var(--rf-native-dock-inset, 96px), var(--sab)) + 16px);
 }
 :root[data-redfit-native-dock] body.resting #app {
-  padding-bottom: calc(188px + var(--sab));
+  padding-bottom: calc(max(var(--rf-native-dock-inset, 96px), var(--sab)) + 84px);
 }
 :root[data-redfit-native-dock] #toast {
-  bottom: calc(120px + var(--sab));
+  bottom: calc(max(var(--rf-native-dock-inset, 96px), var(--sab)) + 16px);
 }
 :root[data-redfit-native-dock] #totop {
-  bottom: calc(116px + var(--sab));
+  bottom: calc(max(var(--rf-native-dock-inset, 96px), var(--sab)) + 12px);
 }
 
 /* Floating browser fallback, with one glass surface and a visible selection.

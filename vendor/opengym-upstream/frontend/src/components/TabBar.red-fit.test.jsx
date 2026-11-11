@@ -227,6 +227,7 @@ describe('RED Fit selection material in the existing RED Fit navigation', () => 
 
   it('native UIKit bridge keeps RED Morph buttons but hides their duplicate presentation', () => {
     const messages = []
+    vi.stubGlobal('__REDFitNativeDockReady', true)
     vi.stubGlobal('webkit', { messageHandlers: {
       redFitDock: { postMessage: message => messages.push(message) },
     } })
@@ -252,6 +253,7 @@ describe('RED Fit selection material in the existing RED Fit navigation', () => 
 
   it('native UIKit bar clears space for a web sheet and restores after close', async () => {
     const messages = []
+    vi.stubGlobal('__REDFitNativeDockReady', true)
     vi.stubGlobal('webkit', { messageHandlers: {
       redFitDock: { postMessage: message => messages.push(message) },
     } })

@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 /**
  * Walks the iPhone app the way someone new does and checks what only a real phone shows: that the
@@ -14,6 +15,26 @@ final class OpenGymUITests: XCTestCase {
 
     override func setUp() {
         continueAfterFailure = false
+    }
+
+    override func record(_ issue: XCTIssue) {
+        // This CI target uses only synthetic local data. Keep a useful native
+        // hierarchy in its log when UIKit/bridge integration fails.
+        print("REDFIT_NATIVE_FAILURE " + app.debugDescription)
+        super.record(issue)
+    }
+
+    private func dockShot(_ dock: XCUIElement, _ name: String) {
+        let image = XCUIScreen.main.screenshot().image
+        let rect = dock.frame.intersection(CGRect(origin: .zero, size: image.size))
+        guard !rect.isEmpty, let crop = image.cgImage?.cropping(to: CGRect(
+            x: rect.minX * image.scale, y: rect.minY * image.scale,
+            width: rect.width * image.scale, height: rect.height * image.scale
+        )) else { return }
+        let attachment = XCTAttachment(image: UIImage(cgImage: crop, scale: image.scale, orientation: .up))
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     private func shot(_ name: String) {
@@ -179,6 +200,11 @@ final class OpenGymUITests: XCTestCase {
         let web = app.webViews.firstMatch
         XCTAssertTrue(web.waitForExistence(timeout: 20), "original workout web view is missing")
         XCTAssertEqual(app.webViews.count, 1, "navigation must not create a second web view")
+        XCTAssertEqual(app.tabBars.count, 1, "exactly one real UIKit tab bar must own the dock")
+        XCTAssertEqual(dock.buttons.count, 5, "all five native destinations must be accessible")
+        // Crop only our native dock on an empty synthetic Home screen. The CI
+        // may expose this crop, never an IPA, exercise media or personal records.
+        dockShot(dock, "redfit-glass-home")
 
         // Every tab must navigate through the existing React Router, not just
         // change the native selected item. Headers are scoped to WKWebView

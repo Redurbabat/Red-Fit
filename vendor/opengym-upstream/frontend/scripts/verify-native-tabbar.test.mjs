@@ -10,18 +10,20 @@ const swift = read('ios/App/App/MainViewController.swift')
 const react = read('src/components/TabBar.jsx')
 const css = read('src/index.css')
 const uiTests = read('ios/App/AppUITests/OpenGymUITests.swift')
+const scene = read('ios/App/App/SceneDelegate.swift')
 
-test('native iPhone uses the unmodified Apple UITabBar component', () => {
-  assert.match(swift, /let bar = UITabBar\(\)/)
-  assert.match(swift, /bar\.items = definitions\.enumerated\(\)/)
-  assert.match(swift, /REDFitSystemBarDelegate: NSObject, UITabBarDelegate/)
-  assert.doesNotMatch(swift, /REDFitGlassDock|UIHostingController|glassEffect|UITabBarAppearance/)
+test('native iPhone window uses the complete Apple tab controller outside WKWebView', () => {
+  assert.match(swift, /class REDFitNativeTabController: UITabBarController, UITabBarControllerDelegate/)
+  assert.match(scene, /window\?\.rootViewController = REDFitNativeTabController\(bridge: bridge\)/)
+  assert.match(swift, /setViewControllers\(hosts, animated: false\)/)
+  assert.doesNotMatch(swift, /let bar = UITabBar\(\)|view\.addSubview\(bar\)|UITabBarAppearance|UIHostingController|glassEffect/)
+  assert.doesNotMatch(scene, /MainViewController\(\)/)
 })
 
 test('all original five root destinations use SF Symbols and the current web router', () => {
   for (const pair of [
-    '("Home", "house")', '("Plan", "calendar")', '("Start", "play.fill")',
-    '("Stats", "chart.bar")', '("Exercises", "dumbbell")',
+    '("home", "Home", "house")', '("plan", "Plan", "calendar")', '("start", "Start", "play.fill")',
+    '("stats", "Stats", "chart.bar")', '("library", "Exercises", "dumbbell")',
   ]) assert.ok(swift.includes(pair), 'missing system tab: ' + pair)
   for (const name of ['home', 'plan', 'start', 'stats', 'library']) {
     assert.ok(swift.includes('"' + name + '"'), 'missing route ' + name)
@@ -42,20 +44,31 @@ test('original Capacitor plugins and native dock appearance gates survive', () =
 
 test('native callback is visible to its file-local delegate and VoiceOver names are localized', () => {
   // The iOS simulator build previously failed when this method was private:
-  // REDFitSystemBarDelegate is a separate type in the same Swift source file.
+  // The native tab controller is a separate type in the same Swift source file.
   assert.match(swift, /fileprivate func openREDNativeTab\(_ tab: String\)/)
-  assert.match(swift, /owner\?\.openREDNativeTab\(tabs\[item\.tag\]\)/)
-  assert.match(swift, /start\.title = redFitDockModel\.startLabel/)
+  assert.match(swift, /bridgeController\.openREDNativeTab\(host\.route\)/)
+  assert.match(swift, /hosts\[2\]\.tabBarItem\.title = state\.startLabel/)
   assert.doesNotMatch(swift, /start\.accessibilityLabel\s*=\s*redFitDockModel\.running\s*\?/)
   assert.match(react, /startLabel:|startLabel,/)
 })
 
 test('keyboard/sheet visibility and non-iPhone web fallback remain supported', () => {
-  assert.match(swift, /bar\.isHidden = !redFitDockModel\.visible/)
+  assert.match(swift, /setTabBarHidden\(!state\.visible, animated: false\)/)
   assert.match(react, /window\.webkit\?\.messageHandlers\?\.redFitDock/)
+  assert.match(react, /nativeChannel\.postMessage\(\{ type: 'hello' \}\)/)
+  assert.match(swift, /window\.__REDFitNativeDockReady = true/)
   assert.match(react, /#modal-root/)
   assert.match(react, /contenteditable="true"/)
   assert.match(css, /:root\[data-redfit-native-dock\] #tabbar/)
+  assert.match(react, /aria-hidden=\{nativeDock \? true : undefined\}/)
+})
+
+test('system scroll effects observe the retained WKWebView and never create a new session per tab', () => {
+  assert.match(swift, /tabBarMinimizeBehavior = UIAccessibility\.isReduceMotionEnabled \? \.never : \.onScrollDown/)
+  assert.match(swift, /host\.setContentScrollView\(bridgeController\.webView\?\.scrollView, for: \.all\)/)
+  assert.match(swift, /host\.addChild\(bridgeController\)/)
+  assert.match(swift, /bridgeController\.didMove\(toParent: host\)/)
+  assert.doesNotMatch(swift, /WKWebView\(|MainViewController\(\)/)
 })
 
 test('native dock smoke test skips only optional permission explanations behind a test-only launch argument', () => {

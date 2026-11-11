@@ -45,17 +45,11 @@ jobs:
         if: ${{ always() && steps.install.outcome == 'success' }}
         run: npm run test -- src/components/TabBar.red-fit.test.jsx src/components/TabBar.test.jsx src/components/red-fit-dock.styles.test.js src/views/Home.red-fit-a11y.test.js
 
-      # Cross-branch integration evidence: run Agent 04's original native handoff
-      # tests against THIS branch's combined RED Morph React TabBar. Neither branch
-      # is merged or modified. The pinned upstream test is removed after the run.
-      - name: Agent 04 native UIKit dock tests against Agent 02 integrated TabBar
+      # The contributions are integrated. Validate the current readiness protocol,
+      # not a frozen source-branch test from before the native root-container fix.
+      - name: Current integrated UIKit dock and readiness handshake
         if: ${{ always() && steps.install.outcome == 'success' }}
-        run: |
-          native_test=src/components/TabBar.agent04-native-integration.test.jsx
-          trap 'rm -f "$native_test"' EXIT
-          git fetch --no-tags --depth=1 origin fadfe5301c85183a5667cf1390d11cbf791ca900
-          git show fadfe5301c85183a5667cf1390d11cbf791ca900:vendor/opengym-upstream/frontend/src/components/TabBar.native-dock.test.jsx > "$native_test"
-          npm run test -- "$native_test"
+        run: npm run test -- src/components/TabBar.native-dock.test.jsx
 
       - name: Full original openGym Vitest suite
         if: ${{ always() && steps.install.outcome == 'success' }}

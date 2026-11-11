@@ -38,7 +38,17 @@ export default function TabBar({ onStart }) {
   // The native iOS 26 UIKit bar is installed by Agent 04's MainViewController.
   // A channel exists only on supported iPhones. The WKWebView retains the real
   // buttons and React Router; its web bar must not paint over the native bar.
-  const nativeDock = typeof window !== 'undefined' && !!window.webkit?.messageHandlers?.redFitDock
+  const nativeChannel = typeof window !== 'undefined' ? window.webkit?.messageHandlers?.redFitDock : null
+  const [nativeReady, setNativeReady] = useState(() => typeof window !== 'undefined' && window.__REDFitNativeDockReady === true)
+  const nativeDock = !!nativeChannel && nativeReady
+
+  useEffect(() => {
+    if (!nativeChannel) return
+    const ready = () => setNativeReady(window.__REDFitNativeDockReady === true)
+    window.addEventListener('redfit:native-dock-ready', ready)
+    nativeChannel.postMessage({ type: 'hello' })
+    return () => window.removeEventListener('redfit:native-dock-ready', ready)
+  }, [nativeChannel])
 
   // RED-Bit uses a native iOS 26 TabView. This WebView keeps its real RED Fit
   // buttons, but adapts the same 13px touch-direction hysteresis on compact phones.
@@ -187,7 +197,7 @@ export default function TabBar({ onStart }) {
   // Every React hook above must run even before login; only the markup is gated.
   if (!canShow) return null
   return (
-    <nav id="tabbar" className="redfit-morph-dock" aria-label={t('Navigation')}
+    <nav id="tabbar" className="redfit-morph-dock" aria-label={t('Navigation')} aria-hidden={nativeDock ? true : undefined}
       data-redfit-selection={activeIndex === -1 ? 'hidden' : 'visible'}
       data-redfit-compact={compact ? 'true' : 'false'}
       style={{ '--rf-dock-index': Math.max(0, activeIndex) }}>

@@ -14,6 +14,7 @@ beforeEach(() => {
   originalS = store.S
   originalUser = store.user
   nativeMessages = []
+  vi.stubGlobal('__REDFitNativeDockReady', true)
   vi.stubGlobal('webkit', { messageHandlers: {
     redFitDock: { postMessage: message => nativeMessages.push(message) },
   } })
@@ -41,6 +42,19 @@ function nativeTap(tab) {
 }
 
 describe('RED Fit iOS 26 original UIKit tab bar handoff', () => {
+  it('keeps the fallback until the actual native root acknowledges readiness', async () => {
+    vi.stubGlobal('__REDFitNativeDockReady', false)
+    act(() => root.render(<RouterProvider key="await-native-root" router={router} />))
+    expect(document.documentElement.hasAttribute('data-redfit-native-dock')).toBe(false)
+    expect(nativeMessages).toContainEqual({ type: 'hello' })
+    expect(host.querySelector('#tabbar').getAttribute('aria-hidden')).toBeNull()
+    await act(async () => {
+      window.__REDFitNativeDockReady = true
+      window.dispatchEvent(new Event('redfit:native-dock-ready'))
+    })
+    expect(document.documentElement.dataset.redfitNativeDock).toBe('true')
+    expect(host.querySelector('#tabbar').getAttribute('aria-hidden')).toBe('true')
+  })
   it('announces real selected tab and hides only the duplicate web presentation', () => {
     expect(document.documentElement.dataset.redfitNativeDock).toBe('true')
     expect(nativeMessages.at(-1)).toMatchObject({
@@ -49,6 +63,7 @@ describe('RED Fit iOS 26 original UIKit tab bar handoff', () => {
       connectionTrouble: false,
     })
     expect(host.querySelectorAll('#tabbar button')).toHaveLength(5)
+    expect(host.querySelector('#tabbar').getAttribute('aria-hidden')).toBe('true')
   })
 
   it('native Plan / Stats / Exercises / Home keep the existing router and replace tab history', async () => {
