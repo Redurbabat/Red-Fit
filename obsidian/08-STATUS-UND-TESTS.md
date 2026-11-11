@@ -266,3 +266,10 @@ Nächster konkreter Schritt:
 - **Lokal bestanden:** 61/61 Dock-/Routen-/Styles-/Handshake-Vitest-Tests, 24 native Quell-/Identitäts-/Bundle-Guards, mobiler Original-App-Build und echter Chrome-Privacy-/Nutrition-/Offline-Lauf (0 externe/Server-API-Requests). Zusätzlich 52 fokussierte Datenschutz-/Store-/Routingtests während der Umsetzung bestanden. Workflow-YAML geprüft.
 - iPhone-CI ergänzt Build-Commit im sichtbaren App-Versionsstring, brauchbare Accessibility-Diagnose und einen exportierbaren Ausschnitt der nativen Leiste auf leerem synthetischem Home. Keine IPA, keine separat lizenzierten Übungsbilder und keine echten Nutzerakten öffentlich hochladen. Vollständige private Build-Artefakte bleiben an privates Repo gebunden.
 - Aktueller Agent-02-Test nutzt den integrierten Handshake statt eines eingefrorenen alten Branch-Tests. Neue native macOS-Abnahme auf dem nächsten gepushten Commit starten und Ergebnis prüfen. Apple-Signing/reale Installation weiter getrennt nachweisen.
+
+### Externer Build-Blocker nach Push
+
+- Commit `c2df7900` auf PR #17 gepusht und Lauf `42996454883` gestartet. GitHub verweigert den Start des Mac-Jobs nach 2 Sekunden, ohne Build-Schritte: **The job was not started because an Actions budget is preventing further use.** Kein neuer nativer Kompilier-/IPA-/UI-Erfolg behauptet; keine Kontolimits verändert und keine unveränderten Wiederholungen gestartet.
+- GitHub-Repository am 11.11.2026 erneut gelesen: **private**. Ältere öffentliche Sichtbarkeitsangaben bleiben historische Befunde.
+- Vorhandene `codemagic.yaml` als private Alternative um dieselbe native Simulator-/Dock-Prüfung und private XCResult-Artefakte ergänzt. Hier keine Codemagic-API-Zugangsdaten konfiguriert; Prüfung einer Browsersitzung wegen wiederholter Browser-Zeitüberschreitung nicht abschließbar. Kein Codemagic-Build gestartet.
+- Nutzer nach verfügbarem Actions-Budget oder vorhandenem Codemagic-Zugang gefragt. Alle weiteren lokalen Prüfungen/Patches weiter möglich; echte Glass-/Signierungs-/Installationsabnahme benötigt einen verfügbaren Mac-Buildweg. Retina-Crop rechnet XCTest-Punkte explizit in Screenshot-Pixel um.

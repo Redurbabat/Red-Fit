@@ -26,12 +26,18 @@ final class OpenGymUITests: XCTestCase {
 
     private func dockShot(_ dock: XCUIElement, _ name: String) {
         let image = XCUIScreen.main.screenshot().image
-        let rect = dock.frame.intersection(CGRect(origin: .zero, size: image.size))
-        guard !rect.isEmpty, let crop = image.cgImage?.cropping(to: CGRect(
-            x: rect.minX * image.scale, y: rect.minY * image.scale,
-            width: rect.width * image.scale, height: rect.height * image.scale
+        let bounds = app.frame
+        let rect = dock.frame.intersection(bounds)
+        guard !rect.isEmpty, bounds.width > 0, bounds.height > 0, let source = image.cgImage else { return }
+        // XCTest element frames are points; screenshot metadata does not always
+        // carry the device's 2x/3x scale. Map the actual pixel dimensions explicitly.
+        let scaleX = CGFloat(source.width) / bounds.width
+        let scaleY = CGFloat(source.height) / bounds.height
+        guard let crop = source.cropping(to: CGRect(
+            x: (rect.minX - bounds.minX) * scaleX, y: (rect.minY - bounds.minY) * scaleY,
+            width: rect.width * scaleX, height: rect.height * scaleY
         )) else { return }
-        let attachment = XCTAttachment(image: UIImage(cgImage: crop, scale: image.scale, orientation: .up))
+        let attachment = XCTAttachment(image: UIImage(cgImage: crop))
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)

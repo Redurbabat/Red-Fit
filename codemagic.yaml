@@ -24,9 +24,9 @@ workflows:
       - name: Install locked original frontend dependencies
         script: npm ci
       - name: Test native RED Fit glass dock interactions
-        script: npx vitest run src/components/TabBar.native-dock.test.jsx
+        script: npx vitest run src/components/TabBar.native-dock.test.jsx src/lib/local-only.test.js src/store/useStore.local-only.test.jsx src/store/useStore.local-only.mobile.test.jsx
       - name: Build original mobile app, sync iOS and apply RED Fit assets
-        script: npm run build:ios
+        script: APP_BUILD="$(git rev-parse --short=8 HEAD)" npm run build:ios
       - name: Add original native Apple extensions
         script: |
           ruby ios/ci/add-asset-downloader.rb
@@ -55,6 +55,30 @@ workflows:
           test -s ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
       - name: Verify produced IPA includes iPhone, Watch, Widgets and downloader
         script: python3 scripts/verify-unsigned-ipa.py ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
+      - name: Verify real Apple dock on an iPhone Simulator
+        script: |
+          set -euo pipefail
+          ruby ios/ci/add-ui-tests.rb
+          simulator="$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          found = [d["udid"] for runtime, group in sorted(devices.items(), reverse=True)
+                   if ".iOS-" in runtime
+                   for d in group
+                   if d.get("isAvailable", True) and d["name"].startswith("iPhone")]
+          print(found[0] if found else "")
+          ')"
+          test -n "$simulator"
+          trap 'if [ -d ios/App/build/native-dock.xcresult ]; then ditto -c -k --keepParent ios/App/build/native-dock.xcresult ios/App/build/native-dock-xcresult.zip; fi' EXIT
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme AppUITests -configuration Debug \
+            -destination "platform=iOS Simulator,id=$simulator" \
+            -derivedDataPath ios/App/build/dd-sim \
+            -resultBundlePath ios/App/build/native-dock.xcresult \
+            -parallel-testing-enabled NO \
+            -only-testing:AppUITests/OpenGymUITests/test0REDFitNativeTabBarKeepsOriginalNavigation \
+            CODE_SIGNING_ALLOWED=NO test 2>&1 | tee ios/App/build/native-dock-smoke.log
     artifacts:
       - $CM_BUILD_DIR/vendor/opengym-upstream/frontend/ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
       - $CM_BUILD_DIR/vendor/opengym-upstream/frontend/ios/App/build/device.log
+      - $CM_BUILD_DIR/vendor/opengym-upstream/frontend/ios/App/build/native-dock-smoke.log
+      - $CM_BUILD_DIR/vendor/opengym-upstream/frontend/ios/App/build/native-dock-xcresult.zip
