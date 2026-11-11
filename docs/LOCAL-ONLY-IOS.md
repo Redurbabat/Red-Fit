@@ -55,12 +55,25 @@ Local evidence uses Windows/Node 22, locked dependencies and synthetic data:
 - 23 original native bundle/identity/tab-bar guards; 14 QA harness/baseline tests; 10 progression/provenance tests.
 - `node tools/opengym-qa/local-only-browser.mjs`: actual built original app, four dock destinations, 80 g = 296 kcal, persisted after reload, offline navigation, rejected fetch/API/socket/window and remote-image attempts; **zero external requests and zero server API requests** in the isolated browser run. This is not a simulator or native traffic capture.
 
-The full original suite was also attempted locally. Existing Windows assumptions (POSIX `sh`, path separators, CRLF byte/hash/regex comparisons) and a failure on an intermediate edited snapshot mean that attempt is not presented as a fully green release run. Use the clean Linux CI run on the final commit for the full regression result. Temporary-directory workarounds stay in ignored `.red-fit-qa/` folders.
+The clean Linux run [42999856109](https://github.com/Redurbabat/Red-Fit/actions/runs/42999856109) on `64ec9b32` passed **8,006/8,006 tests in 666 files**, then both web and mobile builds. Its downloaded `report.json` and test log were checked. This supersedes the earlier Windows attempt affected by POSIX/path/CRLF assumptions. Temporary-directory workarounds stay in ignored `.red-fit-qa/` folders.
 
-The current `.github/workflows/red-fit-iphone.yml` additionally runs the privacy tests, builds the real original app on macOS, validates the actual unsigned IPA, and runs native XCUITest. Check its result on this commit before asserting native success. Private-repository evidence includes `.xcresult`; public repositories never receive a downloadable IPA from this workflow.
+The current `.github/workflows/red-fit-iphone.yml` additionally runs the privacy tests, builds the real original app on macOS, validates the actual unsigned IPA, and runs native XCUITest. Check its result on this commit before asserting native success. Private-repository evidence includes `.xcresult`; public repositories never receive a plaintext IPA from this workflow. The obsolete nutrition/Agent-04 temporary merge job is removed: native QA uses the actual integrated head in this one iPhone workflow.
 
-On 11 November, run [42996454883](https://github.com/Redurbabat/Red-Fit/actions/runs/42996454883) at `c2df7900` was refused **before any build steps**: “The job was not started because an Actions budget is preventing further use.” It is not a native compile/test result. Current repository visibility was independently confirmed **private**. No budget was increased and no visibility was changed. The existing private `codemagic.yaml` alternative now also includes the same native navigation test and private result bundle, but no Codemagic build was started or claimed. An available Mac runner/account is required to continue native verification.
+On 11 November, run [42996454883](https://github.com/Redurbabat/Red-Fit/actions/runs/42996454883) at `c2df7900` was refused **before any build steps** by the Actions budget while the repository was private. After the repository independently became public, [42998639557](https://github.com/Redurbabat/Red-Fit/actions/runs/42998639557) started on the standard `macos-26` runner and passed simulator compilation, device compilation and actual IPA integrity. Its native UI result must be read from the run. No budget, payment method, spending limit or repository visibility was changed by this work. The owner prohibits charge-enabling settings changes. The private `codemagic.yaml` alternative remains available but was not started.
 
-Still required for installable delivery: an unblocked macOS build, valid Apple signing, a signed IPA or TestFlight build, real iPhone acceptance (including backup exclusion, data continuity, native traffic and VoiceOver), and any migration between the earlier and new bundle IDs. Android/Windows packaging follows the iPhone priority. No signing credentials are fabricated, exposed or committed.
+### Owner-only unsigned IPA export
+
+Manual runs accept `ipa_recipient`, a base64 DER/SPKI **public** RSA key (3072 bits or stronger). The runner encrypts the validated IPA using a fresh AES-256-GCM key wrapped with RSA-OAEP/SHA-256. Only ciphertext and a public envelope are uploaded for one day; the private key never leaves the owner's computer. Automatic PR runs do not export an encrypted IPA without a recipient. This protects the build archive, not signing or installation; no app records are supplied to CI.
+
+From the repository root, generate a recipient under the ignored local QA folder, supply the contents of `recipient.txt` to the manual workflow, then decrypt the downloaded artifact locally:
+
+```text
+node tools/opengym-qa/private-ipa-artifact.mjs keygen .red-fit-qa/ipa-recipient
+node tools/opengym-qa/private-ipa-artifact.mjs decrypt artifacts/encrypted-ipa .red-fit-qa/ipa-recipient/private.pem artifacts/RED-Fit-UNSIGNED.ipa
+```
+
+Keep `private.pem` locally until the export is recovered. It must never be committed, pasted into workflow inputs or uploaded. The export test checks round-trip, tampering, wrong recipients and refusal to overwrite an existing key/export.
+
+Still required for installable delivery: native UI acceptance, valid Apple signing, a signed IPA or TestFlight build, real iPhone acceptance (including backup exclusion, data continuity, native traffic and VoiceOver), and any migration between the earlier and new bundle IDs. Android/Windows packaging follows the iPhone priority. No signing credentials are fabricated, exposed or committed.
 
 Apple references: [UITabBar](https://developer.apple.com/documentation/uikit/uitabbar), [UIKit Liquid Glass](https://developer.apple.com/videos/play/wwdc2025/284/), [backup exclusion](https://developer.apple.com/documentation/foundation/optimizing-your-app-s-data-for-icloud-backup).

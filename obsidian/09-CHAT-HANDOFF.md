@@ -23,3 +23,9 @@ Arbeite im privaten GitHub-Repository **Redurbabat/Red-Fit**. Der Nutzer will au
 **Next task:** Aktuellen GitHub-Stand mit [[07-BACKLOG]] abgleichen, kleinsten noch offenen vertikalen Funktionsweg umsetzen, Tests real ausführen (oder explizit als nicht ausgeführt markieren), Commit/Dateien und nächstes To-do hier dokumentieren. Erst bei nachgewiesenem Test/Build „fertig“ schreiben. Keine bloßen Planungsrunden wiederholen.
 
 **Hinweis zur Chatübergreifenden Kontinuität:** Die zuverlässige Quelle ist das GitHub-Versionierungsverzeichnis `obsidian/`, nicht ChatGPT-Memory oder ein implizit geteilter Chatverlauf. Neue Chats mit Zugriff auf das Repository können diese Notes direkt lesen.
+
+## 11.11.2026 — Kostenregel und freigegebener Build
+
+Der Eigentümer untersagt Änderungen an Budget-, Zahlungs- oder sonstigen Einstellungen, die Rechnungen ermöglichen. Keine Limits erhöhen, Zahlungsart hinzufügen oder kostenpflichtigen Runner auswählen. Die Repo-Sichtbarkeit wurde außerhalb dieser Arbeit inzwischen öffentlich; hier wurde sie nie verändert. Der Standard-Mac-Runner führt den iPhone-Lauf `42998639557` jetzt aus; Simulator, Gerätebuild und IPA-Integrität sind bestanden. Native UI-Abnahme separat prüfen. Der reine Linux-Gesamtlauf `42999856109` auf `64ec9b32` ist erfolgreich: **8.006 Tests in 666 Dateien**, Web- und mobiler Build bestanden.
+
+Öffentliche CI darf keine unverschlüsselte IPA hochladen. Der manuelle iPhone-Lauf akzeptiert optional nur einen öffentlichen Empfängerschlüssel; privater Schlüssel und entschlüsselte IPA bleiben in ignorierten lokalen Ordnern. Tool/Anleitung: `tools/opengym-qa/private-ipa-artifact.mjs`, `docs/LOCAL-ONLY-IOS.md`. Keine neuen Signierungsdaten vorhanden, keine bestehende iPhone-Installation durch einen Push aktualisiert.

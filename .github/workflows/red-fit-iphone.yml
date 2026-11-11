@@ -8,7 +8,13 @@ on:
     paths:
       - 'vendor/opengym-upstream/frontend/**'
       - '.github/workflows/red-fit-iphone.yml'
+      - 'tools/opengym-qa/private-ipa-artifact*'
   workflow_dispatch:
+    inputs:
+      ipa_recipient:
+        description: 'Optional base64 SPKI public key for an encrypted owner-only IPA export (RSA 3072+). Never enter a private key.'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -46,6 +52,10 @@ jobs:
 
       - name: Self-test IPA integrity and embedded target validator
         run: python3 scripts/verify-unsigned-ipa.py --selftest
+
+      - name: Test encrypted owner-only IPA export
+        working-directory: .
+        run: node --test tools/opengym-qa/private-ipa-artifact.test.mjs
 
       - name: Install original locked dependencies
         run: npm ci
@@ -88,6 +98,23 @@ jobs:
 
       - name: Verify actual unsigned IPA payload and Apple bundle identities
         run: python3 scripts/verify-unsigned-ipa.py ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa
+
+      - name: Encrypt unsigned IPA for the owner's local recipient
+        id: encrypt_ipa
+        if: github.event_name == 'workflow_dispatch' && inputs.ipa_recipient != ''
+        env:
+          REDFIT_IPA_RECIPIENT: ${{ inputs.ipa_recipient }}
+        run: node ../../../tools/opengym-qa/private-ipa-artifact.mjs encrypt ios/App/build/unsigned/RED-Fit-UNSIGNED.ipa ios/App/build/protected-ipa
+
+      - name: Keep encrypted owner-only IPA
+        if: always() && steps.encrypt_ipa.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: red-fit-encrypted-ipa-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+          path: vendor/opengym-upstream/frontend/ios/App/build/protected-ipa/
 
       - name: Attach the original openGym XCUITest target without changing the committed Xcode project
         run: ruby ios/ci/add-ui-tests.rb
