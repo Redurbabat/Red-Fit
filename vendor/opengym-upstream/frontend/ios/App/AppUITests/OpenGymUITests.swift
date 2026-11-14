@@ -82,38 +82,45 @@ final class OpenGymUITests: XCTestCase {
      * tap and pass the next one through to home underneath (CI 10-13, the gym card opened).
      */
     private func chooseLocal() {
-        // The tour is a modal and hides Home from accessibility. Dismiss its invitation
-        // before looking for Home, including when local-only boot skips the server chooser.
+        // RED Fit's enforced local-only boot can open Home directly. Older
+        // installations may still show "Use on this device"; a fresh local
+        // onboarding screen instead offers "RED Fit öffnen". All three paths
+        // must be accepted without changing or clearing stored workout data.
         func dismissTour() {
             if app.staticTexts["Want a 1-minute tour?"].exists, app.buttons["Skip"].exists {
                 app.buttons["Skip"].tap()
             }
         }
-        // The body-weight "Log" action is optional (Settings > Modules), so it
-        // cannot establish whether Home loaded. The original Home.jsx always
-        // renders "Today"; the native navigation test checks that same stable
-        // marker again after selecting the real UIKit tabs.
-        let homeToday = app.webViews.firstMatch.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Today")).firstMatch
-        for _ in 0..<15 {
+        let homeToday = app.webViews.firstMatch.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH[c] %@ OR label BEGINSWITH[c] %@", "Today", "Heute")
+        ).firstMatch
+        let legacyChoice = app.buttons["Use on this device"]
+        let localOnlyChoice = app.buttons["RED Fit öffnen"]
+        let deadline = Date().addingTimeInterval(100)
+        while Date() < deadline {
+            if systemAlertUp() { allowSystemAlert(within: 3) }
             dismissTour()
-            if homeToday.waitForExistence(timeout: 1) { return }
-            if app.buttons["Use on this device"].exists { break }
-        }
-        let local = app.buttons["Use on this device"]
-        XCTAssertTrue(local.waitForExistence(timeout: 60), "the onboarding choice did not show up")
-        for _ in 0..<5 {
-            if systemAlertUp() { allowSystemAlert(within: 20) }
-            if local.exists && local.isHittable { local.tap() }
-            passPermissionSteps()
+            if homeToday.exists { return }
+
+            if localOnlyChoice.exists && localOnlyChoice.isHittable {
+                localOnlyChoice.tap()
+                passPermissionSteps()
+            } else if legacyChoice.exists && legacyChoice.isHittable {
+                legacyChoice.tap()
+                passPermissionSteps()
+            } else if app.staticTexts["Never miss the end of a rest"].exists
+                        || app.staticTexts["Your workouts in Apple Health"].exists {
+                passPermissionSteps()
+            }
             dismissTour()
-            if homeToday.waitForExistence(timeout: 20) { return }
+            if homeToday.waitForExistence(timeout: 2) { return }
         }
         shot("redfit-onboarding-failure")
         let snapshot = XCTAttachment(string: app.debugDescription)
         snapshot.name = "redfit-onboarding-accessibility"
         snapshot.lifetime = .keepAlways
         add(snapshot)
-        XCTFail("home never showed after the onboarding choice")
+        XCTFail("Neither the local Home dashboard nor a usable first-run choice appeared")
     }
 
     private func systemAlertUp() -> Bool { springboard.alerts.firstMatch.exists }
