@@ -49,6 +49,15 @@ The former iPhone run `42862422488` built the simulator app and unsigned device 
 
 Run `42998639557` exposed a second cause: Capacitor's `prepareWebView` replaces `WKWebViewConfiguration.userContentController` after the `webViewConfiguration(for:)` hook. The dock handler and document-start test script are now installed in the later `webView(with:configuration:)` override on the final controller, before returning `super.webView`. The real default WKWebView is retained. Its nested accessibility WebView wrappers must not be mistaken for several WKWebView instances; a test-launch-only native probe counts actual UIKit WKWebView objects after each route change. Xcode routine build output is suppressed so live test lines remain readable.
 
+## 14 November 2026: successful integrated native iPhone CI and visual evidence
+
+- PR #17 head `5ee4164b4728c21f7d77d516ab70cf38baa2b920`, workflow [43645273728](https://github.com/Redurbabat/Red-Fit/actions/runs/43645273728): **completed/success**. The native device build, unsigned IPA packaging, IPA payload/bundle-identity validation and the iOS 26 XCUITest `test0REDFitNativeTabBarKeepsOriginalNavigation` all passed.
+- The successful simulator test confirmed the five real UIKit destinations (Home, Plan, Start, Stats, Exercises), preserved the single actual `WKWebView` and exercised React routing. The old onboarding failure was addressed by commit `5ee4164b`: accept direct local-only Home, `RED Fit öffnen` or the legacy `Use on this device` choice.
+- Workflow artifact `red-fit-native-dock-7d817c7aec65059a62d78f789c188fafefbfca8a` (artifact ID `14134147706`, created 2026-11-14, retention through 2026-11-21) was downloaded and inspected. Its sole file `redfit-glass-home.png` is an RGB **1206×249** crop of the actual iPhone Simulator's five-tab native floating bar on synthetic test data; not a design mock-up. Archive artifact is a UI screenshot, **not an IPA**.
+- On the same head, general CI, Original openGym frontend QA, Original openGym Nutrition and Agent-02 frontend QA all completed successfully. This is not proof of real-device installation, Apple signing, hardware haptics, accessibility/scroll minimization behaviour on a physical phone or a native traffic capture.
+- The repo metadata API currently reports `visibility: public`, contrary to the owner's instruction to keep RED Fit private. Do not publish plaintext IPA or personal data, and do not silently change repository visibility, billing or payment settings. This must be resolved by the owner through authorized settings access.
+- **Next release gates:** valid Apple device signing/provisioning on the owner's Mac, device installation, real iPhone dock/safe-area/scroll/VoiceOver/reduced-motion verification, data persistence and migration/backup round-trips, and explicit privacy review of any future Apple Health/Garmin integration. Keep PR #17 in Draft until acceptance.
+
 ## Verification and remaining delivery work
 
 Local evidence uses Windows/Node 22, locked dependencies and synthetic data:
