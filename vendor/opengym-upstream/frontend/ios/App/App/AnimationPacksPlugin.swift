@@ -207,7 +207,7 @@ public class AnimationPacksPlugin: CAPPlugin, CAPBridgedPlugin {
                 }
                 let manager = AssetPackManager.shared
                 let watcher = Task { [weak self] in
-                    for await update in await manager.statusUpdates(forAssetPackWithID: id) {
+                    for await update in manager.statusUpdates(forAssetPackWithID: id) {
                         if case .downloading(_, let progress) = update {
                             self?.notifyListeners("progress", data: ["packId": id, "fraction": progress.fractionCompleted])
                         }
