@@ -122,7 +122,7 @@ struct RootView: View {
         .onOpenURL { url in
             if url.host == "start", store.workout == nil, let today = store.ready?.today { store.start(today) }
         }
-        .onChange(of: store.widgetState) { state in
+        .onChange(of: store.widgetState) { _, state in
             guard !store.isDemo else { return }
             state.write()
             WidgetCenter.shared.reloadAllTimelines()
