@@ -401,7 +401,7 @@ struct NextInlineView: View {
 // MARK: - the configurable widget ("RED Fit": what to show, OpenGymWidgets.swift)
 
 /// What the configurable widget can show. The menu's words are in OpenGymWidgets.swift (AppEnum).
-enum GymWidgetKind: String, CaseIterable, Codable {
+enum GymWidgetKind: String, CaseIterable, Codable, Sendable {
     case streak, weight, week, next, records, volume, challenges
 }
 
