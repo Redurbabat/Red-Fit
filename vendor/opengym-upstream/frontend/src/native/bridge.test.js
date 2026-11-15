@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { useStore, freshState } from '../store/useStore.js'
-import { executeNativeCommand, nativeSnapshot, homeSummary, latestPhotoOf } from './bridge.js'
+import { executeNativeCommand, nativeSnapshot, homeSummary, latestPhotoOf, installNativeBridge } from './bridge.js'
 
 beforeAll(() => { useStore.setState({ ready: true, S: freshState(), localProfile: null, user: null, sync: { server: null } }) })
 describe('native views use the original domain', () => {
@@ -76,5 +76,16 @@ describe('native views use the original domain', () => {
   it('allows the progress photo route but rejects photo reads for unknown files', async () => {
     await expect(executeNativeCommand('route', { path: '/progress-photos' })).resolves.toBeTruthy()
     await expect(executeNativeCommand('photoThumb', { hash: 'f'.repeat(64) })).rejects.toThrow('Foto')
+  })
+  it('marks the document as SwiftUI-hosted only when the native shell is present', () => {
+    delete document.documentElement.dataset.redfitSwiftui
+    installNativeBridge()
+    expect(document.documentElement.dataset.redfitSwiftui).toBeUndefined()
+    window.__REDFitSwiftUI = true
+    window.webkit = { messageHandlers: { redFitApp: { postMessage: () => {} } } }
+    try {
+      installNativeBridge()
+      expect(document.documentElement.dataset.redfitSwiftui).toBe('true')
+    } finally { delete window.__REDFitSwiftUI; delete window.webkit; delete window.redFitNative }
   })
 })

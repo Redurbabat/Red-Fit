@@ -148,6 +148,24 @@
   bottom: calc(max(var(--rf-native-dock-inset, 96px), var(--sab)) + 12px);
 }
 
+/* iOS 26 SwiftUI shell (REDFitNativeApp): the WKWebView is only shown as a
+ * sheet for the original tools, under SwiftUI's own tab bar and a "Fertig"
+ * button. A second web dock there would duplicate navigation, so it is not
+ * drawn; the buttons stay mounted for Router/store semantics. */
+:root[data-redfit-swiftui] #tabbar.redfit-morph-dock {
+  display: none;
+}
+:root[data-redfit-swiftui] #app,
+:root[data-redfit-swiftui] body.resting #app {
+  padding-bottom: calc(var(--sab) + 16px);
+}
+:root[data-redfit-swiftui] #toast {
+  bottom: calc(var(--sab) + 16px);
+}
+:root[data-redfit-swiftui] #totop {
+  bottom: calc(var(--sab) + 12px);
+}
+
 /* Floating browser fallback, with one glass surface and a visible selection.
  * The installed iPhone app continues to use Apple's real UITabBar. */
 @media (max-width: 999px) {

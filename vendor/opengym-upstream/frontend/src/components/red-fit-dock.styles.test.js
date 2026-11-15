@@ -46,4 +46,8 @@ describe('RED Morph dock geometry and accessibility fallbacks', () => {
     expect(css).not.toMatch(/padding-bottom:\s*calc\(120px \+ var\(--sab\)\)/)
   })
 
+  it('hides the web dock inside the SwiftUI shell so navigation is not duplicated', () => {
+    expect(css).toMatch(/:root\[data-redfit-swiftui\]\s+#tabbar\.redfit-morph-dock\s*\{[^}]*display:\s*none;/)
+    expect(css).toMatch(/:root\[data-redfit-swiftui\]\s+#app[^{]*\{[^}]*padding-bottom:\s*calc\(var\(--sab\)/)
+  })
 })

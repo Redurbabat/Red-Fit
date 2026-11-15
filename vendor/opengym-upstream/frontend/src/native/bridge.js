@@ -284,6 +284,9 @@ export async function executeNativeCommand(action, p) {
 }
 export function installNativeBridge() {
   if (!window.__REDFitSwiftUI || !window.webkit?.messageHandlers?.redFitApp) return
+  // The SwiftUI shell owns navigation; the original web dock must not appear a second time
+  // inside its tool sheets (components/red-fit-dock.css).
+  document.documentElement.dataset.redfitSwiftui = 'true'
   const request = createCommandQueue(async (action, payload) => {
     try { return await executeNativeCommand(action, payload) } finally { publish() }
   })
