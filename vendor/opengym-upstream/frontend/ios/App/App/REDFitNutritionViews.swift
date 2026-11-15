@@ -8,28 +8,89 @@ enum RFDay {
     }
 }
 
+/// A progress ring that fills from empty to its value when it appears and glides to new values.
+struct RFRing: View {
+    let value: Double
+    let color: Color
+    var lineWidth: CGFloat = 10
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown = 0.0
+    var body: some View {
+        ZStack {
+            Circle().stroke(color.opacity(0.18), lineWidth: lineWidth)
+            Circle().trim(from: 0, to: shown)
+                .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            // Past the goal: a second lap in a lighter tone, so too much is visible at a glance.
+            if value > 1 {
+                Circle().trim(from: 0, to: min(1, value - 1) * min(1, shown))
+                    .stroke(color.opacity(0.55), style: StrokeStyle(lineWidth: lineWidth * 0.5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+        }
+        .onAppear { set(value) }
+        .onChange(of: value) { _, new in set(new) }
+    }
+    private func set(_ v: Double) {
+        let target = min(1, max(0, v))
+        if reduceMotion { shown = target } else { withAnimation(.spring(response: 0.9, dampingFraction: 0.85)) { shown = target } }
+    }
+}
+
 struct RFMacroSummary: View {
     let totals: RFRecord
     let goal: RFRecord
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(totals.number("kcal").formatted(.number.precision(.fractionLength(0)))).font(.system(.largeTitle, design: .rounded).weight(.semibold)).contentTransition(.numericText())
-                Text(goal.number("kcal") > 0 ? "von \(Int(goal.number("kcal"))) kcal" : "kcal").foregroundStyle(.secondary)
-            }
-            if goal.number("kcal") > 0 { ProgressView(value: min(totals.number("kcal"), goal.number("kcal")), total: goal.number("kcal")) }
-            HStack {
-                macro("Protein", "protein", .blue)
-                Spacer(); macro("Kohlenhydrate", "carbs", .orange)
-                Spacer(); macro("Fett", "fat", .purple)
-            }
-        }.padding(.vertical, 8).monospacedDigit()
+    private static let macros: [(label: String, key: String, color: Color)] = [
+        ("Protein", "protein", .blue), ("Kohlenhydrate", "carbs", .orange), ("Fett", "fat", .purple)]
+
+    private func share(_ key: String) -> Double {
+        let target = goal.number(key)
+        return target > 0 ? totals.number(key) / target : 0
     }
-    private func macro(_ label: String, _ key: String, _ color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(totals.number(key).formatted(.number.precision(.fractionLength(1))) + " g").font(.subheadline.weight(.semibold)).foregroundStyle(color)
-            Text(label).font(.caption2).foregroundStyle(.secondary)
-        }.accessibilityElement(children: .combine)
+
+    var body: some View {
+        HStack(spacing: 22) {
+            ZStack {
+                RFRing(value: share("kcal"), color: .green, lineWidth: 14)
+                VStack(spacing: 0) {
+                    Text(totals.number("kcal").formatted(.number.precision(.fractionLength(0))))
+                        .font(.system(.title, design: .rounded).weight(.bold))
+                        .contentTransition(.numericText())
+                        .animation(.snappy, value: Int(totals.number("kcal")))
+                    Text(goal.number("kcal") > 0 ? "von \(Int(goal.number("kcal")))" : "kcal")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+                .minimumScaleFactor(0.6).lineLimit(1).padding(18)
+            }
+            .frame(width: 124, height: 124)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Kalorien")
+            .accessibilityValue(goal.number("kcal") > 0 ? "\(Int(totals.number("kcal"))) von \(Int(goal.number("kcal"))) Kilokalorien" : "\(Int(totals.number("kcal"))) Kilokalorien")
+
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(Self.macros, id: \.key) { macro in
+                    HStack(spacing: 10) {
+                        RFRing(value: share(macro.key), color: macro.color, lineWidth: 5).frame(width: 28, height: 28)
+                        VStack(alignment: .leading, spacing: 1) {
+                            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                                Text(totals.number(macro.key).formatted(.number.precision(.fractionLength(0...1))) + " g")
+                                    .font(.subheadline.weight(.semibold)).foregroundStyle(macro.color)
+                                    .contentTransition(.numericText())
+                                    .animation(.snappy, value: totals.number(macro.key))
+                                if goal.number(macro.key) > 0 {
+                                    Text("/ \(Int(goal.number(macro.key))) g").font(.caption2).foregroundStyle(.secondary)
+                                }
+                            }
+                            Text(macro.label).font(.caption2).foregroundStyle(.secondary)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 10)
+        .monospacedDigit()
     }
 }
 
