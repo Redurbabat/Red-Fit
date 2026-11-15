@@ -14,6 +14,37 @@ enum RFTheme {
     static let radius: CGFloat = 28
 }
 
+/// Shared motion: interruptible springs, calm at rest. With Reduce Motion only opacity changes.
+enum RFMotion {
+    static let spring = Animation.spring(response: 0.45, dampingFraction: 0.82)
+    static let snappy = Animation.snappy(duration: 0.28)
+}
+
+/// Home's sections rise in once, one after another, the first time it appears.
+private struct RFEntrance: ViewModifier {
+    let index: Int
+    let shown: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    func body(content: Content) -> some View {
+        content
+            .opacity(shown ? 1 : 0)
+            .offset(y: shown || reduceMotion ? 0 : 22)
+            .scaleEffect(shown || reduceMotion ? 1 : 0.97, anchor: .top)
+            .animation(reduceMotion ? .easeOut(duration: 0.2) : RFMotion.spring.delay(Double(index) * 0.07), value: shown)
+    }
+}
+
+/// Cards answer a press by sinking slightly, the way system controls do.
+struct RFPressStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.965 : 1)
+            .brightness(configuration.isPressed ? -0.04 : 0)
+            .animation(RFMotion.snappy, value: configuration.isPressed)
+    }
+}
+
 /// Days between two `yyyy-MM-dd` keys (b - a), nil for malformed input.
 enum RFDates {
     static func date(_ key: String) -> Date? {
@@ -32,6 +63,8 @@ struct RFHomeView: View {
     @AppStorage("redfit.displayName") private var displayName = ""
     @State private var openWorkout = false
     @State private var showHistory = false
+    @State private var appeared = false
+    @Namespace private var motion
 
     private var home: RFRecord { model.data.record("home") }
     private var widget: RFRecord { home.record("widget") }
@@ -40,7 +73,9 @@ struct RFHomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 30) {
                 RFHomeGreeting(name: displayName, widget: widget, today: model.data.string("date"), accent: model.accent)
+                    .modifier(RFEntrance(index: 0, shown: appeared))
                 RFProgressCard(model: model, widget: widget, photo: home.record("latestPhoto"))
+                    .modifier(RFEntrance(index: 1, shown: appeared))
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Ernährung").font(.title3.weight(.semibold)).accessibilityAddTraits(.isHeader)
                     HStack(alignment: .center, spacing: 14) {
@@ -48,7 +83,9 @@ struct RFHomeView: View {
                         RFMealsCard(model: model).frame(maxWidth: .infinity)
                     }
                 }
-                RFTodayWorkout(model: model, home: home, openWorkout: $openWorkout)
+                .modifier(RFEntrance(index: 2, shown: appeared))
+                RFTodayWorkout(model: model, home: home, openWorkout: $openWorkout, motion: motion)
+                    .modifier(RFEntrance(index: 3, shown: appeared))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 32)
@@ -62,7 +99,9 @@ struct RFHomeView: View {
                 Button { model.selected = "training" } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "flame.fill").foregroundStyle(.orange)
+                            .symbolEffect(.bounce, value: Int(widget.number("streak")))
                         Text("\(Int(widget.number("streak")))").font(.subheadline.weight(.bold)).monospacedDigit().contentTransition(.numericText())
+                            .animation(RFMotion.spring, value: Int(widget.number("streak")))
                         FreezeFlakes(n: Int(widget.record("streakInfo").number("freezes")))
                     }
                 }
@@ -74,7 +113,10 @@ struct RFHomeView: View {
         .sheet(isPresented: $showHistory) {
             NavigationStack { RFHistoryView(model: model).toolbar { ToolbarItem(placement: .confirmationAction) { Button("Fertig") { showHistory = false } } } }
         }
-        .fullScreenCover(isPresented: $openWorkout) { NavigationStack { RFWorkoutView(model: model) } }
+        .fullScreenCover(isPresented: $openWorkout) {
+            NavigationStack { RFWorkoutView(model: model) }.navigationTransition(.zoom(sourceID: "workout-start", in: motion))
+        }
+        .onAppear { appeared = true }
         .accessibilityIdentifier("redfit-native-home")
     }
 }
@@ -95,6 +137,7 @@ private struct RFHomeGreeting: View {
                 .accessibilityIdentifier("redfit-home-greeting")
             HStack(spacing: 12) {
                 ProgressBar(value: Double(8 - min(7, daysLeft)) / 7, accent: accent).frame(width: 150)
+                    .animation(RFMotion.spring, value: daysLeft)
                 Text(daysLeft == 1 ? "Letzter Tag der Woche" : "\(daysLeft) T übrig").font(.subheadline).foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
@@ -124,7 +167,7 @@ private struct RFProgressCard: View {
         HStack(spacing: 0) {
             Button { model.showOriginal("/progress-photos", title: "Fortschrittsfotos") } label: {
                 ZStack(alignment: .bottomLeading) {
-                    if let image { Image(uiImage: image).resizable().scaledToFill() }
+                    if let image { Image(uiImage: image).resizable().scaledToFill().transition(.opacity.combined(with: .scale(scale: 1.04))) }
                     else {
                         Image("REDFitBrand").resizable().scaledToFill()
                     }
@@ -138,7 +181,7 @@ private struct RFProgressCard: View {
                 .frame(width: 150, height: 170)
                 .clipShape(.rect(cornerRadius: RFTheme.radius))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(RFPressStyle())
             .accessibilityLabel(image == nil ? "Fortschrittsfoto hinzufügen" : "Fortschrittsfotos öffnen")
             .accessibilityIdentifier("redfit-progress-photo")
 
@@ -148,6 +191,7 @@ private struct RFProgressCard: View {
                         .font(.system(size: 54, weight: .bold, design: .rounded))
                         .foregroundStyle(LinearGradient(colors: [.primary, .primary.opacity(0.6)], startPoint: .top, endPoint: .bottom))
                         .monospacedDigit().contentTransition(.numericText()).lineLimit(1).minimumScaleFactor(0.6)
+                        .animation(RFMotion.spring, value: goal.done)
                     Text("Wochenziel · \(goal.done) von \(goal.of)").font(.caption).foregroundStyle(.secondary)
                 } else {
                     Text("\(Int(widget.record("week").number("done")))")
@@ -173,7 +217,7 @@ private struct RFProgressCard: View {
         guard let result = try? await model.request("photoThumb", ["hash": hash]),
               let url = result["dataURL"] as? String, let comma = url.firstIndex(of: ","),
               let data = Data(base64Encoded: String(url[url.index(after: comma)...])) else { return }
-        image = UIImage(data: data)
+        withAnimation(RFMotion.spring) { image = UIImage(data: data) }
     }
 }
 
@@ -237,6 +281,7 @@ private struct RFWaterBottle: View {
                 model.perform("water", ["id": UUID().uuidString, "date": model.data.string("date"), "ml": 250])
             } label: {
                 Image(systemName: "drop.fill").font(.title2).foregroundStyle(RFTheme.water).frame(width: 56, height: 56)
+                    .symbolEffect(.bounce.down, value: ml)
             }
             .glassEffect(.regular.interactive(), in: .circle)
             .accessibilityLabel("250 ml hinzufügen")
@@ -310,7 +355,9 @@ private struct RFMealsCard: View {
                             Image(systemName: meal.symbol).font(.title3).foregroundStyle(logged ? meal.tint : .secondary)
                         }
                         .frame(width: 56, height: 56)
-                        .shadow(color: .black.opacity(0.35), radius: 6, y: 3)
+                        .scaleEffect(logged ? 1 : 0.9)
+                        .shadow(color: .black.opacity(logged ? 0.35 : 0.15), radius: 6, y: 3)
+                        .animation(RFMotion.spring, value: logged)
                         .accessibilityHidden(true)
                     }
                 }
@@ -318,6 +365,7 @@ private struct RFMealsCard: View {
                     Image(systemName: "leaf.fill").foregroundStyle(.green)
                     Text(goal > 0 ? "≈\(Int(kcal)) · \(Int((kcal / goal * 100).rounded())) %" : "≈\(Int(kcal)) kcal")
                         .font(.subheadline.weight(.semibold)).monospacedDigit().contentTransition(.numericText())
+                        .animation(RFMotion.spring, value: Int(kcal))
                 }
                 .padding(.horizontal, 14).padding(.vertical, 8)
                 .background(Color.primary.opacity(0.08), in: .capsule)
@@ -326,7 +374,7 @@ private struct RFMealsCard: View {
             .frame(maxWidth: .infinity, minHeight: 200)
             .background(RFTheme.card, in: .rect(cornerRadius: RFTheme.radius))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RFPressStyle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Mahlzeiten des Tages: \(entries.count) Einträge, \(Int(kcal)) Kilokalorien")
         .accessibilityAddTraits(.isButton)
@@ -341,11 +389,14 @@ private struct RFTodayWorkout: View {
     @ObservedObject var model: RFAppModel
     let home: RFRecord
     @Binding var openWorkout: Bool
+    let motion: Namespace.ID
     @State private var centered: String?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let plan = home.record("plan")
         let exercises = home.records("exercises")
+        let shrink = !reduceMotion
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -363,6 +414,7 @@ private struct RFTodayWorkout: View {
                     Label(model.hasActive ? "Fortsetzen" : "Starten", systemImage: "play.fill").font(.headline).frame(minHeight: 44).padding(.horizontal, 6)
                 }
                 .buttonStyle(.glass)
+                .matchedTransitionSource(id: "workout-start", in: motion)
                 .accessibilityIdentifier("redfit-start-workout")
             }
             if exercises.isEmpty {
@@ -370,13 +422,17 @@ private struct RFTodayWorkout: View {
                     Label("Plan erstellen oder freies Training starten", systemImage: "list.bullet.clipboard")
                         .frame(maxWidth: .infinity, minHeight: 64)
                         .background(RFTheme.card, in: .rect(cornerRadius: RFTheme.radius))
-                }.buttonStyle(.plain)
+                }.buttonStyle(RFPressStyle())
             } else {
                 ScrollView(.horizontal) {
                     LazyHStack(spacing: 14) {
                         ForEach(Array(exercises.enumerated()), id: \.offset) { index, ex in
-                            RFExerciseCard(model: model, entry: ex, animate: (centered ?? "0") == "\(index)")
+                            RFExerciseCard(model: model, entry: ex, animate: (centered ?? "0") == "\(index)", motion: motion, sourceID: "exercise-\(index)")
                                 .id("\(index)")
+                                .scrollTransition(.interactive, axis: .horizontal) { card, phase in
+                                    card.scaleEffect(phase.isIdentity || !shrink ? 1 : 0.92)
+                                        .opacity(phase.isIdentity ? 1 : 0.7)
+                                }
                         }
                     }
                     .scrollTargetLayout()
@@ -397,21 +453,25 @@ private struct RFExerciseCard: View {
     @ObservedObject var model: RFAppModel
     let entry: RFRecord
     let animate: Bool
+    let motion: Namespace.ID
+    let sourceID: String
     @State private var record: RFRecord?
     @State private var still: UIImage?
 
     var body: some View {
         NavigationLink {
-            if let record { RFExerciseDetail(model: model, exercise: record) } else { ProgressView() }
+            Group { if let record { RFExerciseDetail(model: model, exercise: record) } else { ProgressView() } }
+                .navigationTransition(.zoom(sourceID: sourceID, in: motion))
         } label: {
             ZStack(alignment: .top) {
                 Group {
-                    if animate, let record { RFExerciseMedia(exercise: record, controls: false).allowsHitTesting(false) }
+                    if animate, let record { RFExerciseMedia(exercise: record, controls: false).allowsHitTesting(false).transition(.opacity) }
                     else if let still { Image(uiImage: still).resizable().scaledToFill() }
                     else { Color.black.overlay { Image(systemName: "figure.strengthtraining.traditional").font(.largeTitle).foregroundStyle(.secondary) } }
                 }
                 .frame(width: 170, height: 230)
                 .clipped()
+                .animation(.easeInOut(duration: 0.35), value: animate)
                 VStack {
                     HStack {
                         Spacer()
@@ -431,8 +491,9 @@ private struct RFExerciseCard: View {
             }
             .frame(width: 170, height: 230)
             .clipShape(.rect(cornerRadius: RFTheme.radius))
+            .matchedTransitionSource(id: sourceID, in: motion)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RFPressStyle())
         .accessibilityLabel(entry.string("name") + (entry.string("line").isEmpty ? "" : ", " + entry.string("line")))
         .accessibilityIdentifier("redfit-home-exercise-" + entry.id)
         .task(id: entry.id) {
