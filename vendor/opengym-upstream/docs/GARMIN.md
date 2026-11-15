@@ -121,6 +121,11 @@ views/settings-pages.js like the Apple Watch and Zepp OS pages.
 - Der Code wird nur mit `ConnectIQ.xcframework` im App-Target aktiv (`#if canImport(ConnectIQ)`); ohne das SDK baut die App unverändert.
 - Gegen das echte SDK ist der Code noch nicht kompiliert. Dafür muss der Eigentümer das SDK nach Annahme der Garmin-Lizenz herunterladen.
 
+**Uhr-App mit echtem SDK (15.11.2026, RED Fit):**
+- Mit Connect IQ SDK 9.3.0 auf macOS kompiliert für `fenix847mm` (echte Gerätedatei) und `fr970` (Ersatzdatei aus `stand-in-devices.mjs`). Ergebnis: Exit 0, nur die bekannten Typ-Warnungen.
+- Der Unit-Test-Build läuft im echten Garmin-Simulator mit **9/9 bestanden**.
+- Für die Forerunner 970 fehlt noch die echte Gerätedatei aus dem SDK Manager. Der lokale Testbuild unter `.red-fit-qa/garmin/` ist mit einem Wegwerf-Testschlüssel signiert.
+
 **The native half (to do):**
 
 1. **Android** (`android/app`, play flavour first): the Connect IQ Mobile SDK
