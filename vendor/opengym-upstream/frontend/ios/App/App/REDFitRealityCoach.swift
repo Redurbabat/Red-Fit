@@ -196,6 +196,8 @@ enum RFLocalMedia {
 
 struct RFExerciseMedia: View {
     let exercise: RFRecord
+    /// Small previews (Home cards) hide the play/pause control; the detail view keeps it.
+    var controls = true
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     @Environment(\.scenePhase) var phase
     @State private var image: UIImage?
@@ -207,7 +209,9 @@ struct RFExerciseMedia: View {
             if let video { RFLocalVideo(url: video, playing: playing && !reduceMotion && phase == .active) }
             else if let image { RFAnimatedImage(image: image, playing: playing && !reduceMotion && phase == .active) }
             else { ContentUnavailableView("Keine lokale Vorführung", systemImage: "figure.strengthtraining.traditional", description: Text("Die Übung bleibt im Training nutzbar.")) }
-            Button(playing ? "Vorführung pausieren" : "Vorführung abspielen", systemImage: playing ? "pause.fill" : "play.fill") { playing.toggle() }.labelStyle(.iconOnly).buttonStyle(.glass).controlSize(.large).padding()
+            if controls {
+                Button(playing ? "Vorführung pausieren" : "Vorführung abspielen", systemImage: playing ? "pause.fill" : "play.fill") { playing.toggle() }.labelStyle(.iconOnly).buttonStyle(.glass).controlSize(.large).padding()
+            }
         }.task(id: exercise.id) {
             let clips = exercise.raw["clips"] as? [String] ?? []
             let sources = (exercise.bool("still") ? [] : clips) + [exercise.string("image")]

@@ -412,6 +412,24 @@ final class REDFitSwiftUIUITests: XCTestCase {
         XCTAssertTrue(total.waitForExistence(timeout: 10), "water total missing after cold restart")
         XCTAssertEqual(total.value as? String, expected, "durable water entry lost after cold restart")
     }
+    func testHomeDashboardShowsStreakGoalMealsAndWater() {
+        start()
+        XCTAssertTrue(app.otherElements["redfit-native-home"].firstMatch.waitForExistence(timeout: 10) || app.scrollViews.firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["redfit-home-greeting"].waitForExistence(timeout: 10), "greeting missing")
+        XCTAssertTrue(app.buttons["redfit-streak"].waitForExistence(timeout: 10), "streak control missing")
+        XCTAssertTrue(app.buttons["redfit-history"].exists, "calendar/history control missing")
+        XCTAssertTrue(app.buttons["redfit-progress-photo"].exists, "progress photo card missing")
+        XCTAssertTrue(app.descendants(matching: .any)["redfit-weekly-goal"].exists, "weekly goal missing")
+        if !app.buttons["redfit-meals-card"].isHittable { app.swipeUp() }
+        XCTAssertTrue(app.buttons["redfit-meals-card"].waitForExistence(timeout: 10), "meals card missing")
+        XCTAssertTrue(app.buttons["redfit-start-workout"].waitForExistence(timeout: 10), "start workout missing")
+        shot("redfit-swiftui-home-dashboard")
+        app.buttons["redfit-history"].tap()
+        XCTAssertTrue(app.navigationBars["Verlauf"].waitForExistence(timeout: 10))
+        app.buttons["Fertig"].tap()
+        app.buttons["redfit-meals-card"].tap()
+        XCTAssertTrue(app.navigationBars["Ernährung"].waitForExistence(timeout: 10))
+    }
     func testNativePlanExerciseAndWorkout() {
         start()
         app.tabBars.buttons["Training"].tap()

@@ -296,3 +296,36 @@ Nächster konkreter Schritt:
 - Bestehender lokaler `CameraScan`/`scan-web`-QR-/1D-Leser verarbeitet Kamera und Bilder; manuelle Eingabe bleibt erhalten. Lokaler Modus verweigert auch direkte Aufrufe des ML-Kit-Pfads vor dem Plugin-Import. Android-Paket separat prüfen, bevor es ausgeliefert wird.
 - `build:ios` prüft die tatsächlich synchronisierten Pods, Pod-Lock und Plugin-Registry. IPA-Verifier prüft das echte Archiv auf ausgeschlossene SDK-Frameworks und Scanner-Registrierung; Selbsttest **7/7** bestanden.
 - **69/69** Tests für lokalen Scanner, Channel, QR/Barcode-Decodierung und Check-In bestanden. Mobiler Vite-Produktionsbuild ebenfalls bestanden. Gesamttests auf neuem Commit erneut per CI; bisheriger voller 8.006er-Lauf bezieht sich auf den vorigen Produktionsstand.
+
+## 2026-11-15 — Startseite im Referenz-Stil, letzte sichtbare openGym-Namen
+
+- **Namen:** Die letzten sichtbaren openGym-Reste heißen jetzt RED Fit.
+  - Programm-Export `red-fit-programm-*.json`, geteiltes Trainingsbild `red-fit-training-*.png`.
+  - Fehlermeldung beim Import, Garmin-Text „Warte aufs Handy“ in 17 Sprachen (neu erzeugt), Garmin-Ersatzname für Trainings, Android-Debugname.
+  - **Unverändert:** interne Kennungen wie Dateispiegel, IndexedDB, URL-Schemes, Widget-`kind`, Xcode-Targets und Android-Paket. Ebenso der Drittlizenzhinweis „Media licensed for use in openGym only“ und der Importhinweis auf die alte openGym-App.
+- **Native Startseite** (`ios/App/App/REDFitHomeView.swift`, eingetragen in `ios/ci/add-swiftui.rb`):
+  - Begrüßung mit optionalem Namen (Mehr → Profil, nur auf dem Gerät), Wochenbalken und „n T übrig“.
+  - Streak-Flamme und Kalender als System-Toolbar (iOS-26-Glas).
+  - Karte mit Fortschrittsfoto und Wochenziel in % (aus `weekLeft`/`week`), dazu Check-in-Countdown bis Wochenende.
+  - Wasserflasche mit Füllstand im Verhältnis zum Wasserziel und +250-ml-Knopf. Die IDs `redfit-add-water` und `redfit-water-total` bleiben.
+  - Karte „Mahlzeiten des Tages“ mit kcal und % vom Ziel.
+  - Trainingsleiste mit den vorhandenen lokalen Übungsvorführungen (`RFExerciseMedia`); nur die vorderste Karte spielt.
+- **Keine Doppelungen:**
+  - Woche, Streak und nächstes Training kommen unverändert aus `buildWidgetSnapshot` (`lib/widgets.js`).
+  - `ProgressBar` und `FreezeFlakes` werden aus `WidgetViews.swift` wiederverwendet, ebenso Verlauf, Übungsdetail und 3D-Coach.
+  - Neu ist nur die Wasserflasche; eine solche Ansicht gab es nicht.
+- **Bridge:**
+  - Neues Snapshot-Feld `home` mit `widget`, `plan`, `exercises` und `latestPhoto`.
+  - Neue Aktion `photoThumb`: verkleinertes neuestes Foto, nur im Speicher.
+  - Neue Route `/progress-photos`.
+- **Behobene Prüfungsfehler:**
+  - `verify-ios-identity.mjs` lehnte die committeten Erweiterungs-IDs (`<appId>.widgets` usw.) als Haupt-ID ab. Er prüft jetzt nur die Haupt-ID; Regressionstest ergänzt.
+  - Der Bridge-Test zur Gekocht-Umrechnung war wegen zufälliger ID-Sortierung wackelig und liest den Eintrag jetzt über seine ID.
+- **Bekannt offen:** `verify-native-tabbar.test.mjs` Fall 8 erwartet eine Startargument-Zeile, die schon vor dieser Änderung fehlte (7/8).
+- **Nachweise (lokal, Mac mit Xcode 27.2, Simulator iOS 27.2 „RED Fit Native QA“):**
+  - Vitest gesamt: **670 Dateien, 8.033/8.033** bestanden. `test:ios-identity-unit`: 13/13. IPA-Verifier-Selbsttest: 7/7.
+  - Simulator- und Gerätebuild (`CODE_SIGNING_ALLOWED=NO`) erfolgreich. Unsignierte IPA mit `verify-unsigned-ipa.py` geprüft: 5 native Bundles, `ch.redurbabat.redfit`, SHA-256 `9a6e19a2…5eafaa`.
+  - XCUITest `testNativeNavigationWaterAndColdRestart` **bestanden**; er war im Lauf vom 15.11. 17 Uhr noch rot.
+  - `testHomeDashboard…` wird vom Simulatorabsturz des Systemdienstes `AppIntentsLiveEntityService` abgebrochen: XPC-Berechtigungsprüfung, kein App-Code im Stack, betrifft die unsignierte App. Die geprüften Wege (Verlauf öffnen und schließen, Mahlzeitenkarte → Ernährung, Wasser +250 ml und dauerhaft gespeichert, Tabwechsel, Übungsleiste mit Vorführung) wurden von Hand im Simulator bestätigt.
+  - `testNativePlanExerciseAndWorkout` schlägt wie schon vorher an derselben Stelle fehl („Satz abschließen“ statt „zurücknehmen“); das ist nicht Teil dieser Änderung.
+  - **Nicht nachgewiesen:** Signierung und Installation auf einem echten iPhone.

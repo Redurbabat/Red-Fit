@@ -185,39 +185,7 @@ private struct RFWorkoutAccessory: View {
     }
 }
 
-private struct RFHomeView: View {
-    @ObservedObject var model: RFAppModel
-    @State private var openWorkout = false
-    var body: some View {
-        List {
-            Section {
-                HStack(spacing: 18) {
-                    Image("REDFitBrand").resizable().scaledToFit().frame(width: 88, height: 88).clipShape(.rect(cornerRadius: 20)).accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 7) { Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide))).font(.subheadline).foregroundStyle(.secondary); Text("Dein Training.\nDein Fortschritt.").font(.title2.weight(.semibold)) }
-                }.padding(.vertical, 10).listRowBackground(Color.clear)
-            }
-            Section("Training") {
-                Button {
-                    if model.hasActive { openWorkout = true; model.perform("route", ["path": "/workout"]) }
-                    else { model.perform("start", ["routineIds": []]) { openWorkout = true } }
-                } label: { Label(model.hasActive ? "Training fortsetzen" : "Freies Training starten", systemImage: "play.fill").font(.headline).frame(minHeight: 44) }.accessibilityIdentifier("redfit-start-workout")
-                ForEach(model.data.records("routines").prefix(3)) { routine in
-                    Button { model.perform("start", ["routineIds": [routine.id]]) { openWorkout = true } } label: { Label(routine.string("name"), systemImage: "list.bullet.clipboard") }.frame(minHeight: 44)
-                }
-                LabeledContent("Abgeschlossene Trainings", value: String(Int(model.data.number("workoutCount"))))
-            }
-            Section("Heute gegessen") {
-                RFMacroSummary(totals: model.data.record("totals"), goal: model.data.record("goal"))
-                Button("Mahlzeit erfassen", systemImage: "plus.circle") { model.selected = "nutrition" }.frame(minHeight: 44)
-            }
-            Section("Wasser") {
-                LabeledContent("Heute", value: "\(Int(model.data.number("waterToday"))) ml").accessibilityIdentifier("redfit-water-total").accessibilityValue(String(Int(model.data.number("waterToday"))))
-                Button("250 ml hinzufügen", systemImage: "drop.fill") { model.perform("water", ["id": UUID().uuidString, "date": model.data.string("date"), "ml": 250]) }.frame(minHeight: 44).accessibilityIdentifier("redfit-add-water")
-            }
-        }.navigationTitle("RED Fit").accessibilityIdentifier("redfit-native-home")
-            .fullScreenCover(isPresented: $openWorkout) { NavigationStack { RFWorkoutView(model: model) } }
-    }
-}
+// The Home tab lives in REDFitHomeView.swift.
 
 private struct RFTrainingView: View {
     @ObservedObject var model: RFAppModel
@@ -280,7 +248,7 @@ private struct RFRoutineEditor: View {
     }
 }
 
-private struct RFWorkoutView: View {
+struct RFWorkoutView: View {
     @ObservedObject var model: RFAppModel
     @Environment(\.dismiss) var dismiss
     @State private var picker = false
@@ -418,7 +386,7 @@ private struct RFExerciseLibrary: View {
     private func row(_ ex: RFRecord) -> some View { VStack(alignment: .leading, spacing: 5) { Text(ex.string("name")).foregroundStyle(.primary); Text(ex.string("equipment") + " · " + ex.string("target")).font(.caption).foregroundStyle(.secondary) }.frame(minHeight: 44) }
 }
 
-private struct RFExerciseDetail: View {
+struct RFExerciseDetail: View {
     @ObservedObject var model: RFAppModel
     let exercise: RFRecord
     var body: some View {
@@ -437,7 +405,7 @@ private struct RFExerciseDetail: View {
     }
 }
 
-private struct RFHistoryView: View {
+struct RFHistoryView: View {
     @ObservedObject var model: RFAppModel
     var body: some View {
         List {
@@ -488,9 +456,11 @@ private struct RFBodyView: View {
 
 private struct RFMoreView: View {
     @ObservedObject var model: RFAppModel
+    @AppStorage("redfit.displayName") private var displayName = ""
     var body: some View {
         List {
             Section { HStack(spacing: 16) { Image("REDFitBrand").resizable().frame(width: 64, height: 64).clipShape(.rect(cornerRadius: 15)); VStack(alignment: .leading, spacing: 5) { Text("RED Fit").font(.title2.weight(.semibold)); Text("Deine Daten bleiben auf deinem Gerät.").font(.caption).foregroundStyle(.secondary) } }.padding(.vertical, 8) }
+            Section("Profil") { TextField("Dein Name für die Begrüßung", text: $displayName).textContentType(.givenName).accessibilityIdentifier("redfit-display-name") }
             Section("Darstellung") {
                 Picker("Design", selection: setting("theme", fallback: "dark")) { Text("Dunkel").tag("dark"); Text("Hell").tag("light"); Text("System").tag("system") }
                 Picker("Einheit", selection: setting("unit", fallback: "kg")) { Text("Kilogramm").tag("kg"); Text("Pfund").tag("lb") }

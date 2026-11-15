@@ -104,6 +104,7 @@
 		B3064454E2F9A27811A4C242 /* OpenGymWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA5E9F9C97F7A2E74CB2B651 /* OpenGymWidgets.swift */; };
 		B5D857666765F7056249610D /* OpenGymWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 1403FD16D254A690DF9225DD /* OpenGymWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B63120DC028BBA02538526E6 /* pt-BR.lproj in Resources */ = {isa = PBXBuildFile; fileRef = C3310FCAE37B2C8F197B589E /* pt-BR.lproj */; };
+		BBEFD2EE7B95564D1ADBD264 /* REDFitHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E613955E7229FC12F0603F8B /* REDFitHomeView.swift */; };
 		BE518D109CF4E30224287EA3 /* bn.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 0BEA0161A30D9E6437FF94DE /* bn.lproj */; };
 		C41C9B0F47F0F500D2FDF0DD /* es.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 385431DA1569EB897C94F252 /* es.lproj */; };
 		C508F4256D4BB3D4260D9510 /* LiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D498620D6FBE15CB5837F74 /* LiveActivityWidget.swift */; };
@@ -377,6 +378,7 @@
 		CC1E8D2A8CD933B57B88203A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		D742B43118678411FFC9AF4F /* it.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = it.lproj; sourceTree = "<group>"; };
 		DA3EFC49E36EFCFA2E761443 /* ru.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ru.lproj; sourceTree = "<group>"; };
+		E613955E7229FC12F0603F8B /* REDFitHomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitHomeView.swift; sourceTree = "<group>"; };
 		EA07B42501F9D3F0A698EAE9 /* pt-PT.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "pt-PT.lproj"; sourceTree = "<group>"; };
 		EE2D152080F790635C1A6201 /* pt-BR.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "pt-BR.lproj"; sourceTree = "<group>"; };
 		EF8C18715ED73655E5857A43 /* ar.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ar.lproj; sourceTree = "<group>"; };
@@ -574,6 +576,7 @@
 				9596E57D57BB4411186C728B /* REDFitNutritionViews.swift */,
 				4F5447FEC680D8F590073C87 /* REDFitRealityCoach.swift */,
 				91B69D547826AA7E29366250 /* redfit-poses.json */,
+				E613955E7229FC12F0603F8B /* REDFitHomeView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -1049,6 +1052,7 @@
 				FFC3A1FE12E00A02F9A26940 /* REDFitNativeApp.swift in Sources */,
 				3C6377EC9DB27AEABB8A7DD3 /* REDFitNutritionViews.swift in Sources */,
 				9EAE07CB878A1A5625D19C91 /* REDFitRealityCoach.swift in Sources */,
+				BBEFD2EE7B95564D1ADBD264 /* REDFitHomeView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

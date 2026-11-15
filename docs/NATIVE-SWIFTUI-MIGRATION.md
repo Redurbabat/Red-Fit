@@ -24,3 +24,14 @@ Ernährung erweitert die bestehenden lokalen Daten additiv um Wasser, Ziele und 
 Dies ist noch keine nachgewiesene vollständige native Funktionsparität: erweiterte Satzvorgaben, Supersätze, Programme, sämtliche Einstellungen und Medien-ZIP-Sicherungen bleiben über die ursprünglichen Werkzeuge erreichbar. Native Texte sind derzeit deutsch; vollständige Übernahme der Sprachwahl, Accessibility-/Abbruchprüfung aller Wege, echte Geräteleistung und signierter iPhone-Test stehen aus. Es liegen keine Messreihen für Startzeit, Speicher oder Bildrate vor.
 
 Der schwarze Außenrahmen des neuen Logos wurde auf ausdrücklichen Wunsch entfernt. `resources/red-fit-gorilla-original.jpg` bleibt als unveränderte Quelle erhalten; `red-fit-gorilla-borderless.png` ist die bearbeitete quadratische Vorlage, `red-fit-master.png` der opake 1024-Pixel-Master. App-, Watch-, Web- und Alternativsymbole werden daraus erzeugt.
+
+## Startseite im Referenz-Stil (15.11.2026)
+
+Die SwiftUI-Startseite „Heute“ ist neu aufgebaut, mit dunklen Karten und Glas nur auf schwebenden Bedienelementen:
+- Begrüßung und Wochenbalken
+- Streak und Verlauf in der System-Toolbar
+- Fortschrittsfoto mit Wochenziel in Prozent
+- Wasserflasche und Mahlzeitenkarte
+- Trainingsleiste mit den vorhandenen Übungsvorführungen
+
+Die fünf System-Tabs bleiben. Die Daten stammen aus dem bestehenden Widget-Snapshot, damit Startseite und Widgets übereinstimmen.

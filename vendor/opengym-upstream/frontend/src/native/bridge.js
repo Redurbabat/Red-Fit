@@ -18,6 +18,10 @@ import { MOBILE } from '../lib/mobile.js'
 import { readBackupFile, storeBackupMedia } from '../lib/backup-media.js'
 import { clipSources } from '../lib/anim-quality.js'
 import { installedBases, getState as packState, readPrefs } from '../lib/anim-packs.js'
+import { buildWidgetSnapshot } from '../lib/widgets.js'
+import { dayPhotosOf } from '../lib/day-photos.js'
+import { workoutMediaOf } from '../lib/media-refs.js'
+import { mediaStore } from '../lib/media-store.js'
 
 const uid = () => crypto.randomUUID()
 const state = () => useStore.getState()
@@ -27,7 +31,7 @@ let nutritionData = { foods: [], entries: [], plans: [] }, extras = { water: [],
 let currentScope = null, revision = 0, publishTimer, preview = null, nutritionLoaded = false
 let refreshPromise = Promise.resolve()
 const navigation = path => {
-  if (!/^\/(home|plan|workout|stats|library|nutrition|settings|history|measurements|photos|muscles|routine|programmes|modules|integrations)(\/[^?#]*)?$/.test(path))
+  if (!/^\/(home|plan|workout|stats|library|nutrition|settings|history|measurements|photos|progress-photos|muscles|routine|programmes|modules|integrations)(\/[^?#]*)?$/.test(path))
     throw new Error('Unbekanntes App-Ziel.')
   if (location.hash !== '#' + path) location.hash = path
 }
@@ -50,6 +54,46 @@ function exerciseRecord(ex) {
     muscles: musclesOf(ex), image: ex.img ? imgSrc(ex, figure) : null, clips: clips.sources, still: clips.still,
     description: ex.desc || '', custom: !!ex.custom, mode: modeOf({ id: ex.id }) }
 }
+/** The newest progress photo (day photos and workout photos, images only), or null. */
+export function latestPhotoOf(S) {
+  let best = null
+  const consider = (d, m) => { if (m?.kind === 'image' && typeof d === 'string' && (!best || d > best.d)) best = { d, hash: m.hash } }
+  for (const p of dayPhotosOf(S)) consider(p.d, p.m)
+  for (const w of Array.isArray(S?.workouts) ? S.workouts : []) for (const m of workoutMediaOf(w)) consider(w?.d, m)
+  return best
+}
+/**
+ * What the native Home shows. Week, streak and the next workout come unchanged from the widget
+ * snapshot (lib/widgets.js) so Home and the widgets never disagree; added are only the exercise
+ * IDs of the next workout (for the existing exercise media) and the newest progress photo.
+ */
+export function homeSummary(S, today) {
+  const widget = buildWidgetSnapshot(S, { today })
+  const all = (S?.routines || []).filter(r => r && (r.ex || []).length)
+  const planned = widget.next?.ids || []
+  // Without a scheduled day, offer the first plan that has exercises (it is not marked as planned).
+  const routines = planned.length ? all.filter(r => planned.includes(r.id)) : all.slice(0, 1)
+  const lines = widget.next?.today ? (widget.days.find(d => d.iso === today)?.exercises || []) : []
+  const exercises = routines.flatMap(r => r.ex || []).slice(0, 8).map((cfg, i) => ({
+    id: String(cfg.id), name: EXIDX[cfg.id] ? exerciseNameFor(EXIDX[cfg.id]) : String(cfg.id),
+    line: lines[i]?.line || [cfg.sets && (cfg.sets + ' ×'), cfg.reps || (cfg.sec && cfg.sec + ' s')].filter(Boolean).join(' ') }))
+  const plan = routines.length ? { ids: routines.map(r => r.id), name: widget.next?.name || routines[0].name || '',
+    planned: planned.length > 0, today: !!widget.next?.today } : null
+  return { widget, plan, exercises, latestPhoto: latestPhotoOf(S) }
+}
+async function photoThumb(hash, edge = 480) {
+  const photo = latestPhotoOf(state().S)
+  if (!photo || photo.hash !== hash) throw new Error('Foto nicht gefunden.')
+  const rec = await mediaStore.get(hash)
+  if (!rec?.blob) return { dataURL: null }
+  const bitmap = await createImageBitmap(rec.blob)
+  const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale)); canvas.height = Math.max(1, Math.round(bitmap.height * scale))
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  bitmap.close?.()
+  return { dataURL: canvas.toDataURL('image/jpeg', 0.82) }
+}
 export function nativeSnapshot() {
   const st = state(), S = st.S, today = localDateKey()
   const describe = entry => ({ ...viewEntry(S, entry), name: EXIDX[entry.id] ? exerciseNameFor(EXIDX[entry.id]) : entry.id,
@@ -67,6 +111,7 @@ export function nativeSnapshot() {
     nutrition: nutritionData, extras, goal, totals: totalsOf(nutritionData.entries.filter(e => e.date === today)),
     waterToday: (extras.water || []).filter(e => e.date === today).reduce((n, e) => n + e.ml, 0),
     shopping: shoppingListOf(nutritionData.plans.filter(p => p.date >= today)),
+    home: homeSummary(S, today),
     toast: useUI.getState().toastMsg || '', hasOriginalSheet: useUI.getState().sheets.length > 0 }
 }
 function publish() {
@@ -113,6 +158,7 @@ export async function executeNativeCommand(action, p) {
     if (!ex) throw new Error('Übung nicht gefunden.')
     return { exercise: exerciseRecord(ex) }
   } else if (action === 'route') { navigation(p.path) }
+  else if (action === 'photoThumb') { return await photoThumb(String(p.hash || '')) }
   else if (action === 'start') {
     if (!state().S.active) beginWorkout(p.routineIds || [], p.bodyweight || null)
     navigation('/workout'); await durable()
@@ -207,7 +253,7 @@ export async function executeNativeCommand(action, p) {
     const training = raw.format === 'redfit-ios' ? raw.training : raw.workouts ? raw : null
     const meals = raw.format === 'redfit-ios' ? raw.nutrition : raw.format === 'redfit-nutrition' ? raw : null
     const extra = raw.format === 'redfit-ios' ? validateExtras(raw.extras) : null
-    if (!training && !meals) throw new Error('Keine unterstützte RED-Fit-/openGym-Sicherung.')
+    if (!training && !meals) throw new Error('Keine unterstützte RED-Fit-Sicherung.')
     if (meals) validateBackup(meals)
     let checked = null
     if (training) checked = await readBackupFile(new File([JSON.stringify(training)], 'backup.json', { type: 'application/json' }))

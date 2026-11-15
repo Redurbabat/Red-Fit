@@ -5,7 +5,7 @@ project_path = File.expand_path('../App/App.xcodeproj', __dir__)
 project = Xcodeproj::Project.open(project_path)
 target = project.targets.find { |t| t.name == 'App' } or abort 'Original App target missing'
 group = project.main_group.find_subpath('App', false) or abort 'Original App group missing'
-%w[REDFitNativeApp.swift REDFitNutritionViews.swift REDFitRealityCoach.swift redfit-poses.json].each do |name|
+%w[REDFitNativeApp.swift REDFitHomeView.swift REDFitNutritionViews.swift REDFitRealityCoach.swift redfit-poses.json].each do |name|
   ref = group.files.find { |f| f.path == name } || group.new_file(name)
   phase = name.end_with?('.swift') ? target.source_build_phase : target.resources_build_phase
   phase.add_file_reference(ref) unless phase.files_references.include?(ref)
