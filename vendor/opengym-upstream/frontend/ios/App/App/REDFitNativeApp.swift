@@ -431,31 +431,7 @@ private struct RFWorkoutSummary: View {
     }
 }
 
-private struct RFBodyView: View {
-    @ObservedObject var model: RFAppModel
-    @State private var weight = ""
-    @State private var selectedMuscle: String?
-    @State private var movement = "squat"
-    var body: some View {
-        List {
-            Section("Dein Körper in 3D") {
-                RFRealityCoach(movement: movement, selectedMuscle: $selectedMuscle).frame(height: 330).listRowInsets(EdgeInsets())
-                Picker("Bewegung", selection: $movement) { Text("Kniebeuge").tag("squat"); Text("Drücken").tag("push"); Text("Ziehen").tag("pull"); Text("Hüftbeuge").tag("hinge"); Text("Schulterdrücken").tag("press"); Text("Bizeps").tag("curl"); Text("Bauch").tag("crunch"); Text("Plank").tag("plank"); Text("Seitheben").tag("raise"); Text("Ausfallschritt").tag("lunges") }
-                Text("Drehen mit einem Finger · Zoomen mit zwei Fingern · Muskel antippen").font(.caption).foregroundStyle(.secondary)
-            }
-            Section("Muskelgruppen") {
-                ForEach(model.data.records("muscles")) { muscle in NavigationLink { RFExerciseLibrary(model: model, muscle: muscle.id) } label: { HStack { Text(muscle.string("name")); Spacer(); if selectedMuscle == muscle.id { Image(systemName: "circle.fill").foregroundStyle(model.accent) } } } }
-            }
-            Section("Körpergewicht") {
-                if !model.data.records("bodyweight").isEmpty {
-                    Chart(Array(model.data.records("bodyweight").suffix(60).enumerated()), id: \.offset) { _, row in LineMark(x: .value("Datum", row.string("d")), y: .value("Gewicht", row.number("w"))) }.frame(height: 160).chartXAxis(.hidden).accessibilityLabel("Gewichtsverlauf")
-                }
-                HStack { TextField("Gewicht in " + model.data.string("unit"), text: $weight).keyboardType(.decimalPad); Button("Speichern") { if let value = Double(weight.replacingOccurrences(of: ",", with: ".")) { model.perform("weight", ["weight": value]) { weight = "" } } else { model.error = "Bitte ein Gewicht eingeben." } }.disabled(model.pending > 0) }
-                Button("Messungen & Fortschrittsfotos") { model.showOriginal("/measurements", title: "Körperwerte") }
-            }
-        }.rfScreen().navigationTitle("Körper")
-    }
-}
+// The Körper tab lives in REDFitBodyView.swift.
 
 private struct RFMoreView: View {
     @ObservedObject var model: RFAppModel

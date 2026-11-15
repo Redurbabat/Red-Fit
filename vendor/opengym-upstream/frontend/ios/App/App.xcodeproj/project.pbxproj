@@ -16,6 +16,7 @@
 		1479FFBE5D0EB2BD8B1C991B /* WidgetState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFD324CCF4599092CA2C1C5 /* WidgetState.swift */; };
 		14AEDD3AFD36C63B74C52C19 /* de.lproj in Resources */ = {isa = PBXBuildFile; fileRef = C4526443745C789E9648AE9E /* de.lproj */; };
 		1711DB6F0AB6EEE22E45A931 /* ru.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 1BA3BC3E83F1397EE12A5DF4 /* ru.lproj */; };
+		1CCCBD3CCAA9E545EA5FFCC6 /* REDFitBodyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E392929A100979F72F98922 /* REDFitBodyView.swift */; };
 		1D97CC2C6E31EA5DE75B7FE9 /* WorkoutActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000007 /* WorkoutActivity.swift */; };
 		234FD24265334F20BEAAE54F /* zh-Hans.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 8A6F8D34BBC718A9AAC61DC4 /* zh-Hans.lproj */; };
 		25253BBA3332D26AF1601C98 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8F2CF5FB6846D196A415C8F4 /* Assets.xcassets */; };
@@ -241,6 +242,7 @@
 		2A6A2EF8007F7D806593F489 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2B588616A1E6EA457075943B /* ar.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ar.lproj; sourceTree = "<group>"; };
 		2CFD324CCF4599092CA2C1C5 /* WidgetState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetState.swift; sourceTree = "<group>"; };
+		2E392929A100979F72F98922 /* REDFitBodyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitBodyView.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		385431DA1569EB897C94F252 /* es.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = es.lproj; sourceTree = "<group>"; };
 		3E973E6CD275A24CE0AA0422 /* AnimationPacksDownloader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnimationPacksDownloader.swift; sourceTree = "<group>"; };
@@ -580,6 +582,7 @@
 				91B69D547826AA7E29366250 /* redfit-poses.json */,
 				E613955E7229FC12F0603F8B /* REDFitHomeView.swift */,
 				A0FC736CECFE9301C89C3162 /* REDFitGarminLink.swift */,
+				2E392929A100979F72F98922 /* REDFitBodyView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -1057,6 +1060,7 @@
 				9EAE07CB878A1A5625D19C91 /* REDFitRealityCoach.swift in Sources */,
 				BBEFD2EE7B95564D1ADBD264 /* REDFitHomeView.swift in Sources */,
 				4A885B196837001DBEF6C9A1 /* REDFitGarminLink.swift in Sources */,
+				1CCCBD3CCAA9E545EA5FFCC6 /* REDFitBodyView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

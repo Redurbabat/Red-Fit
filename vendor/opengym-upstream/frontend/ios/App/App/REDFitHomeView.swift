@@ -162,11 +162,6 @@ private struct RFProgressCard: View {
     @ObservedObject var model: RFAppModel
     let widget: RFRecord
     let photo: RFRecord
-    @State private var image: UIImage?
-    @State private var showLibrary = false
-    @State private var showCamera = false
-    @State private var picked: PhotosPickerItem?
-    @State private var saving = false
 
     private var goal: (done: Int, of: Int)? {
         let left = widget.record("weekLeft")
@@ -178,40 +173,7 @@ private struct RFProgressCard: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            Menu {
-                if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                    Button("Foto aufnehmen", systemImage: "camera") { showCamera = true }
-                }
-                Button("Aus Fotos wählen", systemImage: "photo.on.rectangle") { showLibrary = true }
-                Divider()
-                Button("Alle Fotos & Vergleich", systemImage: "square.split.2x1") { model.showOriginal("/progress-photos", title: "Fortschrittsfotos") }
-            } label: {
-                ZStack(alignment: .bottomLeading) {
-                    if let image { Image(uiImage: image).resizable().scaledToFill().transition(.opacity.combined(with: .scale(scale: 1.04))) }
-                    else {
-                        Image("REDFitBrand").resizable().scaledToFill()
-                    }
-                    Label(image == nil ? "Foto" : RFDates.date(photo.string("d"))?.formatted(.dateTime.day().month(.abbreviated)) ?? "",
-                          systemImage: image == nil ? "plus" : "camera.fill")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 10).padding(.vertical, 6)
-                        .background(.black.opacity(0.5), in: .capsule)
-                        .background(.ultraThinMaterial, in: .capsule)
-                        .padding(10)
-                    if saving {
-                        ProgressView().controlSize(.large).frame(maxWidth: .infinity, maxHeight: .infinity).background(.black.opacity(0.35))
-                            .transition(.opacity)
-                    }
-                }
-                .animation(RFMotion.spring, value: saving)
-                .frame(width: 150, height: 170)
-                .clipShape(.rect(cornerRadius: RFTheme.radius))
-            }
-            .buttonStyle(RFPressStyle())
-            .disabled(saving)
-            .accessibilityLabel(image == nil ? "Fortschrittsfoto hinzufügen" : "Fortschrittsfotos")
-            .accessibilityIdentifier("redfit-progress-photo")
+            RFProgressPhotoTile(model: model, photo: photo).frame(width: 150, height: 170)
 
             VStack(alignment: .leading, spacing: 6) {
                 if let goal {
@@ -236,6 +198,53 @@ private struct RFProgressCard: View {
         }
         .frame(height: 170)
         .background(RFTheme.card, in: .rect(cornerRadius: RFTheme.radius))
+    }
+}
+
+/// The newest progress photo with its menu: take one, pick one, or open all photos and the
+/// existing comparison. Used on Home and in Körper.
+struct RFProgressPhotoTile: View {
+    @ObservedObject var model: RFAppModel
+    let photo: RFRecord
+    @State private var image: UIImage?
+    @State private var showLibrary = false
+    @State private var showCamera = false
+    @State private var picked: PhotosPickerItem?
+    @State private var saving = false
+
+    var body: some View {
+        Menu {
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                Button("Foto aufnehmen", systemImage: "camera") { showCamera = true }
+            }
+            Button("Aus Fotos wählen", systemImage: "photo.on.rectangle") { showLibrary = true }
+            Divider()
+            Button("Alle Fotos & Vergleich", systemImage: "square.split.2x1") { model.showOriginal("/progress-photos", title: "Fortschrittsfotos") }
+        } label: {
+            ZStack(alignment: .bottomLeading) {
+                if let image { Image(uiImage: image).resizable().scaledToFill().transition(.opacity.combined(with: .scale(scale: 1.04))) }
+                else { Image("REDFitBrand").resizable().scaledToFill() }
+                Label(image == nil ? "Foto" : RFDates.date(photo.string("d"))?.formatted(.dateTime.day().month(.abbreviated)) ?? "",
+                      systemImage: image == nil ? "plus" : "camera.fill")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(.black.opacity(0.5), in: .capsule)
+                    .background(.ultraThinMaterial, in: .capsule)
+                    .padding(10)
+                if saving {
+                    ProgressView().controlSize(.large).frame(maxWidth: .infinity, maxHeight: .infinity).background(.black.opacity(0.35))
+                        .transition(.opacity)
+                }
+            }
+            .animation(RFMotion.spring, value: saving)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipShape(.rect(cornerRadius: RFTheme.radius))
+        }
+        .buttonStyle(RFPressStyle())
+        .disabled(saving)
+        .accessibilityLabel(image == nil ? "Fortschrittsfoto hinzufügen" : "Fortschrittsfotos")
+        .accessibilityIdentifier("redfit-progress-photo")
         .task(id: photo.string("hash")) { await loadPhoto() }
         .photosPicker(isPresented: $showLibrary, selection: $picked, matching: .images, preferredItemEncoding: .compatible)
         .onChange(of: picked) { _, item in
