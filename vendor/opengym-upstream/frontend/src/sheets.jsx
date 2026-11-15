@@ -2826,7 +2826,7 @@ export async function exportProgrammeFile(id) {
   const bundle = buildProgrammeBundle(S(), id)
   if (!bundle) return
   const json = JSON.stringify(bundle, null, 2)
-  const name = 'opengym-programme-' + todayISO() + '.json'
+  const name = 'red-fit-programm-' + todayISO() + '.json'
   if (MOBILE) { try { await shareExport(json, name) } catch (e) { /* dismissed */ } return }
   const blob = new Blob([json], { type: 'application/json' })
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href)
@@ -3341,7 +3341,7 @@ function ShareWorkoutImage({ w, close }) {
   const day = workoutDay(w) || todayISO()
   const model = useMemo(() => workoutCardModel(w, { unit: st.unit, nameOf: shareNameOf, warmups, streak: streakInfo(st, day).current }), [w, st.unit, warmups, st.workouts, st.weekStart, day]) // eslint-disable-line react-hooks/exhaustive-deps
   return <ShareCardSheet title={t('Share workout')} close={close} toast={toast}
-    name={'opengym-workout-' + day + '.png'} shareTitle={w.name || 'RED Fit'}
+    name={'red-fit-training-' + day + '.png'} shareTitle={w.name || 'RED Fit'}
     deps={[model, withMap, st.body]}
     render={pref => workoutCardImage(model, { ...pref, map: withMap, body: st.body })}>
     {model.levels && <div className="sect-b" style={{ marginBottom: 12 }}>
