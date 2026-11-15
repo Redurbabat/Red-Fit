@@ -83,7 +83,8 @@ test('system scroll effects observe the retained WKWebView and never create a ne
 })
 
 test('native dock smoke test skips only optional permission explanations behind a test-only launch argument', () => {
-  assert.match(uiTests, /app\.launchArguments = \["-REDFitUITestSkipOnboardingPermissions"\]/)
+  // The smoke test may add its own test-only switches (e.g. -REDFitLegacyUITest for the UIKit dock).
+  assert.match(uiTests, /app\.launchArguments = \["-REDFitUITestSkipOnboardingPermissions"(?:, "-REDFit[A-Za-z]+")*\]/)
   assert.match(swift, /ProcessInfo\.processInfo\.arguments\.contains\("-REDFitUITestSkipOnboardingPermissions"\)/)
   assert.match(swift, /WKUserScript\(source: source, injectionTime: \.atDocumentStart, forMainFrameOnly: true\)/)
   assert.match(swift, /window\.__REDFitUITestSkipOnboardingPermissions = true/)

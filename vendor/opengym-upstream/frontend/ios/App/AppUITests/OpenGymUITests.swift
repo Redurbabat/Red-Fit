@@ -386,6 +386,9 @@ final class REDFitSwiftUIUITests: XCTestCase {
     override func setUp() { continueAfterFailure = false; app.launchArguments = ["-AppleLanguages", "(de)", "-AppleLocale", "de_CH", "-REDFitUITestSkipOnboardingPermissions"] }
     override func record(_ issue: XCTIssue) { print("REDFIT_SWIFTUI_FAILURE " + app.debugDescription); super.record(issue) }
     private func shot(_ name: String) { let item = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); item.name = name; item.lifetime = .keepAlways; add(item) }
+    private func waitForLabel(_ element: XCUIElement, _ label: String, timeout: TimeInterval = 10) -> Bool {
+        XCTWaiter.wait(for: [expectation(for: NSPredicate(format: "label == %@", label), evaluatedWith: element)], timeout: timeout) == .completed
+    }
     private func start() {
         app.launch()
         XCTAssertTrue(app.navigationBars["RED Fit"].waitForExistence(timeout: 45), "native Home never became ready")
@@ -446,16 +449,19 @@ final class REDFitSwiftUIUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Plan trainieren"].firstMatch.waitForExistence(timeout: 10)); app.buttons["Plan trainieren"].firstMatch.tap()
         let checkbox = app.buttons["redfit-set-0-0-both"]
         XCTAssertTrue(checkbox.waitForExistence(timeout: 20), "native workout did not receive original session entries")
+        // A workout still running from an earlier run on this Simulator is resumed: start from an open set.
+        if checkbox.label == "Satz zurücknehmen" { checkbox.tap(); XCTAssertTrue(waitForLabel(checkbox, "Satz abschließen")) }
         let weight = app.textFields["Gewicht Satz 1"]
         XCTAssertTrue(weight.waitForExistence(timeout: 10)); weight.tap()
         let old = weight.value as? String ?? "0"
         weight.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + "60")
         checkbox.tap()
-        XCTAssertEqual(checkbox.label, "Satz zurücknehmen")
+        // The label follows the original core's confirmed state, one bridge round trip later.
+        XCTAssertTrue(waitForLabel(checkbox, "Satz zurücknehmen"), "set not marked done")
         shot("redfit-swiftui-workout")
         app.terminate(); app.launch()
         XCTAssertTrue(app.buttons["redfit-active-workout"].waitForExistence(timeout: 45), "active original workout lost after restart")
         app.buttons["redfit-active-workout"].tap()
-        XCTAssertTrue(checkbox.waitForExistence(timeout: 15)); XCTAssertEqual(checkbox.label, "Satz zurücknehmen")
+        XCTAssertTrue(checkbox.waitForExistence(timeout: 15)); XCTAssertTrue(waitForLabel(checkbox, "Satz zurücknehmen"), "done set lost after restart")
     }
 }
