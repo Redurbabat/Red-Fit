@@ -115,6 +115,12 @@ Garmin page in Settings: the watch app's one setting lives in the Connect IQ app
 Garmin Connect's. If the bridge ever needs a page of its own, it takes `mod: 'watch'` in
 views/settings-pages.js like the Apple Watch and Zepp OS pages.
 
+**RED Fit iPhone (15.11.2026):** Die iPhone-Seite ist als `ios/App/App/REDFitGarminLink.swift` vorbereitet.
+- `WatchBridge.status` meldet `garmin`, `sendSnapshot` gibt `garmin` an die Uhr weiter, und die Ereignisse der Uhr landen in der Warteschlange der Apple Watch.
+- Dazu kommen das URL-Schema `redfit-ciq` und der Knopf „Garmin-Uhr verbinden“ unter Mehr → Uhren.
+- Der Code wird nur mit `ConnectIQ.xcframework` im App-Target aktiv (`#if canImport(ConnectIQ)`); ohne das SDK baut die App unverändert.
+- Gegen das echte SDK ist der Code noch nicht kompiliert. Dafür muss der Eigentümer das SDK nach Annahme der Garmin-Lizenz herunterladen.
+
 **The native half (to do):**
 
 1. **Android** (`android/app`, play flavour first): the Connect IQ Mobile SDK

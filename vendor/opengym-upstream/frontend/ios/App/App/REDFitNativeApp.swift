@@ -467,7 +467,20 @@ private struct RFMoreView: View {
                 Picker("Trainingsansicht", selection: setting("workoutView", fallback: "cards")) { Text("Karten").tag("cards"); Text("Liste").tag("list"); Text("Kompakt").tag("compact") }
                 Toggle("Trainingsklänge", isOn: Binding(get: { model.data.bool("sound") }, set: { model.perform("settings", ["key": "sound", "value": $0]) }))
             }
-            Section("Daten") { NavigationLink { RFBackupView(model: model) } label: { Label("Backup & Datenübernahme", systemImage: "externaldrive") }; NavigationLink { RFGoalsView(model: model) } label: { Label("Ernährungsziele", systemImage: "target") } }
+            // Nutrition goals live in the Ernährung tab only; one place per setting.
+            Section("Daten") { NavigationLink { RFBackupView(model: model) } label: { Label("Backup & Datenübernahme", systemImage: "externaldrive") } }
+            Section {
+                if RFGarminLink.available {
+                    Button("Garmin-Uhr verbinden", systemImage: "applewatch.radiowaves.left.and.right") { RFGarminLink.shared.chooseDevices() }
+                        .accessibilityIdentifier("redfit-garmin-connect")
+                } else {
+                    Label("Garmin-Uhr", systemImage: "applewatch.radiowaves.left.and.right").foregroundStyle(.secondary)
+                }
+            } header: { Text("Uhren") } footer: {
+                Text(RFGarminLink.available
+                     ? "Wählt deine Garmin-Uhr in Garmin Connect aus. Training und Sätze laufen dann zwischen Uhr und iPhone; die RED-Fit-App muss auf der Uhr installiert sein."
+                     : "Die Garmin-Verbindung braucht Garmins Connect-IQ-SDK in diesem Build. Die Apple Watch funktioniert unabhängig davon.")
+            }
             Section("Bestehende Werkzeuge") { Button("Alle Einstellungen & Integrationen", systemImage: "gearshape") { model.showOriginal("/settings", title: "Einstellungen") } }
             Section { Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") · Build \(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "")").font(.caption).foregroundStyle(.secondary) }
         }.navigationTitle("Mehr")

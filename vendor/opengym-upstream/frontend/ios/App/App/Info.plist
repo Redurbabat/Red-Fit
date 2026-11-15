@@ -29,6 +29,20 @@
 				<string>opengym</string>
 			</array>
 		</dict>
+		<!-- Garmin Connect returns the chosen Garmin watches here (REDFitGarminLink.swift, docs/GARMIN.md). -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>ch.redurbabat.redfit.garmin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>redfit-ciq</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Opening Garmin Connect for the watch choice (Connect IQ Mobile SDK). -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>gcm-ciq</string>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>

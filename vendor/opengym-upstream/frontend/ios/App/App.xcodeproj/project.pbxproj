@@ -31,6 +31,7 @@
 		3C6377EC9DB27AEABB8A7DD3 /* REDFitNutritionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9596E57D57BB4411186C728B /* REDFitNutritionViews.swift */; };
 		44AD6FA65A6D4F6BC251A696 /* zh-Hans.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 41CDBA9C2749FCA6A57C70B1 /* zh-Hans.lproj */; };
 		4A305262303250E818A00EE0 /* ru.lproj in Resources */ = {isa = PBXBuildFile; fileRef = DA3EFC49E36EFCFA2E761443 /* ru.lproj */; };
+		4A885B196837001DBEF6C9A1 /* REDFitGarminLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0FC736CECFE9301C89C3162 /* REDFitGarminLink.swift */; };
 		4B6E916D7716FA123E9CA83D /* hi.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 856788372576C7CFEDF934A9 /* hi.lproj */; };
 		4E4B03C9AFE880D617812060 /* redfit-poses.json in Resources */ = {isa = PBXBuildFile; fileRef = 91B69D547826AA7E29366250 /* redfit-poses.json */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
@@ -291,6 +292,7 @@
 		969DC74017A5AA286CA71DD6 /* OpenGymWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = OpenGymWidgets.entitlements; sourceTree = "<group>"; };
 		97D022FBCB7644D5E94F2817 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A0156564863B3CF758DFD631 /* uk.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = uk.lproj; sourceTree = "<group>"; };
+		A0FC736CECFE9301C89C3162 /* REDFitGarminLink.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitGarminLink.swift; sourceTree = "<group>"; };
 		A1165734F5E18314B11F164F /* pt-PT.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "pt-PT.lproj"; sourceTree = "<group>"; };
 		A2211333D5D9C1A02655E51E /* ko.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ko.lproj; sourceTree = "<group>"; };
 		A53D9D21DA44FEC36D7BE832 /* AnimationPacksDownloader.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = AnimationPacksDownloader.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -577,6 +579,7 @@
 				4F5447FEC680D8F590073C87 /* REDFitRealityCoach.swift */,
 				91B69D547826AA7E29366250 /* redfit-poses.json */,
 				E613955E7229FC12F0603F8B /* REDFitHomeView.swift */,
+				A0FC736CECFE9301C89C3162 /* REDFitGarminLink.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -1053,6 +1056,7 @@
 				3C6377EC9DB27AEABB8A7DD3 /* REDFitNutritionViews.swift in Sources */,
 				9EAE07CB878A1A5625D19C91 /* REDFitRealityCoach.swift in Sources */,
 				BBEFD2EE7B95564D1ADBD264 /* REDFitHomeView.swift in Sources */,
+				4A885B196837001DBEF6C9A1 /* REDFitGarminLink.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
