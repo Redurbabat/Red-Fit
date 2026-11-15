@@ -329,3 +329,31 @@ Nächster konkreter Schritt:
   - `testHomeDashboard…` wird vom Simulatorabsturz des Systemdienstes `AppIntentsLiveEntityService` abgebrochen: XPC-Berechtigungsprüfung, kein App-Code im Stack, betrifft die unsignierte App. Die geprüften Wege (Verlauf öffnen und schließen, Mahlzeitenkarte → Ernährung, Wasser +250 ml und dauerhaft gespeichert, Tabwechsel, Übungsleiste mit Vorführung) wurden von Hand im Simulator bestätigt.
   - `testNativePlanExerciseAndWorkout` schlägt wie schon vorher an derselben Stelle fehl („Satz abschließen“ statt „zurücknehmen“); das ist nicht Teil dieser Änderung.
   - **Nicht nachgewiesen:** Signierung und Installation auf einem echten iPhone.
+
+## 2026-11-15 (Abend) — Grün, Animationen, Garmin-iPhone-Seite, Fotos, Wasser, Tests
+
+- **Farbe:**
+  - Standardakzent ist `lime` (#30d158); ein gespeichertes `red` der Bordeaux-Zeit wird ohne Umschreiben grün gezeichnet.
+  - Rot ist nicht mehr wählbar.
+- **Startseite:**
+  - Gestaffelter Einstieg und Zoom-Übergänge (Training, Übungsdetail).
+  - Scroll-Übergang der Übungsleiste, Druckrückmeldung, Symbol-Effekte; „Bewegung reduzieren“ wird beachtet.
+  - Alle nativen Tabs teilen Hintergrund und Kartenfarbe der Startseite (`rfScreen()`).
+- **Fortschrittsfotos nativ:**
+  - Kamera und Fotomediathek über die Bridge-Aktion `addPhoto`. Sie nutzt `ingestMediaFile`, den lokalen Medienspeicher und `fileProgressPhoto`.
+  - Der Vergleich bleibt der vorhandene der Originalansicht.
+- **Wasser:**
+  - Langes Drücken bietet 150/330/500/750 ml; „Rückgängig“ für den letzten Eintrag über die neue Aktion `removeWater`, die nur diese ID löscht.
+  - Ein älteres Backup kann einen entfernten Eintrag beim Import wieder zusammenführen.
+- **Backup:** Der Begrüßungsname steht optional als `profile.displayName` im `redfit-ios`-Backup und wird beim Import angeboten.
+- **Garmin:** Die iPhone-Seite steht in `REDFitGarminLink.swift`. Aktiv wird sie erst mit `ConnectIQ.xcframework`, das der Eigentümer nach Annahme der Garmin-Lizenz besorgen muss.
+- **Tests repariert:**
+  - `verify-native-tabbar` Fall 8 erlaubt zusätzliche Test-Startargumente (8/8).
+  - Der Plan-XCUITest wartet auf den bestätigten Satzstatus und setzt einen alten Simulatorzustand zurück.
+  - Ein doppeltes Speichern beim Abhaken mit offener Tastatur ist behoben.
+- **Start:** Ein normaler Start dauert im Simulator 6–10 s (JS-Kern ~6 s). Die ~1 min trat nur beim ersten Start nach der Installation auf.
+- **Größe:** Das IPA besteht zu ~215 MB aus den offline mitgelieferten Übungsanimationen (6.554 MP4 + WebP); ohne Verlust nicht kleiner. Der Release-Build ist ~10 MB kleiner und optimiert.
+- **Nachweise:**
+  - Vitest **670 Dateien, 8.039/8.039**.
+  - Simulator-Build sowie Debug- und Release-Gerätebuild erfolgreich; Release-IPA mit `verify-unsigned-ipa.py` geprüft.
+  - Nicht nachgewiesen: Garmin gegen das echte SDK, signierte Installation auf dem iPhone.
