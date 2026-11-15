@@ -33,8 +33,7 @@ func drawAsset(to path: URL, size: Int, imageSize: CGFloat) throws {
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current = context
     context.imageInterpolation = .high
-    NSColor(calibratedRed: 64.0 / 255.0, green: 11.0 / 255.0,
-            blue: 27.0 / 255.0, alpha: 1.0).setFill()
+    NSColor(calibratedRed: 0, green: 0, blue: 0, alpha: 1.0).setFill()
     NSRect(x: 0, y: 0, width: size, height: size).fill()
     let offset = (CGFloat(size) - imageSize) / 2
     icon.draw(in: NSRect(x: offset, y: offset, width: imageSize, height: imageSize),

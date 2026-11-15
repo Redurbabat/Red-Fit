@@ -309,7 +309,7 @@ function Shell() {
   // A friend's routine link (components/RoutineShare.jsx): the same wait for the setup.
   useRoutineLinks(setupDone)
   useEffect(() => {
-    if (!setupDone || tourAsked.current) return
+    if (!setupDone || tourAsked.current || window.__REDFitSwiftUI) return
     const tm = setTimeout(() => {
       const st = useStore.getState()
       if (tourAsked.current || tourState() || st.S.active || useUI.getState().sheets.length || /^#\/workout/.test(window.location.hash || '')) return

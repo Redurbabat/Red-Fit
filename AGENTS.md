@@ -1,5 +1,7 @@
 # RED Fit — agent entry point
 
+> **Owner instruction 15.11.2026:** Implement the approved incremental native SwiftUI iPhone plan, keeping the original shared JavaScript training/nutrition logic and one Capacitor runtime. The user-supplied green/black/white gorilla replaces the Bordeaux/ivory brand. Preserve existing animations and data; build a locally downloadable unsigned IPA. See `docs/NATIVE-SWIFTUI-MIGRATION.md`. No main merge, visibility/billing changes, or old-app uninstall.
+
 > **Owner cost/privacy constraint 11.11.2026:** Do not change budget, payment or spending settings to permit charges. Do not change repository visibility. iOS excludes ML Kit/Google scanner telemetry and uses the existing local QR/1D reader; preserve the post-sync dependency guard. A public CI run may export an IPA only encrypted to the owner's public recipient key; private key and decrypted IPA stay local. See `docs/LOCAL-ONLY-IOS.md`.
 
 > **Owner instruction 10.11.2026:** Continue integration in PR #17; iPhone/iOS first, genuine Apple dock, local app data with no third-party services. Read [skills/red-fit-ios/SKILL.md](skills/red-fit-ios/SKILL.md) and [docs/LOCAL-ONLY-IOS.md](docs/LOCAL-ONLY-IOS.md). RED Morph and RED Bit supply relevant design, accessibility and native testing ideas; do not copy unrelated audio/streaming features. Do not re-enable tracking, server sync or external AI through build settings or old credentials.

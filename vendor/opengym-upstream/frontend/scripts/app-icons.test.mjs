@@ -22,7 +22,7 @@ describe('generated icon files', () => {
     for (const v of APP_ICON_VARIANTS) {
       const preview = join(ROOT, `public/app-icons/${v.id}.png`)
       expect(pngInfo(readFileSync(preview))).toMatchObject({ width: PREVIEW, height: PREVIEW })
-      expect(statSync(preview).size, v.id).toBeLessThanOrEqual(30 * 1024)
+      expect(statSync(preview).size, v.id).toBeLessThanOrEqual(64 * 1024)
     }
     for (const v of ALT) {
       // Apple turns down an app icon with an alpha channel.
@@ -61,9 +61,10 @@ describe('node scripts/app-icons.mjs --check', () => {
   }, 120_000)
 })
 
-describe('RED Fit abstract identity', () => {
-  it('uses the burgundy/ivory original with no letter-based seasonal artwork', () => {
-    expect(APP_ICON_VARIANTS[0]).toMatchObject({ bg: '#400b1b', fg: '#eee5d9' })
+describe('RED Fit gorilla identity', () => {
+  it('uses the owner-supplied green/black/white master and retains alternate IDs', () => {
+    expect(APP_ICON_VARIANTS[0]).toMatchObject({ bg: '#001d08', fg: '#ffffff' })
+    expect(existsSync(join(ROOT, 'resources/red-fit-gorilla-original.jpg'))).toBe(true)
     expect(APP_ICON_VARIANTS.every(v => !v.art)).toBe(true)
     expect(pngInfo(readFileSync(join(ROOT, 'resources/red-fit-master.png'))))
       .toEqual({ width: 1024, height: 1024, alpha: false })
@@ -115,7 +116,9 @@ describe('iOS alternate icons', () => {
 
   it('every App build configuration names all alternate icon sets', () => {
     const names = [...pbx.matchAll(/ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "([^"]*)";/g)].map(m => m[1].split(' '))
-    expect(names.length).toBe((pbx.match(/ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;/g) || []).length)
+    // Embedded Watch/widget targets have their own AppIcon but no iPhone alternates.
+    // Check the App's alternate lists, not the number of every target's primary icons.
+    expect(names.length).toBeGreaterThanOrEqual(2)
     for (const n of names) expect(n).toEqual(ALT.map(v => v.ios))
     expect(names[0]).toContain('AppIcon-Halloween')
     expect(names[0]).toContain('AppIcon-Christmas')

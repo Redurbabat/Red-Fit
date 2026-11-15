@@ -82,11 +82,19 @@ export function validateEntry(raw) {
   if (!foodName || foodName.length > 120) throw new Error('Lebensmittelname fehlt.')
   const grams = number(raw.grams, 'Menge', 100000)
   if (grams === 0) throw new Error('Menge muss grösser als 0 sein.')
+  let cooked = null
+  if (raw.weighedAs === 'cooked') {
+    const weighedAmountG = number(raw.weighedAmountG, 'Gekochte Menge', 100000)
+    const factor = number(raw.cookingYieldFactor, 'Umrechnungsfaktor', 10)
+    if (weighedAmountG <= 0 || factor < 0.1 || Math.abs(grams - weighedAmountG / factor) > Math.max(1e-7, grams * 1e-10))
+      throw new Error('Gekochte Menge und Rohmenge stimmen nicht überein.')
+    cooked = { weighedAs: 'cooked', weighedAmountG, cookingYieldFactor: factor }
+  } else if (raw.weighedAmountG !== undefined || raw.cookingYieldFactor !== undefined) throw new Error('Umrechnungsdaten ohne gekochtes Gewicht.')
   return { id: raw.id, date: raw.date, mealType: raw.mealType, foodName, grams,
     kcal: number(raw.kcal, 'Kalorien', 1000000),
     protein: number(raw.protein, 'Protein', 100000),
     carbs: number(raw.carbs, 'Kohlenhydrate', 100000),
-    fat: number(raw.fat, 'Fett', 100000) }
+    fat: number(raw.fat, 'Fett', 100000), ...(cooked || {}) }
 }
 export function makeMealEntry(food, grams, mealType, date, id) {
   const f = validateFood(food)

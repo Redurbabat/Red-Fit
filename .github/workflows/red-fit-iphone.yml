@@ -141,6 +141,7 @@ jobs:
             -resultBundlePath ios/App/build/native-dock.xcresult \
             -parallel-testing-enabled NO \
             -only-testing:AppUITests/OpenGymUITests/test0REDFitNativeTabBarKeepsOriginalNavigation \
+            -only-testing:AppUITests/REDFitSwiftUIUITests \
             CODE_SIGNING_ALLOWED=NO test | tee ios/App/build/native-dock-smoke.log
 
       - name: Export only the synthetic native dock crop

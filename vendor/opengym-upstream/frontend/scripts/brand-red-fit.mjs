@@ -15,7 +15,7 @@ function splash(rel, width, height) {
   const side = Math.round(Math.min(width, height) * .32)
   const mark = resizeRgba(master, side)
   const out = Buffer.alloc(width * height * 3)
-  for (let i = 0; i < out.length; i += 3) { out[i] = 64; out[i + 1] = 11; out[i + 2] = 27 }
+  for (let i = 0; i < out.length; i += 3) { out[i] = 0; out[i + 1] = 0; out[i + 2] = 0 }
   const ox = Math.floor((width - side) / 2), oy = Math.floor((height - side) / 2)
   for (let y = 0; y < side; y++) for (let x = 0; x < side; x++) {
     const i = (y * side + x) * 4, o = ((y + oy) * width + x + ox) * 3
@@ -54,7 +54,7 @@ let minX = grid, minY = grid, maxX = 0, maxY = 0
 for (let y = 0; y < grid; y++) {
   let start = -1
   for (let x = 0; x <= grid; x++) {
-    const lit = x < grid && small[(y * grid + x) * 4 + 1] > 80
+    const lit = x < grid && small[(y * grid + x) * 4] > 100 && small[(y * grid + x) * 4 + 2] > 100
     if (lit && start < 0) start = x
     if (!lit && start >= 0) {
       spans.push([start, y, x - start]); minX = Math.min(minX, start); minY = Math.min(minY, y)

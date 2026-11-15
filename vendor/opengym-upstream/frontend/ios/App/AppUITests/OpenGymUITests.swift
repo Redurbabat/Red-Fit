@@ -199,7 +199,7 @@ final class OpenGymUITests: XCTestCase {
         // authorization sheet. The app's narrowly scoped test launch argument
         // marks only the onboarding explanations as seen; OS permissions are
         // never granted or bypassed.
-        app.launchArguments = ["-REDFitUITestSkipOnboardingPermissions"]
+        app.launchArguments = ["-REDFitUITestSkipOnboardingPermissions", "-REDFitLegacyUITest"]
         app.launch()
         chooseLocal()
         // The first-run tour is a real modal, so finish its invitation before
@@ -376,5 +376,68 @@ final class OpenGymUITests: XCTestCase {
         XCTAssertTrue(save.waitForExistence(timeout: 5), "no Save button")
         let keyboardTop = app.keyboards.firstMatch.frame.minY
         XCTAssertLessThanOrEqual(save.frame.maxY, keyboardTop + 1, "Save sits under the keyboard")
+    }
+}
+
+// Runs against the real SwiftUI surface and its original local JavaScript core.
+// Use a dedicated synthetic Simulator; never seed or clear an owner's installation.
+final class REDFitSwiftUIUITests: XCTestCase {
+    let app = XCUIApplication()
+    override func setUp() { continueAfterFailure = false; app.launchArguments = ["-AppleLanguages", "(de)", "-AppleLocale", "de_CH", "-REDFitUITestSkipOnboardingPermissions"] }
+    override func record(_ issue: XCTIssue) { print("REDFIT_SWIFTUI_FAILURE " + app.debugDescription); super.record(issue) }
+    private func shot(_ name: String) { let item = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); item.name = name; item.lifetime = .keepAlways; add(item) }
+    private func start() {
+        app.launch()
+        XCTAssertTrue(app.navigationBars["RED Fit"].waitForExistence(timeout: 45), "native Home never became ready")
+        XCTAssertEqual(app.tabBars.count, 1)
+    }
+    func testNativeNavigationWaterAndColdRestart() {
+        start()
+        shot("redfit-swiftui-home")
+        for (tab, title) in [("Training", "Training"), ("Ernährung", "Ernährung"), ("Körper", "Körper"), ("Mehr", "Mehr")] {
+            app.tabBars.buttons[tab].tap()
+            XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 10))
+            shot("redfit-swiftui-" + title)
+        }
+        app.tabBars.buttons["Heute"].tap()
+        let water = app.buttons["redfit-add-water"]
+        if !water.isHittable { app.swipeUp() }
+        let total = app.staticTexts["redfit-water-total"]
+        XCTAssertTrue(total.waitForExistence(timeout: 10))
+        let expected = String((Int(total.value as? String ?? "0") ?? 0) + 250)
+        XCTAssertTrue(water.waitForExistence(timeout: 10)); water.tap()
+        XCTAssertTrue(NSPredicate(format: "value == %@", expected).evaluate(with: total) || XCTWaiter.wait(for: [expectation(for: NSPredicate(format: "value == %@", expected), evaluatedWith: total)], timeout: 10) == .completed)
+        app.terminate(); start()
+        if !total.isHittable { app.swipeUp() }
+        XCTAssertTrue(total.waitForExistence(timeout: 10), "water total missing after cold restart")
+        XCTAssertEqual(total.value as? String, expected, "durable water entry lost after cold restart")
+    }
+    func testNativePlanExerciseAndWorkout() {
+        start()
+        app.tabBars.buttons["Training"].tap()
+        let create = app.buttons["Plan erstellen"]
+        XCTAssertTrue(create.waitForExistence(timeout: 10)); create.tap()
+        let name = app.textFields["redfit-plan-name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 10)); name.tap(); name.typeText("QA Oberkörper")
+        app.buttons["Übung hinzufügen"].tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 10)); search.tap(); search.typeText("bench press")
+        let result = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "redfit-exercise-")).firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 15)); result.tap()
+        app.buttons["redfit-save-plan"].tap()
+        XCTAssertTrue(app.buttons["Plan trainieren"].firstMatch.waitForExistence(timeout: 10)); app.buttons["Plan trainieren"].firstMatch.tap()
+        let checkbox = app.buttons["redfit-set-0-0-both"]
+        XCTAssertTrue(checkbox.waitForExistence(timeout: 20), "native workout did not receive original session entries")
+        let weight = app.textFields["Gewicht Satz 1"]
+        XCTAssertTrue(weight.waitForExistence(timeout: 10)); weight.tap()
+        let old = weight.value as? String ?? "0"
+        weight.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + "60")
+        checkbox.tap()
+        XCTAssertEqual(checkbox.label, "Satz zurücknehmen")
+        shot("redfit-swiftui-workout")
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["redfit-active-workout"].waitForExistence(timeout: 45), "active original workout lost after restart")
+        app.buttons["redfit-active-workout"].tap()
+        XCTAssertTrue(checkbox.waitForExistence(timeout: 15)); XCTAssertEqual(checkbox.label, "Satz zurücknehmen")
     }
 }

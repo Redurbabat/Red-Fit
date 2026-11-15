@@ -18,7 +18,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
            let bridge = window?.rootViewController as? MainViewController {
             // Retain the original storyboard bridge; UIKit owns the visible tab
             // container outside WKWebView. Never instantiate a second bridge.
-            window?.rootViewController = REDFitNativeTabController(bridge: bridge)
+            if ProcessInfo.processInfo.arguments.contains("-REDFitLegacyUITest") {
+                window?.rootViewController = REDFitNativeTabController(bridge: bridge)
+            } else {
+                window?.rootViewController = RFNativeHostController(bridge: bridge)
+            }
         }
         if let url = connectionOptions.urlContexts.first?.url {
             _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: url, options: [:])

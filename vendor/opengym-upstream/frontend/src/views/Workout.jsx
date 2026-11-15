@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useId, useRef, useState } from 'react'
+import { bindNativeWorkoutActions } from '../lib/native-workout-actions.js'
 import SwipeCards from '../components/SwipeCards.jsx'
 import SwipeRow from '../components/SwipeRow.jsx'
 import { useNavigate } from 'react-router-dom'
@@ -2149,6 +2150,23 @@ function ActiveWorkout() {
   // end-of-workout sheet). A row already ticked only takes the numbers.
   const toggleRef = useRef(toggle)
   toggleRef.current = toggle
+  const nativeActions = useRef(null)
+  nativeActions.current = {
+    workoutId: () => useStore.getState().S.active?.id,
+    toggle: ({ entry, set, side }) => checkedToggle(entry, set, side || undefined),
+    patch: ({ entry, set, field, value, side }) => mutEntry(entry, en => {
+      if (!en.sets[set]) throw new Error('Satz nicht mehr vorhanden.')
+      if (side) en.sets[set] = setSideField(en.sets[set], side, field, value)
+      else en.sets[set][field] = value
+    }),
+    addSet: ({ entry }) => addSet(entry),
+    removeSet: ({ entry, set }) => removeSetAt(entry, set),
+    note: ({ text }) => update(s => { if (s.active) s.active.note = String(text || '').slice(0, 500) }),
+  }
+  useEffect(() => bindNativeWorkoutActions({
+    workoutId: () => nativeActions.current.workoutId(),
+    ...Object.fromEntries(['toggle', 'patch', 'addSet', 'removeSet', 'note'].map(key => [key, p => nativeActions.current[key](p)])),
+  }), [])
   // The time is the watch's: the phone may hear of the set much later (lib/finish-workout.js
   // sessionEnd reads the sets' times). The watch's Finish runs the phone's Finish and save.
   useEffect(() => bindWatchActions({

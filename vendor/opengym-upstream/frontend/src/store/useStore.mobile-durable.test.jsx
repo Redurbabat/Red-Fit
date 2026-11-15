@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const h = vi.hoisted(() => {
   vi.stubEnv('VITE_MOBILE', '1')
-  return { files: new Map() }
+  return { files: new Map(), failWrite: false, failRename: false }
 })
 vi.mock('@capacitor/filesystem', () => ({
   Directory: { Data: 'DATA', Documents: 'DOCUMENTS', Cache: 'CACHE' },
@@ -20,8 +20,8 @@ vi.mock('@capacitor/filesystem', () => ({
       if (!h.files.has(k)) throw new Error('File does not exist')
       return { data: h.files.get(k) }
     },
-    writeFile: async ({ path, directory, data }) => { h.files.set(directory + '/' + path, data); return { uri: 'file://' + path } },
-    rename: async ({ from, to, directory }) => { h.files.set(directory + '/' + to, h.files.get(directory + '/' + from)); h.files.delete(directory + '/' + from) },
+    writeFile: async ({ path, directory, data }) => { if (h.failWrite) throw new Error('Disk full'); h.files.set(directory + '/' + path, data); return { uri: 'file://' + path } },
+    rename: async ({ from, to, directory }) => { if (h.failRename) throw new Error('Rename interrupted'); h.files.set(directory + '/' + to, h.files.get(directory + '/' + from)); h.files.delete(directory + '/' + from) },
   },
 }))
 vi.mock('@capacitor/local-notifications', () => ({
@@ -48,6 +48,7 @@ async function localPhone() {
   const S = { ...JSON.parse(JSON.stringify(DEF)), _ts: 5000, workouts: [workout('w1'), workout('w2')],
     active: { id: 'run', d: '2026-10-14', start: 4000, cur: 0, entries: [{ id: '0025', target: { mode: 'reps' }, sets: [{ w: 60, r: 8, done: false }, { w: 60, r: 8, done: false }] }] } }
   h.files.clear()
+  h.failWrite = h.failRename = false
   localStorage.clear()
   h.files.set('DATA/opengym-remote.json', JSON.stringify({ mode: 'local' }))
   h.files.set('DATA/opengym-state.json', JSON.stringify(S))
@@ -119,5 +120,31 @@ describe('a phone with no server', { timeout: 30000 }, () => {
     document.dispatchEvent(new Event('pause'))
     await tick()
     expect(readFile('opengym-state.json').restSec).toBe(80)
+  })
+
+  it('strict native acknowledgement rejects a failed durable write and can retry without replaying a set action', async () => {
+    await localPhone()
+    const store = await freshStore(); await store.getState().boot()
+    const before = readFile('opengym-state.json')
+    store.getState().update(s => { s.restSec = 121 })
+    h.failWrite = true
+    await expect(store.getState().saveNow({ strict: true })).rejects.toThrow('dauerhaft')
+    expect(readFile('opengym-state.json')).toEqual(before)
+    h.failWrite = false
+    await store.getState().saveNow({ strict: true })
+    expect(readFile('opengym-state.json').restSec).toBe(121)
+  })
+
+  it('strict rename failure retains the prior main file and a complete recoverable next copy', async () => {
+    await localPhone()
+    const store = await freshStore(); await store.getState().boot()
+    const before = readFile('opengym-state.json')
+    store.getState().update(s => { s.restSec = 122 })
+    h.failRename = true
+    await expect(store.getState().saveNow({ strict: true })).rejects.toThrow('dauerhaft')
+    expect(readFile('opengym-state.json')).toEqual(before)
+    expect(readFile('opengym-state.next.json').restSec).toBe(122)
+    h.failRename = false
+    await store.getState().saveNow({ strict: true })
   })
 })

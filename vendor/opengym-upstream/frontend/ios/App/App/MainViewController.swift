@@ -14,6 +14,8 @@ enum REDFitPrivacy {
  * that live in the app itself are registered here, or the page finds none of them.
  */
 class MainViewController: CAPBridgeViewController {
+    let nativeAppModel = RFAppModel()
+    private lazy var nativeAppHandler = RFAppMessageHandler(nativeAppModel)
     /// The downloaded animation packs, read through Background Assets (AnimationPacksPlugin.swift).
     private let packFiles = AnimationPackSchemeHandler()
     private let redFitDockModel = REDFitDockState()
@@ -64,6 +66,13 @@ class MainViewController: CAPBridgeViewController {
     }
 
     override open func webView(with frame: CGRect, configuration: WKWebViewConfiguration) -> WKWebView {
+        nativeAppModel.bridge = self
+        configuration.userContentController.add(nativeAppHandler, name: "redFitApp")
+        if !ProcessInfo.processInfo.arguments.contains("-REDFitLegacyUITest") {
+            configuration.userContentController.addUserScript(WKUserScript(
+                source: "window.__REDFitSwiftUI = true;",
+                injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
         // Capacitor replaces config.userContentController AFTER webViewConfiguration.
         // Install on its final controller here, before the original WKWebView loads.
         // Otherwise both the dock channel and the test-only startup script are lost.
