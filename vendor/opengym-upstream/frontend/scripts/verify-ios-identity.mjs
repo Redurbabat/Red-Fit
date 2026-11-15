@@ -31,8 +31,11 @@ const downloaderEntitlements = read('ios/App/AnimationPacksDownloader/AnimationP
 
 assert.equal(capacitor.appName, 'RED Fit', 'Capacitor brand should be RED Fit')
 const ids = parseProjectBundleIds(project)
-assert.ok(ids.length > 0, 'Xcode main target must declare a bundle identifier')
-assert.ok(ids.every((id) => id === capacitor.appId), 'Capacitor appId must match Xcode main target bundle ID')
+// Embedded targets (widgets, Watch, downloader, UI tests) carry `<appId>.<suffix>`; their exact
+// IDs are checked below against the scripts that add them. Every other ID is the main app's.
+const mainIds = ids.filter((id) => !id.startsWith(capacitor.appId + '.'))
+assert.ok(mainIds.length > 0, 'Xcode main target must declare a bundle identifier')
+assert.ok(mainIds.every((id) => id === capacitor.appId), 'Capacitor appId must match Xcode main target bundle ID')
 assert.equal(capacitor.appId, 'ch.redurbabat.redfit', 'RED Fit bundle ID must be ch.redurbabat.redfit')
 for (const [name, plist] of [['app', app], ['widget', widget], ['watch', watch], ['watch widgets', watchWidget]]) {
   assert.equal(plistString(plist, 'CFBundleDisplayName'), 'RED Fit', name + ' display name')

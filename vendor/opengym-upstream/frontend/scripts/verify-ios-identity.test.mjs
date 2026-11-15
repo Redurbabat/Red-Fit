@@ -82,6 +82,15 @@ test('mismatched Capacitor app ID is rejected before iPhone build', () => {
     assert.throws(() => verifyIOSIdentity(root), /must match Xcode main target bundle ID/)
   })
 })
+test('embedded target IDs in the committed Xcode project do not fail the main target check', () => {
+  withFixture(({ root, write }) => {
+    write('ios/App/App.xcodeproj/project.pbxproj', ['', '.widgets', '.watchkitapp', '.watchkitapp.widgets', '.AnimationPacksDownloader', '.uitests']
+      .map((suffix) => 'PRODUCT_BUNDLE_IDENTIFIER = ' + xcodeID + suffix + ';').join('\n'))
+    assert.match(verifyIOSIdentity(root), /identity OK/)
+    write('ios/App/App.xcodeproj/project.pbxproj', 'PRODUCT_BUNDLE_IDENTIFIER = ch.opengym.app;\nPRODUCT_BUNDLE_IDENTIFIER = ' + xcodeID + '.widgets;')
+    assert.throws(() => verifyIOSIdentity(root), /must match Xcode main target bundle ID/)
+  })
+})
 test('widget App Group disagreement is rejected', () => {
   withFixture(({ root, write }) => {
     write('ios/App/OpenGymWidgets/OpenGymWidgets.entitlements', '<string>group.example.wrong</string>')
