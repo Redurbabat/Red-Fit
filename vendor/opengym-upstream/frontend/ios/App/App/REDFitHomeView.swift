@@ -173,7 +173,7 @@ private struct RFProgressCard: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            RFProgressPhotoTile(model: model, photo: photo).frame(width: 150, height: 170)
+            RFProgressPhotoTile(model: model, photo: photo)
 
             VStack(alignment: .leading, spacing: 6) {
                 if let goal {
@@ -206,6 +206,8 @@ private struct RFProgressCard: View {
 struct RFProgressPhotoTile: View {
     @ObservedObject var model: RFAppModel
     let photo: RFRecord
+    /// A Menu label gets no size from outside, so the tile sets its own and clips the photo to it.
+    var size = CGSize(width: 150, height: 170)
     @State private var image: UIImage?
     @State private var showLibrary = false
     @State private var showCamera = false
@@ -238,8 +240,9 @@ struct RFProgressPhotoTile: View {
                 }
             }
             .animation(RFMotion.spring, value: saving)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(width: size.width, height: size.height)
             .clipShape(.rect(cornerRadius: RFTheme.radius))
+            .contentShape(.rect(cornerRadius: RFTheme.radius))
         }
         .buttonStyle(RFPressStyle())
         .disabled(saving)

@@ -171,8 +171,7 @@ private struct RFPhotoMeasureRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 14) {
-                RFProgressPhotoTile(model: model, photo: model.data.record("home").record("latestPhoto"))
-                    .frame(width: 130, height: 170)
+                RFProgressPhotoTile(model: model, photo: model.data.record("home").record("latestPhoto"), size: CGSize(width: 130, height: 170))
                 RFCard(title: "Maße", systemImage: "ruler") {
                     let shown = Self.fields.compactMap { field in latest(field.key).map { (field, $0) } }
                     if shown.isEmpty {
