@@ -214,7 +214,7 @@ private struct RFTrainingView: View {
             Section("Weitere Trainingswerkzeuge") {
                 Button("Wochenplan & Programme", systemImage: "calendar") { model.showOriginal("/plan", title: "Trainingsplanung") }
             }
-        }.navigationTitle("Training").accessibilityIdentifier("redfit-native-training")
+        }.rfScreen().navigationTitle("Training").accessibilityIdentifier("redfit-native-training")
             .sheet(item: $edit) { RFRoutineEditor(model: model, routine: $0) }
             .sheet(isPresented: $create) { RFRoutineEditor(model: model, routine: RFRecord()) }
             .fullScreenCover(isPresented: $workout) { NavigationStack { RFWorkoutView(model: model) } }
@@ -280,7 +280,7 @@ struct RFWorkoutView: View {
                     Button("Alle Trainingswerkzeuge", systemImage: "slider.horizontal.3") { model.showOriginal("/workout", title: "Training") }
                 }
             } else { ContentUnavailableView("Training gespeichert", systemImage: "checkmark.circle", description: Text("Du findest es im Trainingsverlauf.")); Button("Schließen") { dismiss() } }
-        }.navigationTitle(model.active.string("name", "Training")).navigationBarTitleDisplayMode(.inline)
+        }.rfScreen().navigationTitle(model.active.string("name", "Training")).navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Minimieren", systemImage: "chevron.down") { dismiss() } } }
             .confirmationDialog("Training abschließen und alle erfassten Sätze speichern?", isPresented: $finish, titleVisibility: .visible) {
                 Button("Abschließen und speichern") { model.perform("finish", ["workoutId": model.active.id]) { summary = model.data.records("workouts").first } }
@@ -300,6 +300,8 @@ private struct RFSetRow: View {
     @State private var weight = ""
     @State private var amount = ""
     @FocusState private var focused: Bool
+    /// Set while the done button saves, so losing focus does not save the same values a second time.
+    @State private var toggling = false
     private var amountKey: String { mode == "time" ? "sec" : mode == "cardio" ? "min" : "r" }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -307,20 +309,20 @@ private struct RFSetRow: View {
             HStack(spacing: 12) {
                 VStack(alignment: .leading) { Text(unit).font(.caption2).foregroundStyle(.secondary); TextField("Gewicht", text: $weight).keyboardType(.decimalPad).focused($focused).accessibilityLabel("Gewicht Satz \(setIndex + 1)") }.frame(maxWidth: .infinity)
                 VStack(alignment: .leading) { Text(mode == "time" ? "Sekunden" : mode == "cardio" ? "Minuten" : "Wiederholungen").font(.caption2).foregroundStyle(.secondary); TextField("Anzahl", text: $amount).keyboardType(.decimalPad).focused($focused).accessibilityLabel("Anzahl Satz \(setIndex + 1)") }.frame(maxWidth: .infinity)
-                Button { focused = false; save(toggle: true) } label: { Image(systemName: row.bool("done") ? "checkmark.circle.fill" : "circle").font(.title2).frame(width: 48, height: 48) }.buttonStyle(.borderless).disabled(model.pending > 0).accessibilityLabel(row.bool("done") ? "Satz zurücknehmen" : "Satz abschließen").accessibilityIdentifier("redfit-set-\(entry)-\(setIndex)-\(side ?? "both")")
+                Button { toggling = true; focused = false; save(toggle: true) } label: { Image(systemName: row.bool("done") ? "checkmark.circle.fill" : "circle").font(.title2).frame(width: 48, height: 48) }.buttonStyle(.borderless).disabled(model.pending > 0).accessibilityLabel(row.bool("done") ? "Satz zurücknehmen" : "Satz abschließen").accessibilityIdentifier("redfit-set-\(entry)-\(setIndex)-\(side ?? "both")")
             }.monospacedDigit()
             if !row.string("type").isEmpty && row.string("type") != "straight" { Text(row.string("type") == "dropset" ? "Dropsatz · Details in den Trainingswerkzeugen" : "Rest-Pause · Details in den Trainingswerkzeugen").font(.caption).foregroundStyle(.secondary) }
         }.padding(.vertical, 3)
             .onAppear { reset() }
             .onChange(of: row.number("w")) { _, _ in if !focused { reset() } }
             .onChange(of: row.number(amountKey)) { _, _ in if !focused { reset() } }
-            .onChange(of: focused) { was, now in if was && !now { save(toggle: false) } }
+            .onChange(of: focused) { was, now in if was && !now && !toggling { save(toggle: false) } }
             .swipeActions { Button("Satz entfernen", role: .destructive) { model.workout("removeSet", ["entry": entry, "set": setIndex]) } }
     }
     private func reset() { weight = row.number("w").formatted(.number.precision(.fractionLength(0...2)).grouping(.never)); amount = row.number(amountKey).formatted(.number.precision(.fractionLength(0...2)).grouping(.never)) }
     private func save(toggle: Bool) {
         let w = Double(weight.replacingOccurrences(of: ",", with: ".")), n = Double(amount.replacingOccurrences(of: ",", with: "."))
-        guard let w, let n, w.isFinite, n.isFinite, w >= 0, n >= 0 else { model.error = "Bitte gültige Zahlen eingeben."; return }
+        guard let w, let n, w.isFinite, n.isFinite, w >= 0, n >= 0 else { toggling = false; model.error = "Bitte gültige Zahlen eingeben."; return }
         var base: [String: Any] = ["workoutId": model.active.id, "entry": entry, "set": setIndex]
         if let side { base["side"] = side }
         Task {
@@ -329,6 +331,7 @@ private struct RFSetRow: View {
                 if n != row.number(amountKey) { _ = try await model.request("workout", base.merging(["operation": "patch", "field": amountKey, "value": n]) { _, b in b }) }
                 if toggle { _ = try await model.request("workout", base.merging(["operation": "toggle"]) { _, b in b }) }
             } catch { model.error = error.localizedDescription }
+            if toggle { toggling = false }
         }
     }
 }
@@ -370,7 +373,7 @@ private struct RFExerciseLibrary: View {
             }
             if !loading && items.isEmpty && loadError == nil { ContentUnavailableView.search(text: query) }
             if count > items.count { Text("\(count) Treffer · Suche verfeinern").font(.caption).foregroundStyle(.secondary) }
-        }.navigationTitle("Übungen").searchable(text: $query, prompt: "Name oder Gerät")
+        }.rfScreen().navigationTitle("Übungen").searchable(text: $query, prompt: "Name oder Gerät")
             .task(id: query + (muscle ?? "")) {
                 loading = true
                 do {
@@ -412,7 +415,7 @@ struct RFHistoryView: View {
             ForEach(model.data.records("workouts")) { w in NavigationLink { RFWorkoutSummary(workout: w, unit: model.data.string("unit")) } label: { VStack(alignment: .leading, spacing: 5) { Text(w.string("name")).font(.headline); Text(w.string("d") + " · " + w.number("volume").formatted() + " " + model.data.string("unit")).font(.subheadline).foregroundStyle(.secondary) } } }
             if model.data.records("workouts").isEmpty { ContentUnavailableView("Noch kein Training", systemImage: "clock", description: Text("Dein nächstes abgeschlossenes Training erscheint hier.")) }
             Button("Vollständiger Verlauf & Bearbeiten") { model.showOriginal("/history", title: "Verlauf") }
-        }.navigationTitle("Verlauf")
+        }.rfScreen().navigationTitle("Verlauf")
     }
 }
 
@@ -450,7 +453,7 @@ private struct RFBodyView: View {
                 HStack { TextField("Gewicht in " + model.data.string("unit"), text: $weight).keyboardType(.decimalPad); Button("Speichern") { if let value = Double(weight.replacingOccurrences(of: ",", with: ".")) { model.perform("weight", ["weight": value]) { weight = "" } } else { model.error = "Bitte ein Gewicht eingeben." } }.disabled(model.pending > 0) }
                 Button("Messungen & Fortschrittsfotos") { model.showOriginal("/measurements", title: "Körperwerte") }
             }
-        }.navigationTitle("Körper")
+        }.rfScreen().navigationTitle("Körper")
     }
 }
 
@@ -483,13 +486,14 @@ private struct RFMoreView: View {
             }
             Section("Bestehende Werkzeuge") { Button("Alle Einstellungen & Integrationen", systemImage: "gearshape") { model.showOriginal("/settings", title: "Einstellungen") } }
             Section { Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") · Build \(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "")").font(.caption).foregroundStyle(.secondary) }
-        }.navigationTitle("Mehr")
+        }.rfScreen().navigationTitle("Mehr")
     }
     private func setting(_ key: String, fallback: String) -> Binding<String> { Binding(get: { model.data.string(key, fallback) }, set: { model.perform("settings", ["key": key, "value": $0]) }) }
 }
 
 private struct RFBackupView: View {
     @ObservedObject var model: RFAppModel
+    @AppStorage("redfit.displayName") private var displayName = ""
     @State private var document: RFJSONDocument?
     @State private var exporting = false
     @State private var importing = false
@@ -497,15 +501,15 @@ private struct RFBackupView: View {
     var body: some View {
         List {
             Section("Sichern") {
-                Button("Backup exportieren", systemImage: "square.and.arrow.up") { Task { do { let r = try await model.request("export"); document = RFJSONDocument(text: r["text"] as? String ?? ""); exporting = true } catch { model.error = error.localizedDescription } } }.disabled(model.pending > 0)
-                Text("Training, Ernährung, Wasser, Ziele und Einkaufsliste werden gemeinsam gesichert. Eigene Fotos und Videos lassen sich zusätzlich über die bestehenden Werkzeuge exportieren.").font(.footnote).foregroundStyle(.secondary)
+                Button("Backup exportieren", systemImage: "square.and.arrow.up") { Task { do { let r = try await model.request("export", ["displayName": displayName]); document = RFJSONDocument(text: r["text"] as? String ?? ""); exporting = true } catch { model.error = error.localizedDescription } } }.disabled(model.pending > 0)
+                Text("Training, Ernährung, Wasser, Ziele, Einkaufsliste und dein Begrüßungsname werden gemeinsam gesichert. Eigene Fotos und Videos lassen sich zusätzlich über die bestehenden Werkzeuge exportieren.").font(.footnote).foregroundStyle(.secondary)
                 Button("Backup mit Fotos & Videos") { model.showOriginal("/settings/data", title: "Mediensicherung") }
             }
             Section("Übernehmen") {
                 Button("Sicherung prüfen und importieren", systemImage: "square.and.arrow.down") { importing = true }.disabled(model.pending > 0)
                 Text("Die bestehende openGym-App bleibt erhalten. Exportiere dort eine JSON-Sicherung und wähle sie hier aus. Der Import zeigt zuerst eine Vorschau und führt die Daten zusammen.").font(.footnote).foregroundStyle(.secondary)
             }
-        }.navigationTitle("Backup")
+        }.rfScreen().navigationTitle("Backup")
             .fileExporter(isPresented: $exporting, document: document, contentType: .json, defaultFilename: "RED-Fit-Backup-" + model.data.string("date")) { result in if case .failure(let error) = result { model.error = error.localizedDescription } }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
                 Task { do {
@@ -515,7 +519,7 @@ private struct RFBackupView: View {
                     preview = RFRecord(try await model.request("previewImport", ["text": text]))
                 } catch { model.error = error.localizedDescription } }
             }
-            .sheet(item: $preview) { checked in NavigationStack { List { LabeledContent("Trainings", value: String(Int(checked.number("workouts")))); LabeledContent("Pläne", value: String(Int(checked.number("routines")))); LabeledContent("Mahlzeiten", value: String(Int(checked.number("meals")))); Text("Vorhandene Daten werden zusammengeführt. Die Quelldatei und die alte App bleiben erhalten."); Button("Daten zusammenführen") { model.perform("import", ["token": checked.string("token")]) { preview = nil } }.disabled(model.pending > 0) }.navigationTitle("Importvorschau").toolbar { ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { preview = nil } } } } }
+            .sheet(item: $preview) { checked in NavigationStack { List { LabeledContent("Trainings", value: String(Int(checked.number("workouts")))); LabeledContent("Pläne", value: String(Int(checked.number("routines")))); LabeledContent("Mahlzeiten", value: String(Int(checked.number("meals")))); if !checked.string("displayName").isEmpty { LabeledContent("Begrüßungsname", value: checked.string("displayName")) }; Text("Vorhandene Daten werden zusammengeführt. Die Quelldatei und die alte App bleiben erhalten."); Button("Daten zusammenführen") { model.perform("import", ["token": checked.string("token")]) { if displayName.isEmpty { displayName = checked.string("displayName") }; preview = nil } }.disabled(model.pending > 0) }.navigationTitle("Importvorschau").toolbar { ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { preview = nil } } } } }
     }
 }
 

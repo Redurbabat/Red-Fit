@@ -9,6 +9,14 @@ describe('additive nutrition extras', () => {
     await changeExtras(scope, 'water', payload); await changeExtras(scope, 'water', payload)
     expect((await loadExtras(scope)).water).toEqual([payload])
   })
+  it('removes only the undone water entry', async () => {
+    const scope = newScope()
+    await changeExtras(scope, 'water', { id: 'a', date: '2026-11-15', ml: 250 })
+    await changeExtras(scope, 'water', { id: 'b', date: '2026-11-15', ml: 500 })
+    await changeExtras(scope, 'removeWater', { id: 'a' })
+    expect((await loadExtras(scope)).water).toEqual([{ id: 'b', date: '2026-11-15', ml: 500 }])
+    await expect(changeExtras(scope, 'removeWater', { id: '' })).rejects.toThrow('ID')
+  })
   it('keeps account scopes isolated', async () => {
     const scope = newScope()
     await changeExtras(scope, 'water', { id: 'w', date: '2026-11-15', ml: 300 })

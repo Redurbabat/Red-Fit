@@ -19,7 +19,7 @@ import { readBackupFile, storeBackupMedia } from '../lib/backup-media.js'
 import { clipSources } from '../lib/anim-quality.js'
 import { installedBases, getState as packState, readPrefs } from '../lib/anim-packs.js'
 import { buildWidgetSnapshot } from '../lib/widgets.js'
-import { dayPhotosOf } from '../lib/day-photos.js'
+import { dayPhotosOf, fileProgressPhoto, serverTakesDayPhotos } from '../lib/day-photos.js'
 import { workoutMediaOf } from '../lib/media-refs.js'
 import { mediaStore } from '../lib/media-store.js'
 
@@ -80,6 +80,31 @@ export function homeSummary(S, today) {
   const plan = routines.length ? { ids: routines.map(r => r.id), name: widget.next?.name || routines[0].name || '',
     planned: planned.length > 0, today: !!widget.next?.today } : null
   return { widget, plan, exercises, latestPhoto: latestPhotoOf(S) }
+}
+/** The greeting name as it may be stored or shown: plain text, trimmed, at most 40 characters. */
+export const cleanDisplayName = v => typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 40) : ''
+const PHOTO_MAX_BYTES = 12 * 1024 * 1024
+/**
+ * A progress photo taken or picked in the native view: the same ingest, local store and filing
+ * as the original Progress photos page (CustomMediaField's picker, lib/day-photos.js), so the
+ * photo lands on that day's workout or under the day, and backups and the clean-up see it.
+ */
+async function addProgressPhoto(p) {
+  const date = String(p.date || '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > localDateKey()) throw new Error('Ungültiges Datum.')
+  const base64 = String(p.jpeg || '')
+  if (!base64 || base64.length > PHOTO_MAX_BYTES * 1.4) throw new Error('Das Foto ist zu groß.')
+  const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
+  const { ingestMediaFile } = await import('../lib/media-ingest.js')
+  const out = await ingestMediaFile(new File([bytes], 'progress.jpg', { type: 'image/jpeg' }))
+  if (out.media?.kind !== 'image') throw new Error('Nur Fotos können hier gespeichert werden.')
+  for (const b of out.blobs) await mediaStore.put(b.hash, b.blob, { mime: b.mime, pending: true })
+  let filed = null
+  const st = state()
+  st.update(S => { filed = fileProgressPhoto(S, date, out.media, { canDay: serverTakesDayPhotos(st.user, st.config) }) })
+  await durable()
+  if (filed !== 'workout' && filed !== 'day' && filed !== 'dup') throw new Error('Das Foto konnte nicht abgelegt werden.')
+  return { filed, hash: out.media.hash }
 }
 async function photoThumb(hash, edge = 480) {
   const photo = latestPhotoOf(state().S)
@@ -159,6 +184,7 @@ export async function executeNativeCommand(action, p) {
     return { exercise: exerciseRecord(ex) }
   } else if (action === 'route') { navigation(p.path) }
   else if (action === 'photoThumb') { return await photoThumb(String(p.hash || '')) }
+  else if (action === 'addPhoto') { return await addProgressPhoto(p) }
   else if (action === 'start') {
     if (!state().S.active) beginWorkout(p.routineIds || [], p.bodyweight || null)
     navigation('/workout'); await durable()
@@ -242,11 +268,14 @@ export async function executeNativeCommand(action, p) {
     await nutrition.completePlannedMeal(scope(), p.planId, p.entryId); await refreshNutrition(); await saveNutritionMirror()
   } else if (action === 'removeMeal') {
     await nutrition.removeMealEntry(scope(), p.id); await refreshNutrition(); await saveNutritionMirror()
-  } else if (['water', 'goals', 'shopping'].includes(action)) {
+  } else if (['water', 'removeWater', 'goals', 'shopping'].includes(action)) {
     extras = await changeExtras(scope(), action, p); await saveExtraMirror()
   } else if (action === 'export') {
     const backup = { format: 'redfit-ios', version: 1, training: state().S,
       nutrition: safeJSON(await nutrition.exportNutrition(scope())), extras: await loadExtras(scope()) }
+    // Optional and additive: the native greeting name lives on the device, not in the core state.
+    const name = cleanDisplayName(p.displayName)
+    if (name) backup.profile = { displayName: name }
     result = { text: JSON.stringify(backup, null, 2) }
   } else if (action === 'previewImport') {
     const raw = safeJSON(p.text)
@@ -258,7 +287,8 @@ export async function executeNativeCommand(action, p) {
     let checked = null
     if (training) checked = await readBackupFile(new File([JSON.stringify(training)], 'backup.json', { type: 'application/json' }))
     preview = { token: uid(), checked, meals, extra }
-    result = { token: preview.token, workouts: training?.workouts?.length || 0, routines: training?.routines?.length || 0, meals: meals?.entries?.length || 0 }
+    result = { token: preview.token, workouts: training?.workouts?.length || 0, routines: training?.routines?.length || 0, meals: meals?.entries?.length || 0,
+      displayName: raw.format === 'redfit-ios' ? cleanDisplayName(raw.profile?.displayName) : '' }
   } else if (action === 'import') {
     if (!preview || preview.token !== p.token) throw new Error('Bitte die Sicherung erneut prüfen.')
     // Keep a durable before-copy, then only merge. Existing active sessions are preserved.

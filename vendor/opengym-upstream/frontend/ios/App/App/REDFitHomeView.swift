@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import ImageIO
+import PhotosUI
 
 // Native Home ("Heute"). Calm dark cards, glass only on floating controls (RED Morph material
 // hierarchy). Week, streak and the next workout come from the widget snapshot the bridge passes
@@ -9,9 +10,17 @@ import ImageIO
 
 enum RFTheme {
     static let background = Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.055, green: 0.067, blue: 0.086, alpha: 1) : .systemGroupedBackground })
-    static let card = Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(red: 0.11, green: 0.125, blue: 0.153, alpha: 1) : .secondarySystemGroupedBackground })
+    /// The same colour as the rows of every grouped list, so Home's cards and the other tabs match.
+    static let card = Color(uiColor: .secondarySystemGroupedBackground)
     static let water = Color(red: 0.16, green: 0.45, blue: 1.0)
     static let radius: CGFloat = 28
+}
+
+extension View {
+    /// Every native screen sits on RED Fit's background, so the tabs look like one app with Home.
+    func rfScreen() -> some View {
+        scrollContentBackground(.hidden).background(RFTheme.background.ignoresSafeArea())
+    }
 }
 
 /// Shared motion: interruptible springs, calm at rest. With Reduce Motion only opacity changes.
@@ -154,6 +163,10 @@ private struct RFProgressCard: View {
     let widget: RFRecord
     let photo: RFRecord
     @State private var image: UIImage?
+    @State private var showLibrary = false
+    @State private var showCamera = false
+    @State private var picked: PhotosPickerItem?
+    @State private var saving = false
 
     private var goal: (done: Int, of: Int)? {
         let left = widget.record("weekLeft")
@@ -165,7 +178,14 @@ private struct RFProgressCard: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            Button { model.showOriginal("/progress-photos", title: "Fortschrittsfotos") } label: {
+            Menu {
+                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    Button("Foto aufnehmen", systemImage: "camera") { showCamera = true }
+                }
+                Button("Aus Fotos wählen", systemImage: "photo.on.rectangle") { showLibrary = true }
+                Divider()
+                Button("Alle Fotos & Vergleich", systemImage: "square.split.2x1") { model.showOriginal("/progress-photos", title: "Fortschrittsfotos") }
+            } label: {
                 ZStack(alignment: .bottomLeading) {
                     if let image { Image(uiImage: image).resizable().scaledToFill().transition(.opacity.combined(with: .scale(scale: 1.04))) }
                     else {
@@ -174,15 +194,23 @@ private struct RFProgressCard: View {
                     Label(image == nil ? "Foto" : RFDates.date(photo.string("d"))?.formatted(.dateTime.day().month(.abbreviated)) ?? "",
                           systemImage: image == nil ? "plus" : "camera.fill")
                         .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white)
                         .padding(.horizontal, 10).padding(.vertical, 6)
-                        .glassEffect(.regular, in: .capsule)
+                        .background(.black.opacity(0.5), in: .capsule)
+                        .background(.ultraThinMaterial, in: .capsule)
                         .padding(10)
+                    if saving {
+                        ProgressView().controlSize(.large).frame(maxWidth: .infinity, maxHeight: .infinity).background(.black.opacity(0.35))
+                            .transition(.opacity)
+                    }
                 }
+                .animation(RFMotion.spring, value: saving)
                 .frame(width: 150, height: 170)
                 .clipShape(.rect(cornerRadius: RFTheme.radius))
             }
             .buttonStyle(RFPressStyle())
-            .accessibilityLabel(image == nil ? "Fortschrittsfoto hinzufügen" : "Fortschrittsfotos öffnen")
+            .disabled(saving)
+            .accessibilityLabel(image == nil ? "Fortschrittsfoto hinzufügen" : "Fortschrittsfotos")
             .accessibilityIdentifier("redfit-progress-photo")
 
             VStack(alignment: .leading, spacing: 6) {
@@ -209,6 +237,27 @@ private struct RFProgressCard: View {
         .frame(height: 170)
         .background(RFTheme.card, in: .rect(cornerRadius: RFTheme.radius))
         .task(id: photo.string("hash")) { await loadPhoto() }
+        .photosPicker(isPresented: $showLibrary, selection: $picked, matching: .images, preferredItemEncoding: .compatible)
+        .onChange(of: picked) { _, item in
+            guard let item else { return }
+            picked = nil
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self), let picture = UIImage(data: data) { await save(picture) }
+            }
+        }
+        .fullScreenCover(isPresented: $showCamera) {
+            RFCameraPicker { picture in Task { await save(picture) } }.ignoresSafeArea()
+        }
+    }
+
+    /// Hands the photo to the original core (bridge `addPhoto`): stored locally, filed under today.
+    private func save(_ picture: UIImage) async {
+        saving = true
+        defer { saving = false }
+        let jpeg = await Task.detached(priority: .userInitiated) { RFPhotoEncoding.jpeg(picture) }.value
+        guard let jpeg else { model.error = "Das Foto konnte nicht gelesen werden."; return }
+        do { _ = try await model.request("addPhoto", ["jpeg": jpeg.base64EncodedString(), "date": model.data.string("date")]) }
+        catch { model.error = error.localizedDescription }
     }
 
     private func loadPhoto() async {
@@ -218,6 +267,42 @@ private struct RFProgressCard: View {
               let url = result["dataURL"] as? String, let comma = url.firstIndex(of: ","),
               let data = Data(base64Encoded: String(url[url.index(after: comma)...])) else { return }
         withAnimation(RFMotion.spring) { image = UIImage(data: data) }
+    }
+}
+
+/// Photos go to the core as JPEG, at most 2048 px on the long side (the core's own ingest limits again).
+enum RFPhotoEncoding {
+    static func jpeg(_ image: UIImage, edge: CGFloat = 2048) -> Data? {
+        let scale = min(1, edge / max(image.size.width, image.size.height))
+        let size = CGSize(width: (image.size.width * scale).rounded(), height: (image.size.height * scale).rounded())
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        let drawn = UIGraphicsImageRenderer(size: size, format: format).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+        return drawn.jpegData(compressionQuality: 0.85)
+    }
+}
+
+/// The system camera for one progress photo.
+struct RFCameraPicker: UIViewControllerRepresentable {
+    let done: (UIImage) -> Void
+    @Environment(\.dismiss) private var dismiss
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.cameraDevice = .front
+        picker.delegate = context.coordinator
+        return picker
+    }
+    func updateUIViewController(_ controller: UIImagePickerController, context: Context) {}
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: RFCameraPicker
+        init(_ parent: RFCameraPicker) { self.parent = parent }
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let image = info[.originalImage] as? UIImage { parent.done(image) }
+            parent.dismiss()
+        }
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) { parent.dismiss() }
     }
 }
 
@@ -250,8 +335,26 @@ private struct RFWaterBottle: View {
     @ObservedObject var model: RFAppModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var phase
+    /// The last entry added here, offered for undo for a few seconds.
+    @State private var lastAdded: (id: String, ml: Int)?
+    @State private var undoTask: Task<Void, Never>?
 
     private var ml: Double { model.data.number("waterToday") }
+
+    private func add(_ amount: Int) {
+        let id = UUID().uuidString
+        model.perform("water", ["id": id, "date": model.data.string("date"), "ml": amount])
+        withAnimation(RFMotion.spring) { lastAdded = (id, amount) }
+        undoTask?.cancel()
+        undoTask = Task { try? await Task.sleep(for: .seconds(8)); if !Task.isCancelled { withAnimation(RFMotion.spring) { lastAdded = nil } } }
+    }
+
+    private func undo() {
+        guard let last = lastAdded else { return }
+        model.perform("removeWater", ["id": last.id])
+        undoTask?.cancel()
+        withAnimation(RFMotion.spring) { lastAdded = nil }
+    }
     private var goal: Double { max(250, model.data.record("goal").number("water", 2500)) }
 
     var body: some View {
@@ -277,16 +380,41 @@ private struct RFWaterBottle: View {
             .accessibilityValue(String(Int(ml)))
             .accessibilityIdentifier("redfit-water-total")
 
-            Button {
-                model.perform("water", ["id": UUID().uuidString, "date": model.data.string("date"), "ml": 250])
-            } label: {
-                Image(systemName: "drop.fill").font(.title2).foregroundStyle(RFTheme.water).frame(width: 56, height: 56)
-                    .symbolEffect(.bounce.down, value: ml)
+            VStack(spacing: 10) {
+                Button { add(250) } label: {
+                    Image(systemName: "drop.fill").font(.title2).foregroundStyle(RFTheme.water).frame(width: 56, height: 56)
+                        .symbolEffect(.bounce.down, value: ml)
+                }
+                .glassEffect(.regular.interactive(), in: .circle)
+                .contextMenu {
+                    ForEach([150, 330, 500, 750], id: \.self) { amount in
+                        Button("\(amount) ml", systemImage: amount >= 500 ? "waterbottle" : "cup.and.saucer") { add(amount) }
+                    }
+                    if lastAdded != nil { Button("Rückgängig", systemImage: "arrow.uturn.backward", role: .destructive) { undo() } }
+                }
+                .accessibilityLabel("250 ml hinzufügen")
+                .accessibilityHint("Lange drücken für andere Mengen")
+                .accessibilityIdentifier("redfit-add-water")
+                .sensoryFeedback(.increase, trigger: ml)
+
+                // The slot is always there, so the drop button never moves under a finger.
+                Button(action: undo) {
+                    VStack(spacing: 2) {
+                        Image(systemName: "arrow.uturn.backward").font(.caption.weight(.bold))
+                        Text("\(lastAdded?.ml ?? 0)").font(.caption2.weight(.semibold)).monospacedDigit()
+                    }
+                    .frame(width: 44, height: 44)
+                }
+                .buttonStyle(RFPressStyle())
+                .glassEffect(.regular.interactive(), in: .circle)
+                .scaleEffect(lastAdded == nil ? 0.6 : 1)
+                .opacity(lastAdded == nil ? 0 : 1)
+                .allowsHitTesting(lastAdded != nil)
+                .accessibilityHidden(lastAdded == nil)
+                .accessibilityLabel("\(lastAdded?.ml ?? 0) ml rückgängig")
+                .accessibilityIdentifier("redfit-undo-water")
             }
-            .glassEffect(.regular.interactive(), in: .circle)
-            .accessibilityLabel("250 ml hinzufügen")
-            .accessibilityIdentifier("redfit-add-water")
-            .sensoryFeedback(.increase, trigger: ml)
+            .frame(width: 60)
         }
     }
 }
@@ -318,7 +446,8 @@ private struct RFWaterFill: Shape {
     func path(in r: CGRect) -> Path {
         var p = Path()
         guard level > 0 else { return p }
-        let top = r.maxY - r.height * level
+        // The cap (top tenth of the bottle) is never filled.
+        let top = r.maxY - r.height * 0.9 * level
         let amp = level >= 1 ? 0 : 4.0
         p.move(to: CGPoint(x: r.minX, y: top))
         stride(from: 0.0, through: 1.0, by: 0.05).forEach { x in

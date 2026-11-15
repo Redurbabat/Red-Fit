@@ -79,7 +79,7 @@ struct RFNutritionView: View {
                 }
                 if model.data.record("nutrition").records("foods").isEmpty { Text("Lege ein Lebensmittel mit den Nährwerten seiner Verpackung an.").foregroundStyle(.secondary) }
             }
-        }.navigationTitle("Ernährung").accessibilityIdentifier("redfit-native-nutrition")
+        }.rfScreen().navigationTitle("Ernährung").accessibilityIdentifier("redfit-native-nutrition")
             .sheet(isPresented: $addMeal) { RFMealEditor(model: model, date: day, planned: false) }
             .sheet(isPresented: $addFood) { RFFoodEditor(model: model) }
             .sheet(isPresented: $addRecipe) { RFRecipeEditor(model: model) }
@@ -218,7 +218,7 @@ private struct RFMealPlanView: View {
                     }
                 }
             }
-        }.navigationTitle("Essensplan").sheet(isPresented: $planning) { RFMealEditor(model: model, date: from, planned: true) }
+        }.rfScreen().navigationTitle("Essensplan").sheet(isPresented: $planning) { RFMealEditor(model: model, date: from, planned: true) }
     }
 }
 
@@ -245,7 +245,7 @@ private struct RFShoppingView: View {
                 }
                 if rows.isEmpty { ContentUnavailableView("Deine Einkaufsliste ist leer", systemImage: "basket", description: Text("Plane Mahlzeiten für diese Woche. Die benötigten Zutaten erscheinen automatisch hier.")) }
             }
-        }.navigationTitle("Einkaufsliste").onAppear { from = initialDate }
+        }.rfScreen().navigationTitle("Einkaufsliste").onAppear { from = initialDate }
     }
 }
 
@@ -272,7 +272,7 @@ struct RFGoalsView: View {
             }
             if !message.isEmpty { Text(message).foregroundStyle(.secondary) }
             Section { Text("Die App gibt keine Werte vor. Trage deine eigenen Ziele ein; bisherige Einträge bleiben unverändert.").font(.footnote).foregroundStyle(.secondary) }
-        }.navigationTitle("Ernährungsziele").onAppear { let goal = model.data.record("goal"); kcal = String(Int(goal.number("kcal"))); protein = String(Int(goal.number("protein"))); carbs = String(Int(goal.number("carbs"))); fat = String(Int(goal.number("fat"))); water = String(Int(goal.number("water"))) }
+        }.rfScreen().navigationTitle("Ernährungsziele").onAppear { let goal = model.data.record("goal"); kcal = String(Int(goal.number("kcal"))); protein = String(Int(goal.number("protein"))); carbs = String(Int(goal.number("carbs"))); fat = String(Int(goal.number("fat"))); water = String(Int(goal.number("water"))) }
     }
 }
 

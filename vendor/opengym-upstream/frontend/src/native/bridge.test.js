@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { useStore, freshState } from '../store/useStore.js'
-import { executeNativeCommand, nativeSnapshot, homeSummary, latestPhotoOf, installNativeBridge } from './bridge.js'
+import { executeNativeCommand, nativeSnapshot, homeSummary, latestPhotoOf, installNativeBridge, cleanDisplayName } from './bridge.js'
 
 beforeAll(() => { useStore.setState({ ready: true, S: freshState(), localProfile: null, user: null, sync: { server: null } }) })
 describe('native views use the original domain', () => {
@@ -87,5 +87,18 @@ describe('native views use the original domain', () => {
       installNativeBridge()
       expect(document.documentElement.dataset.redfitSwiftui).toBe('true')
     } finally { delete window.__REDFitSwiftUI; delete window.webkit; delete window.redFitNative }
+  })
+  it('rejects native progress photos with a bad date or no data before touching the store', async () => {
+    await expect(executeNativeCommand('addPhoto', { jpeg: 'AAAA', date: '2999-01-01' })).rejects.toThrow('Datum')
+    await expect(executeNativeCommand('addPhoto', { jpeg: '', date: '2026-11-15' })).rejects.toThrow('groß')
+  })
+  it('carries the greeting name in the native backup and offers it back on import', async () => {
+    const exported = await executeNativeCommand('export', { displayName: '  Amine\n ' })
+    expect(JSON.parse(exported.text).profile).toEqual({ displayName: 'Amine' })
+    expect((await executeNativeCommand('previewImport', { text: exported.text })).displayName).toBe('Amine')
+    const without = await executeNativeCommand('export', {})
+    expect('profile' in JSON.parse(without.text)).toBe(false)
+    expect(cleanDisplayName(42)).toBe('')
+    expect(cleanDisplayName('x'.repeat(80))).toHaveLength(40)
   })
 })

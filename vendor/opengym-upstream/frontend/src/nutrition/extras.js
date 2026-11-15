@@ -73,6 +73,10 @@ export async function changeExtras(scope, action, payload) {
     if (action === 'water') {
       const row = validateWater(payload)
       if (!state.water.some(x => x.id === row.id)) state.water.push(row)
+    } else if (action === 'removeWater') {
+      // Undo of a water entry (native Home). Only that entry by its ID; others stay.
+      const target = id(payload?.id)
+      state.water = state.water.filter(x => x.id !== target)
     } else if (action === 'goals') {
       const row = validateGoal(payload)
       state.goals = [...state.goals.filter(x => x.date !== row.date), row]
