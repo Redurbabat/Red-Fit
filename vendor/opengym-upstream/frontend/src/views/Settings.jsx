@@ -41,7 +41,7 @@ import { syncMedia, fetchToStore } from '../lib/media-sync.js'
 import { getMediaStatus, subscribeMediaStatus, pendingRefCount, localOnlyRefCount } from '../lib/media-owed.js'
 import { limitsFrom, fmtMB, MB } from '../lib/media-limits.js'
 import { setRestAccent } from '../lib/rest-alert.js'
-import { CUSTOM, accentKey, adjustedIn, applyAccent, cleanHex, inkOn, isGrey } from '../lib/accent.js'
+import { CUSTOM, RETIRED_ACCENTS, accentKey, adjustedIn, applyAccent, cleanHex, inkOn, isGrey } from '../lib/accent.js'
 import { checkForUpdate, downloadAndInstall, fetchChecksum, forgetDownloadedUpdate, RELEASES_PAGE } from '../lib/update.js'
 import { APK_VARIANT, VARIANT_NAMES } from '../lib/apk-variant.js'
 import { BUILTIN_PX } from '../lib/anim-quality.js'
@@ -1648,7 +1648,7 @@ function AccentSwatches({ S, update }) {
   ].filter(Boolean) : []
   return <>
     <div className="swatches" style={{ flexBasis: '100%', paddingInlineStart: 41 }}>
-      {Object.entries(ACCENTS).map(([k, c]) => (
+      {Object.entries(ACCENTS).filter(([k]) => !RETIRED_ACCENTS.includes(k)).map(([k, c]) => (
         <button key={k} className={'swatch' + (key === k ? ' on' : '')}
           style={{ background: c }} onClick={() => pickPreset(k)} aria-label={t(ACCENT_NAMES[k] || k)} />
       ))}
