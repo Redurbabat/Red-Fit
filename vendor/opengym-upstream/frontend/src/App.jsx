@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { hideBoot } from './lib/boot.js'
+import { isLocalOnly } from './lib/local-only.js'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
@@ -90,6 +91,8 @@ const ProgrammeEdit = lazyView(() => import('./views/Programmes.jsx').then(m => 
 const Stats = lazyView(() => import('./views/Stats.jsx'))
 const History = lazyView(() => import('./views/History.jsx'))
 const Library = lazyView(() => import('./views/Library.jsx'))
+// Agent 03: nutrition stays a separate lazy chunk inside the original RED Fit app.
+const Nutrition = lazyView(() => import('./views/Nutrition.jsx'))
 const Muscles = lazyView(() => import('./views/Muscles.jsx'))
 const SettingsRoute = lazyView(() => import('./views/Settings.jsx').then(m => ({ default: m.SettingsRoute })))
 // The app tour's overlay (components/Tour.jsx): fetched when it opens, never before.
@@ -306,7 +309,7 @@ function Shell() {
   // A friend's routine link (components/RoutineShare.jsx): the same wait for the setup.
   useRoutineLinks(setupDone)
   useEffect(() => {
-    if (!setupDone || tourAsked.current) return
+    if (!setupDone || tourAsked.current || window.__REDFitSwiftUI) return
     const tm = setTimeout(() => {
       const st = useStore.getState()
       if (tourAsked.current || tourState() || st.S.active || useUI.getState().sheets.length || /^#\/workout/.test(window.location.hash || '')) return
@@ -344,6 +347,7 @@ function Shell() {
       <Route path="/stats" element={<Stats />} />
       <Route path="/history" element={<History />} />
       <Route path="/library" element={<Library />} />
+      <Route path="/nutrition" element={<Nutrition />} />
       <Route path="/muscles" element={<Muscles />} />
       <Route path="/structural-balance" element={<StructuralBalance />} />
       {isOn(S, 'body') && <Route path="/progress-photos" element={<ProgressPhotos />} />}
@@ -353,10 +357,10 @@ function Shell() {
       {/* The Coach screens gate themselves on the instance config; the routes exist whenever the
           AI Coach module is on, so a deep link from a notification lands somewhere sane rather
           than on the catch-all. With the module off, Home is the sane place. */}
-      {isOn(S, 'coach') && <Route path="/coach" element={<CoachChat />} />}
-      {isOn(S, 'coach') && <Route path="/coach/intake" element={<CoachIntake />} />}
-      {isOn(S, 'coach') && <Route path="/coach/proposal" element={<Navigate to="/coach" replace />} />}
-      {isOn(S, 'coach') && <Route path="/coach/setup" element={<CoachSetup />} />}
+      {!isLocalOnly() && isOn(S, 'coach') && <Route path="/coach" element={<CoachChat />} />}
+      {!isLocalOnly() && isOn(S, 'coach') && <Route path="/coach/intake" element={<CoachIntake />} />}
+      {!isLocalOnly() && isOn(S, 'coach') && <Route path="/coach/proposal" element={<Navigate to="/coach" replace />} />}
+      {!isLocalOnly() && isOn(S, 'coach') && <Route path="/coach/setup" element={<CoachSetup />} />}
       <Route path="/admin" element={user?.admin ? <Admin /> : <Navigate to="/home" replace />} />
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
@@ -388,7 +392,7 @@ function Shell() {
       {/* Seasonal decoration (lib/seasonal.js): nothing, and nothing loaded, out of season. Never
           over a running workout or the first-launch screens. */}
       {authed && !needsMobileOnboarding && !permSteps && <SeasonalLayer hidden={inWorkout || loc.pathname === '/workout'} />}
-      {/* Your year in openGym (components/WrappedEntry.jsx): nothing loaded until it is opened. */}
+      {/* Your year in RED Fit (components/WrappedEntry.jsx): nothing loaded until it is opened. */}
       {authed && isOn(S, 'motivation') && <WrappedLayer ready={setupDone} />}
     </>
   )

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "upstreamCommit": "8fb98b16861a2728652302a7e6e30c50548493a0",
+  "derivedTotalBytes": 2118361,
+  "overrides": {
+    "accent.js": {
+      "upstreamSha": "e0c2afd9e8aefa3660b290555828873e5870ed43",
+      "derivedSha": "dbb7ddfb660521f7a0c3f7461c2faca9df8d7b8b",
+      "reason": "RED Fit product branding; existing protocol and storage compatibility retained"
+    },
+    "api.js": {
+      "upstreamSha": "4ec876e99a5e04537c453a7ced37144a6705c26e",
+      "derivedSha": "7ad3607be77cee61872312cc906cfccaa75b1b54",
+      "reason": "Owner-approved local-only data policy; server and external provider transports are refused without deleting saved data"
+    },
+    "app-base.js": {
+      "upstreamSha": "b747e0cc1dae1db64ad1772a91e8b119503c2b0e",
+      "derivedSha": "ff54915f319926b3ae773b8b77e83dbe6c46523c",
+      "reason": "RED Fit product branding; existing protocol and storage compatibility retained"
+    },
+    "exercises.js": {
+      "upstreamSha": "77464601f7cd6ab85faab72528d455ef1ab668cc",
+      "derivedSha": "a8157f889f1275359ecad9b4927c612ea4322dbe",
+      "reason": "RED Fit product branding; existing protocol and storage compatibility retained"
+    },
+    "mobile.js": {
+      "upstreamSha": "fe5d0605016107611d0ecafd40acee86f164437c",
+      "derivedSha": "22429625aac13ef4c2c1c188917cf6bb0de80474",
+      "reason": "RED Fit product branding; existing protocol and storage compatibility retained"
+    },
+    "modules.js": {
+      "upstreamSha": "477b8f2994e19dcfb6fea221a266ed0241e7fe15",
+      "derivedSha": "fdad80248982a965ea5d9e002fe36a6b7f4255cc",
+      "reason": "RED Fit product branding; existing protocol and storage compatibility retained"
+    },
+    "plan-share.js": {
+      "upstreamSha": "b437ee4986da200653e5f47b9e4b69059beb3114",
+      "derivedSha": "6ae7c7ee4cff7dc3fdb5af94b6bcd4a909976a8f",
+      "reason": "RED Fit product branding; existing protocol and storage compatibility retained"
+    },
+    "print-doc.js": {
+      "upstreamSha": "bc276e8a90c0b173ae2cb8b4199cc2b6af81063f",
+      "derivedSha": "0690f83daf46b0c3132504ce652fdc592ab5dd43",
+      "reason": "RED Fit product branding; existing protocol and storage compatibility retained"
+    },
+    "sync-merge.js": {
+      "upstreamSha": "1605ad65d40eab421edbc18cf446e188e2cfdaba",
+      "derivedSha": "630d4f2c717cc3401f04c227ad4d2af98afbf474",
+      "reason": "RED Fit product branding; existing protocol and storage compatibility retained"
+    },
+    "capacitor-fetch.js": {
+      "upstreamSha": "c59c230c5bd01899a0d345526619474228dfaedd",
+      "derivedSha": "67765a301c3675dcde3f823885e6f14e69ec957d",
+      "reason": "Owner-approved local-only data policy; server and external provider transports are refused without deleting saved data"
+    }
+  }
+}

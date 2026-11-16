@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { ACCENTS } from './format.js'
 import {
-  cleanHex, sanitizeAccent, accentKey, accentValue, contrast, inkOn, readableIn, adjustedIn,
+  RETIRED_ACCENTS, cleanHex, sanitizeAccent, accentKey, accentValue, contrast, inkOn, readableIn, adjustedIn,
   customAccentVars, inkIn, accentPair, applyAccent, applyTintFallback, THEMES, isGrey, inkOnBoth, mix, GREY_TEXT, GREY_GAP,
 } from './accent.js'
 import { mergeStates, stampChange } from './sync-merge.js'
@@ -40,7 +40,7 @@ describe('accentKey / accentValue', () => {
     expect(accentKey({ accent: 'custom', accentCustom: 'nope' })).toBe('lime')
     expect(accentValue({ accent: 'custom', accentCustom: '#123ABC' })).toBe('#123abc')
     // the own colour is kept while a preset is the accent
-    expect(accentValue({ accent: 'red', accentCustom: '#123abc' })).toBe('red')
+    expect(accentValue({ accent: 'sky', accentCustom: '#123abc' })).toBe('sky')
   })
 })
 
@@ -244,6 +244,13 @@ describe('sync with an app from before own colours', () => {
     // App.jsx before own colours: ACCENTS[accent] ? accent : 'lime'
     const S = { accent: 'custom', accentCustom: '#123456' }
     expect(ACCENTS[S.accent] ? S.accent : 'lime').toBe('lime')
+  })
+  it('reads the earlier Bordeaux default red as the green brand default without rewriting it', () => {
+    const S = { accent: 'red' }
+    expect(accentKey(S)).toBe('lime')
+    expect(accentValue(S)).toBe('lime')
+    expect(S.accent).toBe('red')
+    expect(RETIRED_ACCENTS).toContain('red')
   })
   it('a malformed colour from the other copy is dropped by the merge', () => {
     const mine = { ...base, _ts: 10, accent: 'red' }

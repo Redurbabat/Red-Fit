@@ -1,0 +1,46 @@
+name: Original openGym frontend QA
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/opengym-original-qa.yml'
+      - 'tools/opengym-qa/**'
+      - 'vendor/opengym-upstream/frontend/**'
+      - 'vendor/opengym-upstream/api/coach/core/**'
+      - 'vendor/opengym-upstream/catalogue/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original-frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout private source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node 22 and original frontend npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: vendor/opengym-upstream/frontend/package-lock.json
+      - name: Verify original-app QA harness (fixture tests only)
+        run: node --test tools/opengym-qa/verify.test.mjs
+      - name: Verify original iOS Xcode integration structure (read-only)
+        run: |
+          node --test tools/opengym-qa/ios-baseline.test.mjs
+          node tools/opengym-qa/ios-baseline.mjs
+      - name: Install, test and build original openGym frontend
+        run: node tools/opengym-qa/verify.mjs
+      - name: Retain QA report and captured command logs (private repository only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: opengym-original-qa
+          path: artifacts/opengym-qa/
+          retention-days: 7
+          if-no-files-found: warn

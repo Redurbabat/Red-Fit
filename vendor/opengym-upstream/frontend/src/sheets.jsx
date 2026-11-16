@@ -74,7 +74,7 @@ import { shareRoutineSheet } from './components/RoutineShare.jsx'
 import { youtubeSearchUrl } from './lib/youtube.js'
 import { openExternal } from './components/CustomMedia.jsx'
 import { repeatSessionEntries } from './lib/session-repeat.js'
-import { swapActiveExercise } from './lib/active-exercise-swap.js'
+import { swapActiveExercise, hasLoggedWork } from './lib/active-exercise-swap.js'
 import WarmupConfig from './components/WarmupConfig.jsx'
 import { warmupModeOf, ownRowsOf } from './lib/warmup-ramp.js'
 import { useSheetKeyboard, useRevealActiveChip, tappable } from './lib/use-sheet-keyboard.js'
@@ -605,7 +605,7 @@ function ImportSummary({ parsed, close }) {
     </div>}
     {/* A Liftosaur plan's progression is a script; it arrives as a note on each exercise. */}
     {plans?.scripted > 0 && <div className="small dim" style={{ marginBottom: 10 }}>
-      {t('Liftoscript progressions come along as notes on the exercises. openGym doesn’t run them.')}
+      {t('Liftoscript progressions come along as notes on the exercises. RED Fit doesn’t run them.')}
     </div>}
     {plans && newPlans < plans.routines.length && <div className="small dim" style={{ marginBottom: 10 }}>
       {tn('{0} routine is already here and will be left alone.', '{0} routines are already here and will be left alone.', plans.routines.length - newPlans)}
@@ -636,7 +636,7 @@ export function importFromApp(file, onDone) {
     if (parsed.error === 'empty') { toast(t('That file is empty')); return }
     // It looks like that app's export but does not read as one: say so rather than guess.
     if (parsed.error === 'format') { toast(t('This looks like a {0} export, but we couldn’t read it. Nothing was imported.', parsed.app)); return }
-    if (parsed.error === 'opengym') { toast(t('That’s an openGym backup or plan file. Use Import backup, or import it on the Plan screen.')); return }
+    if (parsed.error === 'opengym') { toast(t('That’s a RED Fit backup or plan file. Use Import backup, or import it on the Plan screen.')); return }
     if (parsed.error) { toast(t("We don't recognise that file's columns. Check the docs for supported apps.")); return }
     if (parsed.kind === 'bodyweight' ? !parsed.bodyweight.length && !parsed.measurements?.length : !parsed.workouts.length && !parsed.routines?.routines?.length) {
       toast(t('Nothing to import from that file')); return
@@ -1366,7 +1366,7 @@ function ExerciseDetail({ ex, close }) {
     {/* The catalogue is community-edited (catalogue/README.md): a wrong muscle, a clumsy step or a
         missing translation is one tap from an issue that already names the exercise. */}
     {!isCustomEx(ex) && !ex.missing && <a className="small dim exfix-link" target="_blank" rel="noopener"
-      href={'https://github.com/DuarteSantos8/openGym/issues/new?template=exercise.yml&exercise=' + encodeURIComponent(ex.id + ', ' + ex.n)}>
+      href={'https://github.com/Redurbabat/Red-Fit/issues/new?template=exercise.yml&exercise=' + encodeURIComponent(ex.id + ', ' + ex.n)}>
       <Icon name="pencil" /> {t('Suggest a fix for this exercise')}</a>}
     {/* The end of the sheet: what makes this exercise go away. Merge into… (#656,
         lib/exercise-merge.js) moves its history and plans onto another and then deletes or hides
@@ -1885,6 +1885,11 @@ export const exercisePicker = (onPick, { title, like, actionIcon, backups } = {}
 export function swapActiveWorkoutExercise(index) {
   const active = S().active
   if (!active?.entries?.[index]) return
+  // The picker/configuration sheet may stay open while a background resume or sync
+  // changes the workout. Do not let its old index silently target a new exercise.
+  const pickedSessionId = active.id
+  // The whole list matters: an identical duplicate may shift into this index after deletion.
+  const pickedEntries = JSON.stringify(active.entries)
 
   // The "+" on a picker row commits with the default config, exactly as it does in the add
   // flows; tapping the row still opens the config sheet first.
@@ -1894,6 +1899,11 @@ export function swapActiveWorkoutExercise(index) {
     // The picker is a chooser here, not a stack you keep adding from: one swap, then back to
     // the workout. (The add flow deliberately leaves it open.)
     picker.close()
+    const live = S().active
+    if (!live || live.id !== pickedSessionId || JSON.stringify(live.entries) !== pickedEntries) {
+      ui().toast(t('Something went wrong'))
+      return
+    }
     commitActiveSwap(index, ex, cfg)
   }
 }
@@ -1933,15 +1943,27 @@ function commitActiveSwap(index, ex, cfg) {
     ...(current.noProg === true ? { noProg: true } : {}),
   }
 
+  // A confirmation can be accepted later, after a sync, background restore, or another
+  // workout edit changed the entry at this index. The store clones active on every update, so
+  // compare its persisted content (not object identity) before touching timers or logged data.
+  const originalSessionId = st.active.id
+  // Compare the full list so deleting a selected duplicate cannot masquerade as the same slot.
+  const originalEntries = JSON.stringify(st.active.entries)
   const apply = options => {
+    const live = S().active
+    if (!live || live.id !== originalSessionId || JSON.stringify(live.entries) !== originalEntries) {
+      ui().toast(t('Something went wrong'))
+      return
+    }
     // A timed callback closes over entry/set indexes. Invalidate it, and the current rest,
     // before the selected occurrence can be replaced or a new entry shifts those indexes.
     ui().stopWork()
     ui().stopRest()
     update(state => { swapActiveExercise(state.active, index, replacement, options) }, true)
   }
-  const logged = (current.sets || []).some(set => set.done === true)
-  if (!logged) { apply(); return }
+  // A unilateral set with only one completed limb already holds real training data.
+  // Use the same guard as swapActiveExercise so this confirmation cannot be bypassed.
+  if (!hasLoggedWork(current)) { apply(); return }
 
   if (current.sg) {
     swapGroupSheet(groupDisposition => apply({ loggedConfirmed: true, groupDisposition }))
@@ -2792,7 +2814,7 @@ export async function exportPlanFile() {
   const st = S(), user = useStore.getState().user
   const bundle = buildPlanBundle(st, user?.name ? t('{0}’s plan', user.name) : '')
   const json = JSON.stringify(bundle, null, 2)
-  const name = 'opengym-plan-' + todayISO() + '.json'
+  const name = 'red-fit-plan-' + todayISO() + '.json'
   if (MOBILE) { try { await shareExport(json, name) } catch (e) { /* dismissed */ } return }
   const blob = new Blob([json], { type: 'application/json' })
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href)
@@ -2804,7 +2826,7 @@ export async function exportProgrammeFile(id) {
   const bundle = buildProgrammeBundle(S(), id)
   if (!bundle) return
   const json = JSON.stringify(bundle, null, 2)
-  const name = 'opengym-programme-' + todayISO() + '.json'
+  const name = 'red-fit-programm-' + todayISO() + '.json'
   if (MOBILE) { try { await shareExport(json, name) } catch (e) { /* dismissed */ } return }
   const blob = new Blob([json], { type: 'application/json' })
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href)
@@ -3319,7 +3341,7 @@ function ShareWorkoutImage({ w, close }) {
   const day = workoutDay(w) || todayISO()
   const model = useMemo(() => workoutCardModel(w, { unit: st.unit, nameOf: shareNameOf, warmups, streak: streakInfo(st, day).current }), [w, st.unit, warmups, st.workouts, st.weekStart, day]) // eslint-disable-line react-hooks/exhaustive-deps
   return <ShareCardSheet title={t('Share workout')} close={close} toast={toast}
-    name={'opengym-workout-' + day + '.png'} shareTitle={w.name || 'openGym'}
+    name={'red-fit-training-' + day + '.png'} shareTitle={w.name || 'RED Fit'}
     deps={[model, withMap, st.body]}
     render={pref => workoutCardImage(model, { ...pref, map: withMap, body: st.body })}>
     {model.levels && <div className="sect-b" style={{ marginBottom: 12 }}>

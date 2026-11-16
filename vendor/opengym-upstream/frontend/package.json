@@ -1,5 +1,5 @@
 {
-  "name": "opengym-frontend",
+  "name": "red-fit-frontend",
   "private": true,
   "version": "1.4.4",
   "type": "module",
@@ -11,7 +11,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:fatigue-probe": "node scripts/fatigue-monotonic-probe.mjs",
-    "pdf:check": "node scripts/pdf/render-samples.mjs --out pdf-samples --langs en,de,ar --paper A4,Letter --check"
+    "pdf:check": "node scripts/pdf/render-samples.mjs --out pdf-samples --langs en,de,ar --paper A4,Letter --check",
+    "ios:brand": "swift ios/ci/brand-red-fit.swift",
+    "test:ios-identity": "node scripts/verify-ios-identity.mjs",
+    "build:ios": "npm run ios:poses && VITE_MOBILE=1 vite build && node ../scripts/catalogue/stage-media.mjs dist && cap sync ios && ruby ios/ci/add-swiftui.rb && node scripts/verify-ios-private-deps.mjs && node scripts/check-ios-mobile-bundle.mjs && npm run ios:brand && npm run test:ios-identity",
+    "test:ios-bundle": "node --test scripts/check-ios-mobile-bundle.test.mjs",
+    "test:ios-identity-unit": "node --test scripts/verify-ios-identity.test.mjs",
+    "brand:assets": "node scripts/app-icons.mjs && node scripts/brand-red-fit.mjs",
+    "ios:poses": "node --experimental-strip-types scripts/native-poses.mjs"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
@@ -37,6 +44,7 @@
     "@capacitor/ios": "^8.5.3",
     "@vitejs/plugin-react": "^6.1.2",
     "@vitest/coverage-v8": "^4.1.12",
+    "fake-indexeddb": "6.0.1",
     "fast-check": "^4.10.2",
     "happy-dom": "^20.14.6",
     "linkedom": "^0.18.13",

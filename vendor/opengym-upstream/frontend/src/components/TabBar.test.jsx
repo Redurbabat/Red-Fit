@@ -6,6 +6,7 @@ import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import TabBar from './TabBar.jsx'
+import { t } from '../lib/i18n.js'
 import { DEF, useStore } from '../store/useStore.js'
 
 const where = vi.hoisted(() => ({ loc: { pathname: '/home' } }))
@@ -75,10 +76,11 @@ describe('the connection dot on Home', () => {
       expect(home().querySelector('.tab-dot')).toBeNull()
       act(() => { useStore.getState().update(s => { s.connStatus = false }, false) })
       expect(home().querySelector('.tab-dot')).not.toBeNull()
-      expect(home().getAttribute('aria-label')).toBe('Home, Connection problem')
+      expect(home().getAttribute('aria-label')).toBe(t('Home') + ', ' + t('Connection problem'))
       act(() => { useStore.setState({ sync: { status: 'ok', lastError: null, pending: false } }) })
       expect(home().querySelector('.tab-dot')).toBeNull()
-      expect(home().getAttribute('aria-label')).toBeNull()
+      // RED Morph always supplies a name: compact mode visually hides tab labels.
+      expect(home().getAttribute('aria-label')).toBe(t('Home'))
     } finally { useStore.setState({ sync: original }) }
   })
 })

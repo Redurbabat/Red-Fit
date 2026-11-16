@@ -1,7 +1,7 @@
 {
-  "name": "openGym",
-  "short_name": "openGym",
-  "description": "Personal gym & body weight tracker",
+  "name": "RED Fit",
+  "short_name": "RED Fit",
+  "description": "RED Fit — Training, nutrition and progress",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

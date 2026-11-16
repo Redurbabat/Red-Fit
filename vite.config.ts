@@ -1,6 +1,6 @@
-/// <reference types="vitest/config" />
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { configDefaults } from "vitest/config";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
@@ -44,6 +44,11 @@ export default defineConfig({
     }),
   ],
   test: {
+    // The original openGym is a separate vendored project with its own Vitest
+    // dependencies and test setup; root RED Fit tests must not execute it.
+    // Agent 05 uses node:test in its own original-openGym QA workflow; these
+    // files are not Vitest suites and must not be discovered by the root run.
+    exclude: [...configDefaults.exclude, "vendor/**", "tools/opengym-qa/**"],
     environment: "happy-dom",
     setupFiles: ["./vitest.setup.ts"],
   },

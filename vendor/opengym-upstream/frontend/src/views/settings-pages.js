@@ -23,7 +23,7 @@ export const PAGES = {
   look: { title: 'Look & Home', icon: 'palette', tint: 'var(--purple)' },
   coach: { title: 'AI Coach', icon: 'sparkles', tint: 'var(--green)', mod: 'coach' },
   watch: { title: 'Apple Watch', icon: 'watch', tint: 'var(--grey)', mod: 'watch' },
-  // Settings → Integrations (v1.4.4): the directory of what openGym talks to (views/Integrations.jsx).
+  // Settings → Integrations (v1.4.4): the directory of what RED Fit talks to (views/Integrations.jsx).
   integrations: { title: 'Integrations', icon: 'plug', tint: 'var(--indigo)', kw: 'integrations connect apps services webhook webhooks home assistant n8n ntfy node-red zapier automation garmin fitbit strava sync api mcp' },
   zepp: { title: 'Zepp OS watch', icon: 'watch', tint: 'var(--orange)', mod: 'watch' },
   data: { title: 'Data & backup', icon: 'folder', tint: 'var(--blue)' },
@@ -52,14 +52,28 @@ export const ROOT_GROUPS = [['modules'], ['workout', 'alerts', 'reminders'], ['p
  * the phone's own notifications; the Coach page is the phone's Coach setup (the web app's Coach
  * runs on the server, set up by its admin).
  */
+import { isLocalOnly, healthBlockedByLocalOnly } from '../lib/local-only.js'
+
+/** Whether `page` may open: its own rule and its parent's. In local mode the Integrations page
+ * stays hidden (its other rows are online services), but the on-device health pages under it
+ * open directly when health is allowed (owner decision 16.11.2026). */
+export function pageOpenable(page, ctx) {
+  if (!PAGES[page] || !pageVisible(page, ctx)) return false
+  const parent = PAGES[page].parent
+  if (!parent || pageVisible(parent, ctx)) return true
+  return isLocalOnly() && !healthBlockedByLocalOnly() && ['apple-health', 'health-connect'].includes(page)
+}
+
 export function pageVisible(page, ctx) {
+  if (isLocalOnly() && ['coach', 'integrations', 'gym', 'gym-find', 'gym-edit', 'zepp'].includes(page)) return false
+  if (healthBlockedByLocalOnly() && ['apple-health', 'health-connect'].includes(page)) return false
   // A page of a module that is off (ctx.mod answers isOn for this profile; absent: all on).
   if (PAGES[page]?.mod && ctx.mod && !ctx.mod(PAGES[page].mod)) return false
   if (page === 'reminders') return !!(ctx.user || ctx.mobile)
   if (page === 'coach') return !!ctx.mobile
   // The iPhone app only: the watch app ships inside it.
   if (page === 'watch') return !!ctx.ios
-  // Signed in to a server: a Zepp OS watch reaches openGym through it (lib/watch-relay.js).
+  // Signed in to a server: a Zepp OS watch reaches RED Fit through it (lib/watch-relay.js).
   if (page === 'zepp') return !!ctx.user && !ctx.demo
   // The phone app only: a browser cannot watch where you are with the page closed.
   if (page === 'gym' || page === 'gym-find' || page === 'gym-edit') return !!ctx.mobile && ctx.gymReminder !== false

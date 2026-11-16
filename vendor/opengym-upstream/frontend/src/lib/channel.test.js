@@ -64,9 +64,10 @@ describe('install channel', () => {
 
   it('the iPhone app is the App Store\'s', async () => {
     h.platform = 'ios'
-    const { getChannel, selfUpdates } = await import('./channel.js')
+    const { getChannel, selfUpdates, nativeScanner } = await import('./channel.js')
     expect(await getChannel()).toBe('appstore')
     expect(await selfUpdates()).toBe(false)
+    expect(await nativeScanner()).toBe(false)
   })
 
   it('the gym reminder is there unless the build left background location out', async () => {

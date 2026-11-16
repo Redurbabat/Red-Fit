@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 /**
  * Walks the iPhone app the way someone new does and checks what only a real phone shows: that the
@@ -14,6 +15,32 @@ final class OpenGymUITests: XCTestCase {
 
     override func setUp() {
         continueAfterFailure = false
+    }
+
+    override func record(_ issue: XCTIssue) {
+        // This CI target uses only synthetic local data. Keep a useful native
+        // hierarchy in its log when UIKit/bridge integration fails.
+        print("REDFIT_NATIVE_FAILURE " + app.debugDescription)
+        super.record(issue)
+    }
+
+    private func dockShot(_ dock: XCUIElement, _ name: String) {
+        let image = XCUIScreen.main.screenshot().image
+        let bounds = app.frame
+        let rect = dock.frame.intersection(bounds)
+        guard !rect.isEmpty, bounds.width > 0, bounds.height > 0, let source = image.cgImage else { return }
+        // XCTest element frames are points; screenshot metadata does not always
+        // carry the device's 2x/3x scale. Map the actual pixel dimensions explicitly.
+        let scaleX = CGFloat(source.width) / bounds.width
+        let scaleY = CGFloat(source.height) / bounds.height
+        guard let crop = source.cropping(to: CGRect(
+            x: (rect.minX - bounds.minX) * scaleX, y: (rect.minY - bounds.minY) * scaleY,
+            width: rect.width * scaleX, height: rect.height * scaleY
+        )) else { return }
+        let attachment = XCTAttachment(image: UIImage(cgImage: crop))
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     private func shot(_ name: String) {
@@ -55,16 +82,45 @@ final class OpenGymUITests: XCTestCase {
      * tap and pass the next one through to home underneath (CI 10-13, the gym card opened).
      */
     private func chooseLocal() {
-        if app.buttons["Log"].waitForExistence(timeout: 45) { return }   // chosen in an earlier test
-        let local = app.buttons["Use on this device"]
-        XCTAssertTrue(local.waitForExistence(timeout: 60), "the onboarding choice did not show up")
-        for _ in 0..<5 {
-            if systemAlertUp() { allowSystemAlert(within: 20) }
-            if local.exists && local.isHittable { local.tap() }
-            passPermissionSteps()
-            if app.buttons["Log"].waitForExistence(timeout: 20) { return }
+        // RED Fit's enforced local-only boot can open Home directly. Older
+        // installations may still show "Use on this device"; a fresh local
+        // onboarding screen instead offers "RED Fit öffnen". All three paths
+        // must be accepted without changing or clearing stored workout data.
+        func dismissTour() {
+            if app.staticTexts["Want a 1-minute tour?"].exists, app.buttons["Skip"].exists {
+                app.buttons["Skip"].tap()
+            }
         }
-        XCTFail("home never showed after the onboarding choice")
+        let homeToday = app.webViews.firstMatch.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH[c] %@ OR label BEGINSWITH[c] %@", "Today", "Heute")
+        ).firstMatch
+        let legacyChoice = app.buttons["Use on this device"]
+        let localOnlyChoice = app.buttons["RED Fit öffnen"]
+        let deadline = Date().addingTimeInterval(100)
+        while Date() < deadline {
+            if systemAlertUp() { allowSystemAlert(within: 3) }
+            dismissTour()
+            if homeToday.exists { return }
+
+            if localOnlyChoice.exists && localOnlyChoice.isHittable {
+                localOnlyChoice.tap()
+                passPermissionSteps()
+            } else if legacyChoice.exists && legacyChoice.isHittable {
+                legacyChoice.tap()
+                passPermissionSteps()
+            } else if app.staticTexts["Never miss the end of a rest"].exists
+                        || app.staticTexts["Your workouts in Apple Health"].exists {
+                passPermissionSteps()
+            }
+            dismissTour()
+            if homeToday.waitForExistence(timeout: 2) { return }
+        }
+        shot("redfit-onboarding-failure")
+        let snapshot = XCTAttachment(string: app.debugDescription)
+        snapshot.name = "redfit-onboarding-accessibility"
+        snapshot.lifetime = .keepAlways
+        add(snapshot)
+        XCTFail("Neither the local Home dashboard nor a usable first-run choice appeared")
     }
 
     private func systemAlertUp() -> Bool { springboard.alerts.firstMatch.exists }
@@ -129,6 +185,60 @@ final class OpenGymUITests: XCTestCase {
             sleep(1)
         }
         XCTAssertEqual(sw.value as? String, "1", "the \(what) switch did not stay on")
+    }
+
+    /**
+     * Smoke test for the REAL iOS 26 UIKit tab bar installed above the original
+     * Capacitor WKWebView. A source-level check cannot detect an invisible or
+     * untappable dock, a lost JavaScript route, or accidentally duplicated web views.
+     * Run independently via AppUITests scheme / -only-testing (no real account).
+     */
+    func test0REDFitNativeTabBarKeepsOriginalNavigation() {
+        guard #available(iOS 26.0, *) else { return }
+        // This test verifies native navigation, not the optional HealthKit
+        // authorization sheet. The app's narrowly scoped test launch argument
+        // marks only the onboarding explanations as seen; OS permissions are
+        // never granted or bypassed.
+        app.launchArguments = ["-REDFitUITestSkipOnboardingPermissions", "-REDFitLegacyUITest"]
+        app.launch()
+        chooseLocal()
+        // The first-run tour is a real modal, so finish its invitation before
+        // interacting with the native peer navigation behind it.
+        if app.staticTexts["Want a 1-minute tour?"].waitForExistence(timeout: 5) {
+            tap(app.buttons["Skip"], "skip the optional introduction")
+        }
+
+        let dock = app.tabBars.matching(identifier: "redfit-system-tabbar").firstMatch
+        XCTAssertTrue(dock.waitForExistence(timeout: 30), "native iPhone system tab bar is missing")
+        let web = app.webViews.matching(identifier: "redfit-workout-webview").firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 20), "original workout web view is missing")
+        let structure = app.staticTexts["redfit-native-structure"]
+        XCTAssertTrue(structure.waitForExistence(timeout: 10), "native view structure probe is missing")
+        XCTAssertEqual(structure.label, "webviews:1; native-tabs:5", "navigation must preserve one actual WKWebView")
+        XCTAssertEqual(app.tabBars.count, 1, "exactly one real UIKit tab bar must own the dock")
+        XCTAssertEqual(dock.buttons.count, 5, "all five native destinations must be accessible")
+        // Crop only our native dock on an empty synthetic Home screen. The CI
+        // may expose this crop, never an IPA, exercise media or personal records.
+        dockShot(dock, "redfit-glass-home")
+
+        // Every tab must navigate through the existing React Router, not just
+        // change the native selected item. Headers are scoped to WKWebView
+        // because the system tab bar also displays these tab titles.
+        for (tab, header) in [("Plan", "Plan"), ("Stats", "Stats"), ("Exercises", "Exercises")] {
+            tap(dock.buttons[tab], "native " + tab)
+            XCTAssertTrue(web.staticTexts[header].waitForExistence(timeout: 20),
+                "native " + tab + " did not open the original " + header + " page")
+            XCTAssertEqual(structure.label, "webviews:1; native-tabs:5", "switching to " + tab + " replaced the web view")
+        }
+        tap(dock.buttons["Home"], "native Home")
+        XCTAssertTrue(web.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Today")).firstMatch.waitForExistence(timeout: 20),
+            "native Home did not restore the original dashboard")
+
+        tap(dock.buttons["Start"], "native Start workout")
+        XCTAssertTrue(web.staticTexts["Start workout"].waitForExistence(timeout: 20),
+            "native Start did not open the original workout picker")
+        XCTAssertEqual(structure.label, "webviews:1; native-tabs:5", "starting a workout must preserve WKWebView")
+        shot("redfit-native-system-tabbar")
     }
 
     // XCTest runs a class's tests in name order: the keyboard check wants a plain home screen, and
@@ -266,5 +376,92 @@ final class OpenGymUITests: XCTestCase {
         XCTAssertTrue(save.waitForExistence(timeout: 5), "no Save button")
         let keyboardTop = app.keyboards.firstMatch.frame.minY
         XCTAssertLessThanOrEqual(save.frame.maxY, keyboardTop + 1, "Save sits under the keyboard")
+    }
+}
+
+// Runs against the real SwiftUI surface and its original local JavaScript core.
+// Use a dedicated synthetic Simulator; never seed or clear an owner's installation.
+final class REDFitSwiftUIUITests: XCTestCase {
+    let app = XCUIApplication()
+    override func setUp() { continueAfterFailure = false; app.launchArguments = ["-AppleLanguages", "(de)", "-AppleLocale", "de_CH", "-REDFitUITestSkipOnboardingPermissions"] }
+    override func record(_ issue: XCTIssue) { print("REDFIT_SWIFTUI_FAILURE " + app.debugDescription); super.record(issue) }
+    private func shot(_ name: String) { let item = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); item.name = name; item.lifetime = .keepAlways; add(item) }
+    private func waitForLabel(_ element: XCUIElement, _ label: String, timeout: TimeInterval = 10) -> Bool {
+        XCTWaiter.wait(for: [expectation(for: NSPredicate(format: "label == %@", label), evaluatedWith: element)], timeout: timeout) == .completed
+    }
+    private func start() {
+        app.launch()
+        XCTAssertTrue(app.navigationBars["RED Fit"].waitForExistence(timeout: 45), "native Home never became ready")
+        XCTAssertEqual(app.tabBars.count, 1)
+    }
+    func testNativeNavigationWaterAndColdRestart() {
+        start()
+        shot("redfit-swiftui-home")
+        for (tab, title) in [("Training", "Training"), ("Ernährung", "Ernährung"), ("Körper", "Körper"), ("Mehr", "Mehr")] {
+            app.tabBars.buttons[tab].tap()
+            XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 10))
+            shot("redfit-swiftui-" + title)
+        }
+        app.tabBars.buttons["Heute"].tap()
+        let water = app.buttons["redfit-add-water"]
+        if !water.isHittable { app.swipeUp() }
+        let total = app.staticTexts["redfit-water-total"]
+        XCTAssertTrue(total.waitForExistence(timeout: 10))
+        let expected = String((Int(total.value as? String ?? "0") ?? 0) + 250)
+        XCTAssertTrue(water.waitForExistence(timeout: 10)); water.tap()
+        XCTAssertTrue(NSPredicate(format: "value == %@", expected).evaluate(with: total) || XCTWaiter.wait(for: [expectation(for: NSPredicate(format: "value == %@", expected), evaluatedWith: total)], timeout: 10) == .completed)
+        app.terminate(); start()
+        if !total.isHittable { app.swipeUp() }
+        XCTAssertTrue(total.waitForExistence(timeout: 10), "water total missing after cold restart")
+        XCTAssertEqual(total.value as? String, expected, "durable water entry lost after cold restart")
+    }
+    func testHomeDashboardShowsStreakGoalMealsAndWater() {
+        start()
+        XCTAssertTrue(app.otherElements["redfit-native-home"].firstMatch.waitForExistence(timeout: 10) || app.scrollViews.firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["redfit-home-greeting"].waitForExistence(timeout: 10), "greeting missing")
+        XCTAssertTrue(app.buttons["redfit-streak"].waitForExistence(timeout: 10), "streak control missing")
+        XCTAssertTrue(app.buttons["redfit-history"].exists, "calendar/history control missing")
+        XCTAssertTrue(app.buttons["redfit-progress-photo"].exists, "progress photo card missing")
+        XCTAssertTrue(app.descendants(matching: .any)["redfit-weekly-goal"].exists, "weekly goal missing")
+        if !app.buttons["redfit-meals-card"].isHittable { app.swipeUp() }
+        XCTAssertTrue(app.buttons["redfit-meals-card"].waitForExistence(timeout: 10), "meals card missing")
+        XCTAssertTrue(app.buttons["redfit-start-workout"].waitForExistence(timeout: 10), "start workout missing")
+        shot("redfit-swiftui-home-dashboard")
+        app.buttons["redfit-history"].tap()
+        XCTAssertTrue(app.navigationBars["Verlauf"].waitForExistence(timeout: 10))
+        app.buttons["Fertig"].tap()
+        app.buttons["redfit-meals-card"].tap()
+        XCTAssertTrue(app.navigationBars["Ernährung"].waitForExistence(timeout: 10))
+    }
+    func testNativePlanExerciseAndWorkout() {
+        start()
+        app.tabBars.buttons["Training"].tap()
+        let create = app.buttons["Plan erstellen"]
+        XCTAssertTrue(create.waitForExistence(timeout: 10)); create.tap()
+        let name = app.textFields["redfit-plan-name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 10)); name.tap(); name.typeText("QA Oberkörper")
+        app.buttons["Übung hinzufügen"].tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 10)); search.tap(); search.typeText("bench press")
+        let result = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "redfit-exercise-")).firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 15)); result.tap()
+        app.buttons["redfit-save-plan"].tap()
+        XCTAssertTrue(app.buttons["Plan trainieren"].firstMatch.waitForExistence(timeout: 10)); app.buttons["Plan trainieren"].firstMatch.tap()
+        let checkbox = app.buttons["redfit-set-0-0-both"]
+        XCTAssertTrue(checkbox.waitForExistence(timeout: 20), "native workout did not receive original session entries")
+        // A workout still running from an earlier run on this Simulator is resumed: start from an open set.
+        if checkbox.label == "Satz zurücknehmen" { checkbox.tap(); XCTAssertTrue(waitForLabel(checkbox, "Satz abschließen")) }
+        let weight = app.textFields["Gewicht Satz 1"]
+        XCTAssertTrue(weight.waitForExistence(timeout: 10)); weight.tap()
+        let old = weight.value as? String ?? "0"
+        weight.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + "60")
+        checkbox.tap()
+        // The label follows the original core's confirmed state, one bridge round trip later.
+        XCTAssertTrue(waitForLabel(checkbox, "Satz zurücknehmen"), "set not marked done")
+        shot("redfit-swiftui-workout")
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["redfit-active-workout"].waitForExistence(timeout: 45), "active original workout lost after restart")
+        app.buttons["redfit-active-workout"].tap()
+        XCTAssertTrue(checkbox.waitForExistence(timeout: 15)); XCTAssertTrue(waitForLabel(checkbox, "Satz zurücknehmen"), "done set lost after restart")
     }
 }

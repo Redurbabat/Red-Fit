@@ -24,6 +24,7 @@
 // syncs. Packs are downloaded per device, and a phone and an iPad want different sizes; the
 // profile, its workouts and its history are not touched by any of this.
 import { MOBILE } from './mobile.js'
+import { isLocalOnly } from './local-only.js'
 import { EXIDX } from './exercises.js'
 import { PACK_QUALITIES, FIGURES, packId, packDrawingId, readChoice, wantedPack, packQualities, parsePackId, DEFAULT_CHOICE } from './anim-quality.js'
 
@@ -124,6 +125,7 @@ export function targetPack(choice, figure, device = deviceInfo(), s = state) {
 
 /** Asks the native side what it has. Once at start, and after every download or removal. */
 export async function refresh() {
+  if (isLocalOnly()) { state = { ...state, checked: true, available: false }; emit(); return state }
   const p = await packsPlugin()
   if (!p) { state = { ...state, checked: true, available: false }; emit(); return state }
   let available = false, testflight = false, offered = null
@@ -146,6 +148,7 @@ let progressHooked = false
 const downloads = new Map()
 /** Downloads a pack; resolves to 'ready' or the code it stopped with. One at a time per pack. */
 export function download(id) {
+  if (isLocalOnly()) return Promise.resolve('unavailable')
   if (downloads.has(id)) return downloads.get(id)
   const run = (async () => {
     const p = await packsPlugin()

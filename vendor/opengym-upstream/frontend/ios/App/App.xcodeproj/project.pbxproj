@@ -7,81 +7,324 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0016B43E1F558B7216E231DD /* OpenGymWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 18EA95227706B0E83F3FB4FF /* OpenGymWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		04898E5EBBF06F652C930EFE /* ko.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 6EC67C96DE7E3F15876A4015 /* ko.lproj */; };
+		06905CF3F4C2EE03E4AF12E0 /* pl.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 88E9C0C53B3DEF2BB64E80CF /* pl.lproj */; };
+		098DEEBAE5F59AD68E1EE428 /* ko.lproj in Resources */ = {isa = PBXBuildFile; fileRef = C050837DF1E0529876E1F334 /* ko.lproj */; };
+		10F6178208BAAF6E2311F0F8 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63ECED7F444E64BBDB7730FF /* SessionStore.swift */; };
+		12B02928A52DC2611E8608C7 /* SensorPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC556DE1B5850A27D1C0274F /* SensorPlan.swift */; };
+		1479FFBE5D0EB2BD8B1C991B /* WidgetState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFD324CCF4599092CA2C1C5 /* WidgetState.swift */; };
+		14AEDD3AFD36C63B74C52C19 /* de.lproj in Resources */ = {isa = PBXBuildFile; fileRef = C4526443745C789E9648AE9E /* de.lproj */; };
+		1711DB6F0AB6EEE22E45A931 /* ru.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 1BA3BC3E83F1397EE12A5DF4 /* ru.lproj */; };
+		1CCCBD3CCAA9E545EA5FFCC6 /* REDFitBodyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E392929A100979F72F98922 /* REDFitBodyView.swift */; };
+		1D97CC2C6E31EA5DE75B7FE9 /* WorkoutActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000007 /* WorkoutActivity.swift */; };
+		234FD24265334F20BEAAE54F /* zh-Hans.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 8A6F8D34BBC718A9AAC61DC4 /* zh-Hans.lproj */; };
+		25253BBA3332D26AF1601C98 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8F2CF5FB6846D196A415C8F4 /* Assets.xcassets */; };
+		2C70DC0EAD007E65C310521C /* ar.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 2B588616A1E6EA457075943B /* ar.lproj */; };
+		2D6E05984448DCD0218233EE /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B39F4CB31EB5CBC1AF6216 /* Model.swift */; };
+		2F9544C6972F8F4994B0C2D0 /* OpenGymWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABD13FB6D91F32108C044D /* OpenGymWatchApp.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
+		313A557B1D6483018C3CB6D2 /* ru.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 27B5C031A145DB144F11AC20 /* ru.lproj */; };
+		34C17E3F29F1AA0772BB4C12 /* de.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 5FF747B60CEFB8B1C0136D4B /* de.lproj */; };
+		355834FA56433EE4DAF2CF5F /* WidgetState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFD324CCF4599092CA2C1C5 /* WidgetState.swift */; };
+		3758174DAB9FE84563197E93 /* hi.lproj in Resources */ = {isa = PBXBuildFile; fileRef = CAA5787E0BDFE5A44B819F0B /* hi.lproj */; };
+		382D409BF17F37C614C5D696 /* pl.lproj in Resources */ = {isa = PBXBuildFile; fileRef = BDB23C75194516310B98F5E3 /* pl.lproj */; };
+		3C6377EC9DB27AEABB8A7DD3 /* REDFitNutritionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9596E57D57BB4411186C728B /* REDFitNutritionViews.swift */; };
+		44AD6FA65A6D4F6BC251A696 /* zh-Hans.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 41CDBA9C2749FCA6A57C70B1 /* zh-Hans.lproj */; };
+		4A305262303250E818A00EE0 /* ru.lproj in Resources */ = {isa = PBXBuildFile; fileRef = DA3EFC49E36EFCFA2E761443 /* ru.lproj */; };
+		4A885B196837001DBEF6C9A1 /* REDFitGarminLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0FC736CECFE9301C89C3162 /* REDFitGarminLink.swift */; };
+		4B6E916D7716FA123E9CA83D /* hi.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 856788372576C7CFEDF934A9 /* hi.lproj */; };
+		4E4B03C9AFE880D617812060 /* redfit-poses.json in Resources */ = {isa = PBXBuildFile; fileRef = 91B69D547826AA7E29366250 /* redfit-poses.json */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
-		AA0000000000000000000002 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* SceneDelegate.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
+		505B08531809844E3BA03B53 /* zh-Hans.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 6EEE83865BAB8283B0D30377 /* zh-Hans.lproj */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		5567A0B5B034263ABCC265E2 /* tr.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 552CED8148AC4F0AA93C4175 /* tr.lproj */; };
+		5B9B3771C8948C051048C6A9 /* zh-Hant.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 1261FD5C44AA38F2B8C84A79 /* zh-Hant.lproj */; };
+		5EA5C55092F4EA6CC7524589 /* es.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 84C165F69D0ACCE2153228F0 /* es.lproj */; };
+		610FE0275F57E1F553633CF6 /* WorkoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F290DFDCDDBB3011059DC4 /* WorkoutManager.swift */; };
+		615DF86146BAC12D029CD37D /* pt-PT.lproj in Resources */ = {isa = PBXBuildFile; fileRef = EA07B42501F9D3F0A698EAE9 /* pt-PT.lproj */; };
+		654B5D7367CE2CF9875CD225 /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000009 /* WidgetViews.swift */; };
+		657058268ECA5ED5C325A727 /* fr.lproj in Resources */ = {isa = PBXBuildFile; fileRef = C08C5F4DC9402082AE710A61 /* fr.lproj */; };
+		6BB4407E69E61AF1169B4998 /* th.lproj in Resources */ = {isa = PBXBuildFile; fileRef = F3EE8378B6396190D3202D18 /* th.lproj */; };
+		6C8C7583FB96C2A92A9C1C86 /* fr.lproj in Resources */ = {isa = PBXBuildFile; fileRef = B10D5A8998FEB2D34693BB02 /* fr.lproj */; };
+		6CF986D0F790C09C1C408D19 /* uk.lproj in Resources */ = {isa = PBXBuildFile; fileRef = A0156564863B3CF758DFD631 /* uk.lproj */; };
+		7281F767A0E8896B8FFE621E /* OpenGymWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6CE63D5D2AA204A2239570DA /* OpenGymWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		75C5D39D60E99D0A231D959E /* hu.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 5D2320C6896D82A03FE501E7 /* hu.lproj */; };
+		7B7C35316B4C2954848358DF /* uk.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 67A0630282DC390DB16F4AC5 /* uk.lproj */; };
+		7DEB7F65E6AD28890C53835D /* OpenGymWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB8D54EF830149A8A2A01EE7 /* OpenGymWidgets.swift */; };
+		7E7ACB01E38BA473B5D57C76 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23DBF5FABE112107E1748BBD /* WidgetKit.framework */; };
+		7FE9E96C4BBAB8436B0DA25F /* bn.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 90F33175EAF8B79A543E6AB5 /* bn.lproj */; };
+		8719D6E53175C700F4548074 /* th.lproj in Resources */ = {isa = PBXBuildFile; fileRef = A55BBBC03E941E87BB4C45B6 /* th.lproj */; };
+		886BE9D0D306B267CB2DCFF3 /* en.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 2661C36783407CB20957A6B9 /* en.lproj */; };
+		886D7F605EDD33EB16915090 /* pt-BR.lproj in Resources */ = {isa = PBXBuildFile; fileRef = EE2D152080F790635C1A6201 /* pt-BR.lproj */; };
+		888D4ED07E34210E5502519E /* ar.lproj in Resources */ = {isa = PBXBuildFile; fileRef = EF8C18715ED73655E5857A43 /* ar.lproj */; };
+		8A6B5BD6D287FAFEC3582026 /* pl.lproj in Resources */ = {isa = PBXBuildFile; fileRef = AA745D1A7F92F6E3DE9A632D /* pl.lproj */; };
+		8B743F659EC37E9176D776C5 /* it.lproj in Resources */ = {isa = PBXBuildFile; fileRef = D742B43118678411FFC9AF4F /* it.lproj */; };
+		8D5DC680BA29A37DEF6CCA9C /* uk.lproj in Resources */ = {isa = PBXBuildFile; fileRef = F4665D5224FD9D1B7EBB19E0 /* uk.lproj */; };
+		8EFE2B3D7A1C2E74DF06E30E /* tr.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 587B8A64E7104808B374F31F /* tr.lproj */; };
+		8FB092DE953AFEF83DA41D15 /* bn.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 69FF163FAE48764264F8E190 /* bn.lproj */; };
+		90E5074F437D4FCF1E6ED2EF /* HealthReadCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 718B53AA237BF989A2019DC8 /* HealthReadCore.swift */; };
+		91DAC39795F51882604AF1FD /* th.lproj in Resources */ = {isa = PBXBuildFile; fileRef = B0D3032019AD9FFBE039CC53 /* th.lproj */; };
+		9EAE07CB878A1A5625D19C91 /* REDFitRealityCoach.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5447FEC680D8F590073C87 /* REDFitRealityCoach.swift */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
+		A0A9F27B3A393606A6D7DA40 /* tr.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 4B35947BFD12215198957C54 /* tr.lproj */; };
+		A6E547174FA377C60B0FE7B9 /* en.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 3F56E59980CD0BA604A491AA /* en.lproj */; };
+		AA0000000000000000000002 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* SceneDelegate.swift */; };
 		AA0100000000000000000002 /* PrintPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000001 /* PrintPlugin.swift */; };
-		AA0900000000000000000002 /* AppIconPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0900000000000000000001 /* AppIconPlugin.swift */; };
-		AA0A00000000000000000002 /* NfcTagsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0A00000000000000000001 /* NfcTagsPlugin.swift */; };
-		AA0818000000000000000002 /* PhoneWorkoutPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0818000000000000000001 /* PhoneWorkoutPlugin.swift */; };
 		AA0200000000000000000002 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000001 /* MainViewController.swift */; };
 		AA0200000000000000000004 /* RestAlertPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000003 /* RestAlertPlugin.swift */; };
 		AA0200000000000000000006 /* RestTone.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000005 /* RestTone.swift */; };
 		AA0200000000000000000008 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000007 /* PrivacyInfo.xcprivacy */; };
 		AA0300000000000000000002 /* DeviceAuthPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0300000000000000000001 /* DeviceAuthPlugin.swift */; };
-		AA0400000000000000000002 /* AnimationPacksPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0400000000000000000001 /* AnimationPacksPlugin.swift */; };
 		AA0300000000000000000004 /* NudgeCheckPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0300000000000000000003 /* NudgeCheckPlugin.swift */; };
+		AA0400000000000000000002 /* AnimationPacksPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0400000000000000000001 /* AnimationPacksPlugin.swift */; };
 		AA0500000000000000000002 /* AppleHealthPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000001 /* AppleHealthPlugin.swift */; };
 		AA0500000000000000000004 /* WidgetBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000003 /* WidgetBridgePlugin.swift */; };
 		AA0500000000000000000006 /* LiveActivityPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000005 /* LiveActivityPlugin.swift */; };
 		AA0500000000000000000008 /* WorkoutActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000007 /* WorkoutActivity.swift */; };
 		AA0500000000000000000010 /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000009 /* WidgetViews.swift */; };
 		AA0500000000000000000012 /* WidgetPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0500000000000000000011 /* WidgetPreview.swift */; };
-		AA0700000000000000000002 /* WatchBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0700000000000000000001 /* WatchBridgePlugin.swift */; };
 		AA0600000000000000000002 /* ClipCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0600000000000000000001 /* ClipCodec.swift */; };
 		AA0600000000000000000004 /* HealthReadCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0600000000000000000003 /* HealthReadCore.swift */; };
+		AA0700000000000000000002 /* WatchBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0700000000000000000001 /* WatchBridgePlugin.swift */; };
 		AA0800000000000000000002 /* GymReminderPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0800000000000000000001 /* GymReminderPlugin.swift */; };
 		AA0800000000000000000004 /* GymReminderRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0800000000000000000003 /* GymReminderRules.swift */; };
+		AA0818000000000000000002 /* PhoneWorkoutPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0818000000000000000001 /* PhoneWorkoutPlugin.swift */; };
+		AA0900000000000000000002 /* AppIconPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0900000000000000000001 /* AppIconPlugin.swift */; };
+		AA0A00000000000000000002 /* NfcTagsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0A00000000000000000001 /* NfcTagsPlugin.swift */; };
 		AA1440000000000000000002 /* GymMapPickerPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1440000000000000000001 /* GymMapPickerPlugin.swift */; };
 		AA1450000000000000000002 /* VoiceIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1450000000000000000001 /* VoiceIntents.swift */; };
 		AA1450000000000000000004 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = AA1450000000000000000003 /* AppShortcuts.strings */; };
 		AA1450000000000000000006 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AA1450000000000000000005 /* Localizable.strings */; };
+		B1CB71A8007286B804A0527E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 764B0C80AF618F22DCB58E3C /* Foundation.framework */; };
+		B2521DCDFA6CF56A8F391449 /* it.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 0F028351CAA96D62B630E5D4 /* it.lproj */; };
+		B298C01EF0F8C89D942CA2B6 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 764B0C80AF618F22DCB58E3C /* Foundation.framework */; };
+		B3064454E2F9A27811A4C242 /* OpenGymWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA5E9F9C97F7A2E74CB2B651 /* OpenGymWidgets.swift */; };
+		B5D857666765F7056249610D /* OpenGymWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 1403FD16D254A690DF9225DD /* OpenGymWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B63120DC028BBA02538526E6 /* pt-BR.lproj in Resources */ = {isa = PBXBuildFile; fileRef = C3310FCAE37B2C8F197B589E /* pt-BR.lproj */; };
+		BBEFD2EE7B95564D1ADBD264 /* REDFitHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E613955E7229FC12F0603F8B /* REDFitHomeView.swift */; };
+		BE518D109CF4E30224287EA3 /* bn.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 0BEA0161A30D9E6437FF94DE /* bn.lproj */; };
+		C41C9B0F47F0F500D2FDF0DD /* es.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 385431DA1569EB897C94F252 /* es.lproj */; };
+		C508F4256D4BB3D4260D9510 /* LiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D498620D6FBE15CB5837F74 /* LiveActivityWidget.swift */; };
+		C5FDB58C6F2E46BB1C920FA4 /* hi.lproj in Resources */ = {isa = PBXBuildFile; fileRef = F61E3B40BE988C02AE462755 /* hi.lproj */; };
+		C740FAF31095E982D3B6CDE5 /* ar.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 8FECEE2FC71AC1558B6683B4 /* ar.lproj */; };
+		C7464E799E7B8C41E51A6D3D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC1E8D2A8CD933B57B88203A /* Foundation.framework */; };
+		C7722B097BC860DA1C1B0A91 /* fr.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 6F02FFBF7D1654448F951BA9 /* fr.lproj */; };
+		C8E3A9A48B10F9951B26973C /* pt-BR.lproj in Resources */ = {isa = PBXBuildFile; fileRef = BFA71E9EBB0A0D1A03236BDC /* pt-BR.lproj */; };
+		CB141109F482F0A28F8C9ED5 /* SessionCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55581742EEFDD3D3BFD2A003 /* SessionCore.swift */; };
+		CF14C7C14CF189E249CE7B6C /* ClipCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20054CB417E9DD6976224C6A /* ClipCodec.swift */; };
+		CF932D52B5A7817EF01754E8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 516082791D48CDCBE60E43C7 /* SwiftUI.framework */; };
+		D0A068C07FCF10755C881B4E /* ko.lproj in Resources */ = {isa = PBXBuildFile; fileRef = A2211333D5D9C1A02655E51E /* ko.lproj */; };
+		D177C1E9C2F817CB1D93A3DA /* it.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 03AE03076F29B633A915B962 /* it.lproj */; };
+		D26B2F7E3DB64A24402AE680 /* zh-Hant.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 7505466636ECD08E03505199 /* zh-Hant.lproj */; };
+		D84D8B39B802B1A9BCA68E7E /* hu.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 82DF048E6527DB8A0282A925 /* hu.lproj */; };
+		D97F5145AD603426D80C4F27 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC1E8D2A8CD933B57B88203A /* Foundation.framework */; };
+		DD1DCFC33B00B7814119318C /* es.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 05944D48CBAE6DEA0CD270D5 /* es.lproj */; };
+		DF00D5BC8E7B954029B91453 /* hu.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 06F9B2A2E7633456023C1E77 /* hu.lproj */; };
+		E60AC2D2BDFC7852F853EC90 /* OpenGymUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0301B704B7896046E47A597F /* OpenGymUITests.swift */; };
+		E74F78C8FAAF9AE09CF9D2B3 /* REDFitWorkoutViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2599D3D28D2084CEFC45AFC /* REDFitWorkoutViews.swift */; };
+		E84789243708DA773AFF02A8 /* pt-PT.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 8A7AC117E705866300EB7483 /* pt-PT.lproj */; };
+		F5DB7E5842E389D840760BA2 /* pt-PT.lproj in Resources */ = {isa = PBXBuildFile; fileRef = A1165734F5E18314B11F164F /* pt-PT.lproj */; };
+		F6B2F95D89DFDED8A12E71D1 /* AnimationPacksDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E973E6CD275A24CE0AA0422 /* AnimationPacksDownloader.swift */; };
+		F90CCEBF574B79BC26A8100B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC1E8D2A8CD933B57B88203A /* Foundation.framework */; };
+		FA75A57BE9AD0ACED75723E3 /* de.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 18AD9C3ABFBB81BE7B6E3863 /* de.lproj */; };
+		FCCE5DE739789C03EA464EF8 /* AnimationPacksDownloader.appex in Embed ExtensionKit Extensions */ = {isa = PBXBuildFile; fileRef = A53D9D21DA44FEC36D7BE832 /* AnimationPacksDownloader.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FD1A465EB1AD23A9B525BC9B /* zh-Hant.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 79CA1758D76B9920E9028A2E /* zh-Hant.lproj */; };
+		FFC3A1FE12E00A02F9A26940 /* REDFitNativeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE7176FEE8D70B15134C0627 /* REDFitNativeApp.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		1AD98E51753D2DE5195A036D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5E3ACA9711F22E30A8E889AE;
+			remoteInfo = OpenGymWidgets;
+		};
+		5DACA6660FEA83E041FACAF3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A4094C791067909B18D20085;
+			remoteInfo = OpenGymWatchWidgets;
+		};
+		DBF2AAC535263280772ACFA3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AC44B83F197A8C1B52132E89;
+			remoteInfo = AnimationPacksDownloader;
+		};
+		F0D34A0F682928A89980C49D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C4A45576B8CA5EF61AFF9F6F;
+			remoteInfo = OpenGymWatch;
+		};
+		F73B73DB7C47944CE098FF15 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 504EC3031FED79650016851F;
+			remoteInfo = App;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		12E813954E274295E35CD210 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7281F767A0E8896B8FFE621E /* OpenGymWatchWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		237F30D7793776BFACAA46E1 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0016B43E1F558B7216E231DD /* OpenGymWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D27E8F8C997D2AF0A9B105B7 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B5D857666765F7056249610D /* OpenGymWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2D04F471C582F88FBCF07CC /* Embed ExtensionKit Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(EXTENSIONS_FOLDER_PATH)";
+			dstSubfolderSpec = 16;
+			files = (
+				FCCE5DE739789C03EA464EF8 /* AnimationPacksDownloader.appex in Embed ExtensionKit Extensions */,
+			);
+			name = "Embed ExtensionKit Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		0301B704B7896046E47A597F /* OpenGymUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenGymUITests.swift; sourceTree = "<group>"; };
+		03AE03076F29B633A915B962 /* it.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = it.lproj; sourceTree = "<group>"; };
+		05944D48CBAE6DEA0CD270D5 /* es.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = es.lproj; sourceTree = "<group>"; };
+		06F9B2A2E7633456023C1E77 /* hu.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = hu.lproj; sourceTree = "<group>"; };
+		0BEA0161A30D9E6437FF94DE /* bn.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = bn.lproj; sourceTree = "<group>"; };
+		0F028351CAA96D62B630E5D4 /* it.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = it.lproj; sourceTree = "<group>"; };
+		11ABD13FB6D91F32108C044D /* OpenGymWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenGymWatchApp.swift; sourceTree = "<group>"; };
+		1261FD5C44AA38F2B8C84A79 /* zh-Hant.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "zh-Hant.lproj"; sourceTree = "<group>"; };
+		1403FD16D254A690DF9225DD /* OpenGymWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenGymWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		18AD9C3ABFBB81BE7B6E3863 /* de.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = de.lproj; sourceTree = "<group>"; };
+		18EA95227706B0E83F3FB4FF /* OpenGymWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OpenGymWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		1BA3BC3E83F1397EE12A5DF4 /* ru.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ru.lproj; sourceTree = "<group>"; };
+		20054CB417E9DD6976224C6A /* ClipCodec.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClipCodec.swift; sourceTree = "<group>"; };
+		23DBF5FABE112107E1748BBD /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/WidgetKit.framework; sourceTree = DEVELOPER_DIR; };
+		2661C36783407CB20957A6B9 /* en.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = en.lproj; sourceTree = "<group>"; };
+		26B39F4CB31EB5CBC1AF6216 /* Model.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
+		27B5C031A145DB144F11AC20 /* ru.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ru.lproj; sourceTree = "<group>"; };
+		2A6A2EF8007F7D806593F489 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2B588616A1E6EA457075943B /* ar.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ar.lproj; sourceTree = "<group>"; };
+		2CFD324CCF4599092CA2C1C5 /* WidgetState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetState.swift; sourceTree = "<group>"; };
+		2E392929A100979F72F98922 /* REDFitBodyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitBodyView.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
+		385431DA1569EB897C94F252 /* es.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = es.lproj; sourceTree = "<group>"; };
+		3E973E6CD275A24CE0AA0422 /* AnimationPacksDownloader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnimationPacksDownloader.swift; sourceTree = "<group>"; };
+		3F56E59980CD0BA604A491AA /* en.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = en.lproj; sourceTree = "<group>"; };
+		41CDBA9C2749FCA6A57C70B1 /* zh-Hans.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "zh-Hans.lproj"; sourceTree = "<group>"; };
+		4B35947BFD12215198957C54 /* tr.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = tr.lproj; sourceTree = "<group>"; };
+		4F5447FEC680D8F590073C87 /* REDFitRealityCoach.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitRealityCoach.swift; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		AA0000000000000000000001 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		AA0900000000000000000001 /* AppIconPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconPlugin.swift; sourceTree = "<group>"; };
-		AA0A00000000000000000001 /* NfcTagsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NfcTagsPlugin.swift; sourceTree = "<group>"; };
-		AA0818000000000000000001 /* PhoneWorkoutPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneWorkoutPlugin.swift; sourceTree = "<group>"; };
-		AA0100000000000000000001 /* PrintPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintPlugin.swift; sourceTree = "<group>"; };
 		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
-		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
-		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
+		516082791D48CDCBE60E43C7 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
+		552CED8148AC4F0AA93C4175 /* tr.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = tr.lproj; sourceTree = "<group>"; };
+		55581742EEFDD3D3BFD2A003 /* SessionCore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionCore.swift; sourceTree = "<group>"; };
+		587B8A64E7104808B374F31F /* tr.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = tr.lproj; sourceTree = "<group>"; };
+		5D2320C6896D82A03FE501E7 /* hu.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = hu.lproj; sourceTree = "<group>"; };
+		5D90654465577DFFF8B60EE9 /* OpenGymWatch.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = OpenGymWatch.entitlements; sourceTree = "<group>"; };
+		5FF747B60CEFB8B1C0136D4B /* de.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = de.lproj; sourceTree = "<group>"; };
+		63ECED7F444E64BBDB7730FF /* SessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		67A0630282DC390DB16F4AC5 /* uk.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = uk.lproj; sourceTree = "<group>"; };
+		69FF163FAE48764264F8E190 /* bn.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = bn.lproj; sourceTree = "<group>"; };
+		6CE63D5D2AA204A2239570DA /* OpenGymWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OpenGymWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		6D498620D6FBE15CB5837F74 /* LiveActivityWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LiveActivityWidget.swift; sourceTree = "<group>"; };
+		6EC67C96DE7E3F15876A4015 /* ko.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ko.lproj; sourceTree = "<group>"; };
+		6EEE83865BAB8283B0D30377 /* zh-Hans.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "zh-Hans.lproj"; sourceTree = "<group>"; };
+		6F02FFBF7D1654448F951BA9 /* fr.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = fr.lproj; sourceTree = "<group>"; };
+		718B53AA237BF989A2019DC8 /* HealthReadCore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HealthReadCore.swift; sourceTree = "<group>"; };
+		73FA2AF97E678680E0F15D05 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7505466636ECD08E03505199 /* zh-Hant.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "zh-Hant.lproj"; sourceTree = "<group>"; };
+		764B0C80AF618F22DCB58E3C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		79CA1758D76B9920E9028A2E /* zh-Hant.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "zh-Hant.lproj"; sourceTree = "<group>"; };
+		82DF048E6527DB8A0282A925 /* hu.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = hu.lproj; sourceTree = "<group>"; };
+		84C165F69D0ACCE2153228F0 /* es.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = es.lproj; sourceTree = "<group>"; };
+		856788372576C7CFEDF934A9 /* hi.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = hi.lproj; sourceTree = "<group>"; };
+		869F94E92B4FF9ABA31D94CF /* AnimationPacksDownloader.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = AnimationPacksDownloader.entitlements; sourceTree = "<group>"; };
+		88E9C0C53B3DEF2BB64E80CF /* pl.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = pl.lproj; sourceTree = "<group>"; };
+		8A6F8D34BBC718A9AAC61DC4 /* zh-Hans.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "zh-Hans.lproj"; sourceTree = "<group>"; };
+		8A7AC117E705866300EB7483 /* pt-PT.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "pt-PT.lproj"; sourceTree = "<group>"; };
+		8F2CF5FB6846D196A415C8F4 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8FECEE2FC71AC1558B6683B4 /* ar.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ar.lproj; sourceTree = "<group>"; };
+		90F33175EAF8B79A543E6AB5 /* bn.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = bn.lproj; sourceTree = "<group>"; };
+		91B69D547826AA7E29366250 /* redfit-poses.json */ = {isa = PBXFileReference; includeInIndex = 1; path = "redfit-poses.json"; sourceTree = "<group>"; };
+		94EBB67444046E7F1F0525BF /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9596E57D57BB4411186C728B /* REDFitNutritionViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitNutritionViews.swift; sourceTree = "<group>"; };
+		969DC74017A5AA286CA71DD6 /* OpenGymWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = OpenGymWidgets.entitlements; sourceTree = "<group>"; };
+		97D022FBCB7644D5E94F2817 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A0156564863B3CF758DFD631 /* uk.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = uk.lproj; sourceTree = "<group>"; };
+		A0FC736CECFE9301C89C3162 /* REDFitGarminLink.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitGarminLink.swift; sourceTree = "<group>"; };
+		A1165734F5E18314B11F164F /* pt-PT.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "pt-PT.lproj"; sourceTree = "<group>"; };
+		A2211333D5D9C1A02655E51E /* ko.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ko.lproj; sourceTree = "<group>"; };
+		A53D9D21DA44FEC36D7BE832 /* AnimationPacksDownloader.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = AnimationPacksDownloader.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A55BBBC03E941E87BB4C45B6 /* th.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = th.lproj; sourceTree = "<group>"; };
+		AA0000000000000000000001 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		AA0100000000000000000001 /* PrintPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintPlugin.swift; sourceTree = "<group>"; };
 		AA0200000000000000000001 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		AA0200000000000000000003 /* RestAlertPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestAlertPlugin.swift; sourceTree = "<group>"; };
 		AA0200000000000000000005 /* RestTone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTone.swift; sourceTree = "<group>"; };
 		AA0200000000000000000007 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA0300000000000000000001 /* DeviceAuthPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAuthPlugin.swift; sourceTree = "<group>"; };
+		AA0300000000000000000003 /* NudgeCheckPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeCheckPlugin.swift; sourceTree = "<group>"; };
 		AA0400000000000000000001 /* AnimationPacksPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationPacksPlugin.swift; sourceTree = "<group>"; };
 		AA0400000000000000000003 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
-		AA0300000000000000000003 /* NudgeCheckPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeCheckPlugin.swift; sourceTree = "<group>"; };
 		AA0500000000000000000001 /* AppleHealthPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleHealthPlugin.swift; sourceTree = "<group>"; };
 		AA0500000000000000000003 /* WidgetBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetBridgePlugin.swift; sourceTree = "<group>"; };
 		AA0500000000000000000005 /* LiveActivityPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityPlugin.swift; sourceTree = "<group>"; };
 		AA0500000000000000000007 /* WorkoutActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivity.swift; sourceTree = "<group>"; };
 		AA0500000000000000000009 /* WidgetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetViews.swift; sourceTree = "<group>"; };
 		AA0500000000000000000011 /* WidgetPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPreview.swift; sourceTree = "<group>"; };
-		AA0700000000000000000001 /* WatchBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridgePlugin.swift; sourceTree = "<group>"; };
 		AA0600000000000000000001 /* ClipCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ClipCodec.swift; path = ../WatchCore/Sources/WatchCore/ClipCodec.swift; sourceTree = "<group>"; };
 		AA0600000000000000000003 /* HealthReadCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HealthReadCore.swift; path = ../WatchCore/Sources/WatchCore/HealthReadCore.swift; sourceTree = "<group>"; };
+		AA0700000000000000000001 /* WatchBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBridgePlugin.swift; sourceTree = "<group>"; };
 		AA0800000000000000000001 /* GymReminderPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymReminderPlugin.swift; sourceTree = "<group>"; };
-		AA1440000000000000000001 /* GymMapPickerPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymMapPickerPlugin.swift; sourceTree = "<group>"; };
 		AA0800000000000000000003 /* GymReminderRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GymReminderRules.swift; path = ../GymReminderCore/Sources/GymReminderCore/GymReminderRules.swift; sourceTree = "<group>"; };
+		AA0818000000000000000001 /* PhoneWorkoutPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneWorkoutPlugin.swift; sourceTree = "<group>"; };
+		AA0900000000000000000001 /* AppIconPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconPlugin.swift; sourceTree = "<group>"; };
+		AA0A00000000000000000001 /* NfcTagsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NfcTagsPlugin.swift; sourceTree = "<group>"; };
+		AA1440000000000000000001 /* GymMapPickerPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymMapPickerPlugin.swift; sourceTree = "<group>"; };
 		AA1450000000000000000001 /* VoiceIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceIntents.swift; sourceTree = "<group>"; };
 		AA1451000000000000000001 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		AA1451000000000000000002 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
@@ -121,9 +364,58 @@
 		AA1451010000000000000017 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		AA1451010000000000000018 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		AA1451010000000000000019 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AA745D1A7F92F6E3DE9A632D /* pl.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = pl.lproj; sourceTree = "<group>"; };
+		AB8D54EF830149A8A2A01EE7 /* OpenGymWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenGymWidgets.swift; sourceTree = "<group>"; };
+		AC00DB8CABE20F728B5399B9 /* OpenGymWatchWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = OpenGymWatchWidgets.entitlements; sourceTree = "<group>"; };
+		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
+		B0D3032019AD9FFBE039CC53 /* th.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = th.lproj; sourceTree = "<group>"; };
+		B10D5A8998FEB2D34693BB02 /* fr.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = fr.lproj; sourceTree = "<group>"; };
+		B2599D3D28D2084CEFC45AFC /* REDFitWorkoutViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitWorkoutViews.swift; sourceTree = "<group>"; };
+		BDB23C75194516310B98F5E3 /* pl.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = pl.lproj; sourceTree = "<group>"; };
+		BFA71E9EBB0A0D1A03236BDC /* pt-BR.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "pt-BR.lproj"; sourceTree = "<group>"; };
+		C050837DF1E0529876E1F334 /* ko.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ko.lproj; sourceTree = "<group>"; };
+		C08C5F4DC9402082AE710A61 /* fr.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = fr.lproj; sourceTree = "<group>"; };
+		C3310FCAE37B2C8F197B589E /* pt-BR.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "pt-BR.lproj"; sourceTree = "<group>"; };
+		C4526443745C789E9648AE9E /* de.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = de.lproj; sourceTree = "<group>"; };
+		CA5E9F9C97F7A2E74CB2B651 /* OpenGymWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenGymWidgets.swift; sourceTree = "<group>"; };
+		CAA5787E0BDFE5A44B819F0B /* hi.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = hi.lproj; sourceTree = "<group>"; };
+		CAFB80CA054470EA51C2FFEA /* AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC1E8D2A8CD933B57B88203A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		D742B43118678411FFC9AF4F /* it.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = it.lproj; sourceTree = "<group>"; };
+		DA3EFC49E36EFCFA2E761443 /* ru.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ru.lproj; sourceTree = "<group>"; };
+		E613955E7229FC12F0603F8B /* REDFitHomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitHomeView.swift; sourceTree = "<group>"; };
+		EA07B42501F9D3F0A698EAE9 /* pt-PT.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "pt-PT.lproj"; sourceTree = "<group>"; };
+		EE2D152080F790635C1A6201 /* pt-BR.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "pt-BR.lproj"; sourceTree = "<group>"; };
+		EF8C18715ED73655E5857A43 /* ar.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ar.lproj; sourceTree = "<group>"; };
+		F3EE8378B6396190D3202D18 /* th.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = th.lproj; sourceTree = "<group>"; };
+		F3F290DFDCDDBB3011059DC4 /* WorkoutManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutManager.swift; sourceTree = "<group>"; };
+		F4665D5224FD9D1B7EBB19E0 /* uk.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = uk.lproj; sourceTree = "<group>"; };
+		F61E3B40BE988C02AE462755 /* hi.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = hi.lproj; sourceTree = "<group>"; };
+		FC556DE1B5850A27D1C0274F /* SensorPlan.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SensorPlan.swift; sourceTree = "<group>"; };
+		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
+		FE7176FEE8D70B15134C0627 /* REDFitNativeApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitNativeApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		40DCA08D5A62E5303E22AED4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1CB71A8007286B804A0527E /* Foundation.framework in Frameworks */,
+				7E7ACB01E38BA473B5D57C76 /* WidgetKit.framework in Frameworks */,
+				CF932D52B5A7817EF01754E8 /* SwiftUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		43C2F58A1CEB42D082960B88 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F90CCEBF574B79BC26A8100B /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3011FED79650016851F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -132,15 +424,90 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		6415F34D419F523C7C8648D2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B298C01EF0F8C89D942CA2B6 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6E7A40FD29F96928EAC33C4B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C7464E799E7B8C41E51A6D3D /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FDAEC4765B4BFC1FCB9ADBAA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D97F5145AD603426D80C4F27 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0174C78360FBB92019FF2FD8 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				CC1E8D2A8CD933B57B88203A /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
 		27E2DDA53C4D2A4D1A88CE4A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */,
+				0174C78360FBB92019FF2FD8 /* iOS */,
+				FB9BA986CD69F667E0A3044B /* watchOS */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		428C078244BFD0BE312396A3 /* AnimationPacksDownloader */ = {
+			isa = PBXGroup;
+			children = (
+				3E973E6CD275A24CE0AA0422 /* AnimationPacksDownloader.swift */,
+				73FA2AF97E678680E0F15D05 /* Info.plist */,
+				869F94E92B4FF9ABA31D94CF /* AnimationPacksDownloader.entitlements */,
+			);
+			name = AnimationPacksDownloader;
+			path = AnimationPacksDownloader;
+			sourceTree = "<group>";
+		};
+		4DDE99339375AA9EE1B324F5 /* WatchWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				CA5E9F9C97F7A2E74CB2B651 /* OpenGymWidgets.swift */,
+				2A6A2EF8007F7D806593F489 /* Info.plist */,
+				EF8C18715ED73655E5857A43 /* ar.lproj */,
+				90F33175EAF8B79A543E6AB5 /* bn.lproj */,
+				18AD9C3ABFBB81BE7B6E3863 /* de.lproj */,
+				3F56E59980CD0BA604A491AA /* en.lproj */,
+				84C165F69D0ACCE2153228F0 /* es.lproj */,
+				B10D5A8998FEB2D34693BB02 /* fr.lproj */,
+				856788372576C7CFEDF934A9 /* hi.lproj */,
+				82DF048E6527DB8A0282A925 /* hu.lproj */,
+				D742B43118678411FFC9AF4F /* it.lproj */,
+				A2211333D5D9C1A02655E51E /* ko.lproj */,
+				88E9C0C53B3DEF2BB64E80CF /* pl.lproj */,
+				EE2D152080F790635C1A6201 /* pt-BR.lproj */,
+				A1165734F5E18314B11F164F /* pt-PT.lproj */,
+				1BA3BC3E83F1397EE12A5DF4 /* ru.lproj */,
+				B0D3032019AD9FFBE039CC53 /* th.lproj */,
+				4B35947BFD12215198957C54 /* tr.lproj */,
+				67A0630282DC390DB16F4AC5 /* uk.lproj */,
+				41CDBA9C2749FCA6A57C70B1 /* zh-Hans.lproj */,
+				7505466636ECD08E03505199 /* zh-Hant.lproj */,
+				AC00DB8CABE20F728B5399B9 /* OpenGymWatchWidgets.entitlements */,
+			);
+			name = WatchWidgets;
+			path = WatchWidgets;
 			sourceTree = "<group>";
 		};
 		504EC2FB1FED79650016851F = {
@@ -150,6 +517,12 @@
 				504EC3051FED79650016851F /* Products */,
 				7F8756D8B27F46E3366F6CEA /* Pods */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
+				428C078244BFD0BE312396A3 /* AnimationPacksDownloader */,
+				9DFF9B9247224411BBC239CC /* Watch */,
+				658B50A0DB0EEE6311DE6767 /* WatchCore */,
+				4DDE99339375AA9EE1B324F5 /* WatchWidgets */,
+				B6E9894195C4A5C00AD481AF /* OpenGymWidgets */,
+				A0BB89D4DE5F42A3BAFB33E9 /* AppUITests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -157,6 +530,11 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				A53D9D21DA44FEC36D7BE832 /* AnimationPacksDownloader.appex */,
+				1403FD16D254A690DF9225DD /* OpenGymWatch.app */,
+				6CE63D5D2AA204A2239570DA /* OpenGymWatchWidgets.appex */,
+				18EA95227706B0E83F3FB4FF /* OpenGymWidgets.appex */,
+				CAFB80CA054470EA51C2FFEA /* AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -200,8 +578,29 @@
 				504EC3131FED79650016851F /* Info.plist */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
+				FE7176FEE8D70B15134C0627 /* REDFitNativeApp.swift */,
+				9596E57D57BB4411186C728B /* REDFitNutritionViews.swift */,
+				4F5447FEC680D8F590073C87 /* REDFitRealityCoach.swift */,
+				91B69D547826AA7E29366250 /* redfit-poses.json */,
+				E613955E7229FC12F0603F8B /* REDFitHomeView.swift */,
+				A0FC736CECFE9301C89C3162 /* REDFitGarminLink.swift */,
+				2E392929A100979F72F98922 /* REDFitBodyView.swift */,
+				B2599D3D28D2084CEFC45AFC /* REDFitWorkoutViews.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		658B50A0DB0EEE6311DE6767 /* WatchCore */ = {
+			isa = PBXGroup;
+			children = (
+				20054CB417E9DD6976224C6A /* ClipCodec.swift */,
+				718B53AA237BF989A2019DC8 /* HealthReadCore.swift */,
+				26B39F4CB31EB5CBC1AF6216 /* Model.swift */,
+				FC556DE1B5850A27D1C0274F /* SensorPlan.swift */,
+				55581742EEFDD3D3BFD2A003 /* SessionCore.swift */,
+			);
+			name = WatchCore;
+			path = WatchCore/Sources/WatchCore;
 			sourceTree = "<group>";
 		};
 		7F8756D8B27F46E3366F6CEA /* Pods */ = {
@@ -213,9 +612,110 @@
 			name = Pods;
 			sourceTree = "<group>";
 		};
+		9DFF9B9247224411BBC239CC /* Watch */ = {
+			isa = PBXGroup;
+			children = (
+				11ABD13FB6D91F32108C044D /* OpenGymWatchApp.swift */,
+				63ECED7F444E64BBDB7730FF /* SessionStore.swift */,
+				2CFD324CCF4599092CA2C1C5 /* WidgetState.swift */,
+				F3F290DFDCDDBB3011059DC4 /* WorkoutManager.swift */,
+				97D022FBCB7644D5E94F2817 /* Info.plist */,
+				8F2CF5FB6846D196A415C8F4 /* Assets.xcassets */,
+				2B588616A1E6EA457075943B /* ar.lproj */,
+				0BEA0161A30D9E6437FF94DE /* bn.lproj */,
+				5FF747B60CEFB8B1C0136D4B /* de.lproj */,
+				2661C36783407CB20957A6B9 /* en.lproj */,
+				05944D48CBAE6DEA0CD270D5 /* es.lproj */,
+				C08C5F4DC9402082AE710A61 /* fr.lproj */,
+				CAA5787E0BDFE5A44B819F0B /* hi.lproj */,
+				5D2320C6896D82A03FE501E7 /* hu.lproj */,
+				03AE03076F29B633A915B962 /* it.lproj */,
+				6EC67C96DE7E3F15876A4015 /* ko.lproj */,
+				BDB23C75194516310B98F5E3 /* pl.lproj */,
+				C3310FCAE37B2C8F197B589E /* pt-BR.lproj */,
+				8A7AC117E705866300EB7483 /* pt-PT.lproj */,
+				DA3EFC49E36EFCFA2E761443 /* ru.lproj */,
+				F3EE8378B6396190D3202D18 /* th.lproj */,
+				587B8A64E7104808B374F31F /* tr.lproj */,
+				A0156564863B3CF758DFD631 /* uk.lproj */,
+				8A6F8D34BBC718A9AAC61DC4 /* zh-Hans.lproj */,
+				79CA1758D76B9920E9028A2E /* zh-Hant.lproj */,
+				5D90654465577DFFF8B60EE9 /* OpenGymWatch.entitlements */,
+			);
+			name = Watch;
+			path = Watch;
+			sourceTree = "<group>";
+		};
+		A0BB89D4DE5F42A3BAFB33E9 /* AppUITests */ = {
+			isa = PBXGroup;
+			children = (
+				0301B704B7896046E47A597F /* OpenGymUITests.swift */,
+			);
+			name = AppUITests;
+			path = AppUITests;
+			sourceTree = "<group>";
+		};
+		B6E9894195C4A5C00AD481AF /* OpenGymWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				6D498620D6FBE15CB5837F74 /* LiveActivityWidget.swift */,
+				AB8D54EF830149A8A2A01EE7 /* OpenGymWidgets.swift */,
+				94EBB67444046E7F1F0525BF /* Info.plist */,
+				969DC74017A5AA286CA71DD6 /* OpenGymWidgets.entitlements */,
+				8FECEE2FC71AC1558B6683B4 /* ar.lproj */,
+				69FF163FAE48764264F8E190 /* bn.lproj */,
+				C4526443745C789E9648AE9E /* de.lproj */,
+				385431DA1569EB897C94F252 /* es.lproj */,
+				6F02FFBF7D1654448F951BA9 /* fr.lproj */,
+				F61E3B40BE988C02AE462755 /* hi.lproj */,
+				06F9B2A2E7633456023C1E77 /* hu.lproj */,
+				0F028351CAA96D62B630E5D4 /* it.lproj */,
+				C050837DF1E0529876E1F334 /* ko.lproj */,
+				AA745D1A7F92F6E3DE9A632D /* pl.lproj */,
+				BFA71E9EBB0A0D1A03236BDC /* pt-BR.lproj */,
+				EA07B42501F9D3F0A698EAE9 /* pt-PT.lproj */,
+				27B5C031A145DB144F11AC20 /* ru.lproj */,
+				A55BBBC03E941E87BB4C45B6 /* th.lproj */,
+				552CED8148AC4F0AA93C4175 /* tr.lproj */,
+				F4665D5224FD9D1B7EBB19E0 /* uk.lproj */,
+				6EEE83865BAB8283B0D30377 /* zh-Hans.lproj */,
+				1261FD5C44AA38F2B8C84A79 /* zh-Hant.lproj */,
+			);
+			name = OpenGymWidgets;
+			path = OpenGymWidgets;
+			sourceTree = "<group>";
+		};
+		FB9BA986CD69F667E0A3044B /* watchOS */ = {
+			isa = PBXGroup;
+			children = (
+				764B0C80AF618F22DCB58E3C /* Foundation.framework */,
+				23DBF5FABE112107E1748BBD /* WidgetKit.framework */,
+				516082791D48CDCBE60E43C7 /* SwiftUI.framework */,
+			);
+			name = watchOS;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		1079BAE1D01BC60D6DCE27E2 /* AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B92838861611819FF901BC58 /* Build configuration list for PBXNativeTarget "AppUITests" */;
+			buildPhases = (
+				F50E76C79A42E1D9142122C1 /* Sources */,
+				43C2F58A1CEB42D082960B88 /* Frameworks */,
+				342D5A5EABB2D6A6AF9CA52F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C641C22DE26C3D8F77CEFB08 /* PBXTargetDependency */,
+			);
+			name = AppUITests;
+			productName = AppUITests;
+			productReference = CAFB80CA054470EA51C2FFEA /* AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		504EC3031FED79650016851F /* App */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 504EC3161FED79650016851F /* Build configuration list for PBXNativeTarget "App" */;
@@ -225,14 +725,90 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
+				E2D04F471C582F88FBCF07CC /* Embed ExtensionKit Extensions */,
+				D27E8F8C997D2AF0A9B105B7 /* Embed Watch Content */,
+				237F30D7793776BFACAA46E1 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2C3166622E8319E34D2B6B7D /* PBXTargetDependency */,
+				47F1B27A3B0B0E78C44A4B7E /* PBXTargetDependency */,
+				53E0E6680F371F74962A7317 /* PBXTargetDependency */,
+			);
+			name = App;
+			productName = App;
+			productReference = 504EC3041FED79650016851F /* App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5E3ACA9711F22E30A8E889AE /* OpenGymWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BEE91E5EAEAF03D3B231746D /* Build configuration list for PBXNativeTarget "OpenGymWidgets" */;
+			buildPhases = (
+				04A2DBBD6CA0EBACFA5091DF /* Sources */,
+				FDAEC4765B4BFC1FCB9ADBAA /* Frameworks */,
+				B938C4D6FCE852E2D34ADD2B /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = App;
-			productName = App;
-			productReference = 504EC3041FED79650016851F /* App.app */;
+			name = OpenGymWidgets;
+			productName = OpenGymWidgets;
+			productReference = 18EA95227706B0E83F3FB4FF /* OpenGymWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A4094C791067909B18D20085 /* OpenGymWatchWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 93FCF8EDFFAEFDA8C70F0ECD /* Build configuration list for PBXNativeTarget "OpenGymWatchWidgets" */;
+			buildPhases = (
+				EDF3B19B00FFFCFA072789DB /* Sources */,
+				40DCA08D5A62E5303E22AED4 /* Frameworks */,
+				61BA9AA869C7C4BD9648C4F0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OpenGymWatchWidgets;
+			productName = OpenGymWatchWidgets;
+			productReference = 6CE63D5D2AA204A2239570DA /* OpenGymWatchWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		AC44B83F197A8C1B52132E89 /* AnimationPacksDownloader */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C34477312CCF324688E0456D /* Build configuration list for PBXNativeTarget "AnimationPacksDownloader" */;
+			buildPhases = (
+				E663FD1E6A8A500909247F11 /* Sources */,
+				6E7A40FD29F96928EAC33C4B /* Frameworks */,
+				E06043B466C4435F1BB89DAD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AnimationPacksDownloader;
+			productName = AnimationPacksDownloader;
+			productReference = A53D9D21DA44FEC36D7BE832 /* AnimationPacksDownloader.appex */;
+			productType = "com.apple.product-type.extensionkit-extension";
+		};
+		C4A45576B8CA5EF61AFF9F6F /* OpenGymWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1EF2974058248AE0FB49F0D1 /* Build configuration list for PBXNativeTarget "OpenGymWatch" */;
+			buildPhases = (
+				712095762606D26E20137BA6 /* Sources */,
+				6415F34D419F523C7C8648D2 /* Frameworks */,
+				27A42827A188C1E8AB4D0BCB /* Resources */,
+				12E813954E274295E35CD210 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BAE538FC836F5ABEE958510C /* PBXTargetDependency */,
+			);
+			name = OpenGymWatch;
+			productName = OpenGymWatch;
+			productReference = 1403FD16D254A690DF9225DD /* OpenGymWatch.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -279,18 +855,55 @@
 				sv,
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
-			packageReferences = (
-			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				AC44B83F197A8C1B52132E89 /* AnimationPacksDownloader */,
+				C4A45576B8CA5EF61AFF9F6F /* OpenGymWatch */,
+				A4094C791067909B18D20085 /* OpenGymWatchWidgets */,
+				5E3ACA9711F22E30A8E889AE /* OpenGymWidgets */,
+				1079BAE1D01BC60D6DCE27E2 /* AppUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		27A42827A188C1E8AB4D0BCB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				25253BBA3332D26AF1601C98 /* Assets.xcassets in Resources */,
+				2C70DC0EAD007E65C310521C /* ar.lproj in Resources */,
+				BE518D109CF4E30224287EA3 /* bn.lproj in Resources */,
+				34C17E3F29F1AA0772BB4C12 /* de.lproj in Resources */,
+				886BE9D0D306B267CB2DCFF3 /* en.lproj in Resources */,
+				DD1DCFC33B00B7814119318C /* es.lproj in Resources */,
+				657058268ECA5ED5C325A727 /* fr.lproj in Resources */,
+				3758174DAB9FE84563197E93 /* hi.lproj in Resources */,
+				75C5D39D60E99D0A231D959E /* hu.lproj in Resources */,
+				D177C1E9C2F817CB1D93A3DA /* it.lproj in Resources */,
+				04898E5EBBF06F652C930EFE /* ko.lproj in Resources */,
+				382D409BF17F37C614C5D696 /* pl.lproj in Resources */,
+				B63120DC028BBA02538526E6 /* pt-BR.lproj in Resources */,
+				E84789243708DA773AFF02A8 /* pt-PT.lproj in Resources */,
+				4A305262303250E818A00EE0 /* ru.lproj in Resources */,
+				6BB4407E69E61AF1169B4998 /* th.lproj in Resources */,
+				8EFE2B3D7A1C2E74DF06E30E /* tr.lproj in Resources */,
+				6CF986D0F790C09C1C408D19 /* uk.lproj in Resources */,
+				234FD24265334F20BEAAE54F /* zh-Hans.lproj in Resources */,
+				FD1A465EB1AD23A9B525BC9B /* zh-Hant.lproj in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		342D5A5EABB2D6A6AF9CA52F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3021FED79650016851F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -304,6 +917,65 @@
 				AA0200000000000000000008 /* PrivacyInfo.xcprivacy in Resources */,
 				AA1450000000000000000004 /* AppShortcuts.strings in Resources */,
 				AA1450000000000000000006 /* Localizable.strings in Resources */,
+				4E4B03C9AFE880D617812060 /* redfit-poses.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		61BA9AA869C7C4BD9648C4F0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				888D4ED07E34210E5502519E /* ar.lproj in Resources */,
+				7FE9E96C4BBAB8436B0DA25F /* bn.lproj in Resources */,
+				FA75A57BE9AD0ACED75723E3 /* de.lproj in Resources */,
+				A6E547174FA377C60B0FE7B9 /* en.lproj in Resources */,
+				5EA5C55092F4EA6CC7524589 /* es.lproj in Resources */,
+				6C8C7583FB96C2A92A9C1C86 /* fr.lproj in Resources */,
+				4B6E916D7716FA123E9CA83D /* hi.lproj in Resources */,
+				D84D8B39B802B1A9BCA68E7E /* hu.lproj in Resources */,
+				8B743F659EC37E9176D776C5 /* it.lproj in Resources */,
+				D0A068C07FCF10755C881B4E /* ko.lproj in Resources */,
+				06905CF3F4C2EE03E4AF12E0 /* pl.lproj in Resources */,
+				886D7F605EDD33EB16915090 /* pt-BR.lproj in Resources */,
+				F5DB7E5842E389D840760BA2 /* pt-PT.lproj in Resources */,
+				1711DB6F0AB6EEE22E45A931 /* ru.lproj in Resources */,
+				91DAC39795F51882604AF1FD /* th.lproj in Resources */,
+				A0A9F27B3A393606A6D7DA40 /* tr.lproj in Resources */,
+				7B7C35316B4C2954848358DF /* uk.lproj in Resources */,
+				44AD6FA65A6D4F6BC251A696 /* zh-Hans.lproj in Resources */,
+				D26B2F7E3DB64A24402AE680 /* zh-Hant.lproj in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B938C4D6FCE852E2D34ADD2B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C740FAF31095E982D3B6CDE5 /* ar.lproj in Resources */,
+				8FB092DE953AFEF83DA41D15 /* bn.lproj in Resources */,
+				14AEDD3AFD36C63B74C52C19 /* de.lproj in Resources */,
+				C41C9B0F47F0F500D2FDF0DD /* es.lproj in Resources */,
+				C7722B097BC860DA1C1B0A91 /* fr.lproj in Resources */,
+				C5FDB58C6F2E46BB1C920FA4 /* hi.lproj in Resources */,
+				DF00D5BC8E7B954029B91453 /* hu.lproj in Resources */,
+				B2521DCDFA6CF56A8F391449 /* it.lproj in Resources */,
+				098DEEBAE5F59AD68E1EE428 /* ko.lproj in Resources */,
+				8A6B5BD6D287FAFEC3582026 /* pl.lproj in Resources */,
+				C8E3A9A48B10F9951B26973C /* pt-BR.lproj in Resources */,
+				615DF86146BAC12D029CD37D /* pt-PT.lproj in Resources */,
+				313A557B1D6483018C3CB6D2 /* ru.lproj in Resources */,
+				8719D6E53175C700F4548074 /* th.lproj in Resources */,
+				5567A0B5B034263ABCC265E2 /* tr.lproj in Resources */,
+				8D5DC680BA29A37DEF6CCA9C /* uk.lproj in Resources */,
+				505B08531809844E3BA03B53 /* zh-Hans.lproj in Resources */,
+				5B9B3771C8948C051048C6A9 /* zh-Hant.lproj in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E06043B466C4435F1BB89DAD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -346,6 +1018,17 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		04A2DBBD6CA0EBACFA5091DF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C508F4256D4BB3D4260D9510 /* LiveActivityWidget.swift in Sources */,
+				7DEB7F65E6AD28890C53835D /* OpenGymWidgets.swift in Sources */,
+				1D97CC2C6E31EA5DE75B7FE9 /* WorkoutActivity.swift in Sources */,
+				654B5D7367CE2CF9875CD225 /* WidgetViews.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3001FED79650016851F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -375,10 +1058,91 @@
 				AA0800000000000000000004 /* GymReminderRules.swift in Sources */,
 				AA1440000000000000000002 /* GymMapPickerPlugin.swift in Sources */,
 				AA1450000000000000000002 /* VoiceIntents.swift in Sources */,
+				FFC3A1FE12E00A02F9A26940 /* REDFitNativeApp.swift in Sources */,
+				3C6377EC9DB27AEABB8A7DD3 /* REDFitNutritionViews.swift in Sources */,
+				9EAE07CB878A1A5625D19C91 /* REDFitRealityCoach.swift in Sources */,
+				BBEFD2EE7B95564D1ADBD264 /* REDFitHomeView.swift in Sources */,
+				4A885B196837001DBEF6C9A1 /* REDFitGarminLink.swift in Sources */,
+				1CCCBD3CCAA9E545EA5FFCC6 /* REDFitBodyView.swift in Sources */,
+				E74F78C8FAAF9AE09CF9D2B3 /* REDFitWorkoutViews.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		712095762606D26E20137BA6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2F9544C6972F8F4994B0C2D0 /* OpenGymWatchApp.swift in Sources */,
+				10F6178208BAAF6E2311F0F8 /* SessionStore.swift in Sources */,
+				355834FA56433EE4DAF2CF5F /* WidgetState.swift in Sources */,
+				610FE0275F57E1F553633CF6 /* WorkoutManager.swift in Sources */,
+				CF14C7C14CF189E249CE7B6C /* ClipCodec.swift in Sources */,
+				90E5074F437D4FCF1E6ED2EF /* HealthReadCore.swift in Sources */,
+				2D6E05984448DCD0218233EE /* Model.swift in Sources */,
+				12B02928A52DC2611E8608C7 /* SensorPlan.swift in Sources */,
+				CB141109F482F0A28F8C9ED5 /* SessionCore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E663FD1E6A8A500909247F11 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F6B2F95D89DFDED8A12E71D1 /* AnimationPacksDownloader.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EDF3B19B00FFFCFA072789DB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B3064454E2F9A27811A4C242 /* OpenGymWidgets.swift in Sources */,
+				1479FFBE5D0EB2BD8B1C991B /* WidgetState.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F50E76C79A42E1D9142122C1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E60AC2D2BDFC7852F853EC90 /* OpenGymUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2C3166622E8319E34D2B6B7D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = AnimationPacksDownloader;
+			target = AC44B83F197A8C1B52132E89 /* AnimationPacksDownloader */;
+			targetProxy = DBF2AAC535263280772ACFA3 /* PBXContainerItemProxy */;
+		};
+		47F1B27A3B0B0E78C44A4B7E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = OpenGymWatch;
+			target = C4A45576B8CA5EF61AFF9F6F /* OpenGymWatch */;
+			targetProxy = F0D34A0F682928A89980C49D /* PBXContainerItemProxy */;
+		};
+		53E0E6680F371F74962A7317 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = OpenGymWidgets;
+			target = 5E3ACA9711F22E30A8E889AE /* OpenGymWidgets */;
+			targetProxy = 1AD98E51753D2DE5195A036D /* PBXContainerItemProxy */;
+		};
+		BAE538FC836F5ABEE958510C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = OpenGymWatchWidgets;
+			target = A4094C791067909B18D20085 /* OpenGymWatchWidgets */;
+			targetProxy = 5DACA6660FEA83E041FACAF3 /* PBXContainerItemProxy */;
+		};
+		C641C22DE26C3D8F77CEFB08 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = App;
+			target = 504EC3031FED79650016851F /* App */;
+			targetProxy = F73B73DB7C47944CE098FF15 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -452,6 +1216,157 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		0606069CB73A1DA1144BF2F9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = AnimationPacksDownloader/AnimationPacksDownloader.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 54;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AnimationPacksDownloader/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.4.4;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit.AnimationPacksDownloader;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1052F802D90BA27707A226B7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = WatchWidgets/OpenGymWatchWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 54;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WatchWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.4.4;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit.watchkitapp.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		1927137ED90039D80BC23708 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = OpenGymWidgets/OpenGymWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 54;
+				ENABLE_PREVIEWS = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OpenGymWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.4.4;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1A223DC2D3EB65475FB8EAC8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = AnimationPacksDownloader/AnimationPacksDownloader.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 54;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AnimationPacksDownloader/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.4.4;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit.AnimationPacksDownloader;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		1B0EBBBFA8A0B430AD584FBA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Watch/OpenGymWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 54;
+				ENABLE_PREVIEWS = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Watch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.4.4;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		2047641AF786EE55AA4FB02C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Watch/OpenGymWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 54;
+				ENABLE_PREVIEWS = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Watch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.4.4;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		21D88FBAA2623AA989C764DA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = App;
+			};
+			name = Debug;
+		};
 		504EC3141FED79650016851F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -569,7 +1484,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 54;
 				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 1.4.4;
 				OTHER_LDFLAGS = (
@@ -580,7 +1495,7 @@
 					AppIntents,
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
-				PRODUCT_BUNDLE_IDENTIFIER = ch.opengym.app;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 5.0;
@@ -598,7 +1513,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 54;
 				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 1.4.4;
 				OTHER_LDFLAGS = (
@@ -608,7 +1523,7 @@
 					"-weak_framework",
 					AppIntents,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = ch.opengym.app;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.0;
@@ -616,9 +1531,80 @@
 			};
 			name = Release;
 		};
+		59819157D9149C9AD06C3A41 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = App;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		6961BD37E83A13EBB56D4873 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = OpenGymWidgets/OpenGymWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 54;
+				ENABLE_PREVIEWS = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OpenGymWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.4.4;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		FEAFA12EC461583AC409CEF5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = WatchWidgets/OpenGymWatchWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 54;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WatchWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.4.4;
+				PRODUCT_BUNDLE_IDENTIFIER = ch.redurbabat.redfit.watchkitapp.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		1EF2974058248AE0FB49F0D1 /* Build configuration list for PBXNativeTarget "OpenGymWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1B0EBBBFA8A0B430AD584FBA /* Release */,
+				2047641AF786EE55AA4FB02C /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -633,6 +1619,42 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		93FCF8EDFFAEFDA8C70F0ECD /* Build configuration list for PBXNativeTarget "OpenGymWatchWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1052F802D90BA27707A226B7 /* Release */,
+				FEAFA12EC461583AC409CEF5 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B92838861611819FF901BC58 /* Build configuration list for PBXNativeTarget "AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				59819157D9149C9AD06C3A41 /* Release */,
+				21D88FBAA2623AA989C764DA /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BEE91E5EAEAF03D3B231746D /* Build configuration list for PBXNativeTarget "OpenGymWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6961BD37E83A13EBB56D4873 /* Release */,
+				1927137ED90039D80BC23708 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C34477312CCF324688E0456D /* Build configuration list for PBXNativeTarget "AnimationPacksDownloader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1A223DC2D3EB65475FB8EAC8 /* Release */,
+				0606069CB73A1DA1144BF2F9 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

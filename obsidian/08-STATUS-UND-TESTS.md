@@ -1,8 +1,30 @@
 ---
 tags: [red-fit, status, verification]
-updated: 2026-11-08
+updated: 2026-11-09
 ---
 # Gesicherter Projektstand / Testprotokoll
+
+## 2026-11-10 — Agents 01–05: gemeinsame Integrations-PR (Quelle, kein Release)
+
+- Integrationsbranch `integration/red-fit-opengym-iphone-20261110` sammelt PRs #11, #12, #13, #14 und #15 in einem einzigen Draft gegen `main`. Original-openGym ist die Produktbasis. Bei Integration wurden native TabBar/React-Bridge, RED-Morph-Home und Ernährungskarte bewusst kombiniert.
+- Separate Evidenz: der letzte Agent-04-iOS-XCUITest `42733050029` scheiterte am Onboarding/Home-Übergang. Kein integrierter iPhone-Gerätetest oder signiertes IPA nachgewiesen. GitHub-Sichtbarkeit zur Prüfung `public`.
+- Gesamt-CI, Sicherheits-/Datenmigration, Apple-Signing und tatsächliche Installation sind nach Integration offen; siehe `docs/agent-runs/00-consolidated-integration.md`.
+
+
+## 2026-11-09 — Agent 03: volle original-openGym-Tests bestanden
+
+- GitHub Actions `42711524409` **completed/success**: `npm test` im vollständigen originalen openGym-Frontend `vendor/opengym-upstream/frontend/` ergibt **657/657 Testdateien mit 7'893/7'893 bestandenen Tests**. Zusätzlich isolierte Ernährungs-Vitest-Suite **61/61**, mobiler Vite-Build und Bundle-Flavour-Kontrolle **success**. Alle Angaben gegen den tatsächlichen Runner-Log und Job-Steps überprüft.
+- Neue getrennte CI-Nachprüfung auf dem Agent-03-Branch: alter Kompatibilitätstester `scripts/check-bundle-syntax.mjs` für Safari 15.5, `npx cap copy ios` (nur Webdateien in das bestehende iOS-Capacitor-Verzeichnis auf dem CI-Runner kopieren, **kein iOS-Build**) und `scripts/check-mobile-bundle.mjs` plus Prüfung des kopierten Nutrition-JS. Neue Schritte bei Dokumentation **noch in progress**, nicht als erfolgreich markieren.
+- **Offen:** echte iPhone-IPA/Xcode-Signierung, Betrieb auf iPhone, WKWebView-IndexedDB-v1→v2-Migration und Datenbackup-Roundtrip, zusammengeführtes Workout-/Nutrition-Backup sowie separater alter Root-App-Lintfehler. Kein Merge in `main`.
+- Detailprotokoll: `docs/agent-runs/03-opengym-nutrition.md`. PR #15.
+
+## 2026-11-09 — Agent 03: original-openGym Ernährung auf echter CI geprüft (nur PR #15)
+
+- **Neu eingerichtete Original-Frontend-CI**: `.github/workflows/opengym-nutrition.yml` führt ausschliesslich unter `vendor/opengym-upstream/frontend` `npm ci`, `npx vitest run src/nutrition` und `VITE_MOBILE=1 npm run build` aus; eigene Prüfung des mobilen `dist/index.html`.
+- **Tatsächlich erfolgreicher GitHub-Actions-Run `42710935902`**: Vitest **61/61 Tests (6 Dateien) bestanden**, Vite v8.3.5 **475 Module**, mobile Browser-/WebView-Bundle erfolgreich erzeugt und Mobile-Flavour bestätigt. Logs und einzelne Steps eingesehen. Keine erfolgreiche iOS-IPA-/Xcode-/Capacitor-Sync-/Geräte-QA behauptet.
+- Nutrition enthält Lebensmittel, Rezepte mit gekochtem Gesamtgewicht, Ernährungstagebuch, v2-IDB-Mahlzeitenplanung, daraus abgeleitete 7-Tage-Einkaufsliste, native Dokumentensicherungen und additive v1/v2-JSON-Wiederherstellung. Details und verbleibende Risiken: `docs/agent-runs/03-opengym-nutrition.md`.
+- **Weiter offen:** Root-`.github/workflows/ci.yml` blockiert durch vorhandenes Lint-`no-control-regex` in `src/services/workout/setNotes.ts` (auf main und Agent-03-Branch identisch); getrennte originale openGym-Gesamttests, nativer iPhone-/Dateisystem-/IndexedDB-Roundtrip und gemeinsames Workout-/Nutrition-Backup.
+- PR #15 gegen `main` bleibt **offen**. Kein eigener Merge/kein direkter Push auf `main`.
 
 ## Bereits im vorhandenen RED-Fit-Code dokumentiert
 - React/TypeScript-PWA mit Navigation, Training, Ernährung, Körper, Plänen, Backup und Einstellungen.
@@ -193,3 +215,145 @@ Nächster konkreter Schritt:
 
 
 - **Nachtrag für den neuen Vendor-Baum:** `eslint.config.js` ignoriert nun `vendor/` beim regulären RED-Fit-Lint-Lauf; der gesonderte `tools/opengym-progression.selftest.mjs` bleibt über `tools/offline-regressions.mjs` ausführbar. Änderung `3d6155e` auf `main`; kein vollständiger ESLint-/Vite-Build durchgeführt.
+
+## 2026-11-10 — Agent 04: iPhone-IPA erfolgreich gebaut und direkt geprüft
+
+- **Aktiver Produktpfad:** Original-openGym als RED Fit unter `vendor/opengym-upstream/frontend/`, **keine** neue Legacy-Root-PWA als iPhone-App. Branch `agent/redfit-04-ios-android`, bestehende Draft-PR #13 gegen `main`.
+- **Belegt:** macOS/Xcode-GitHub-Run [42718097186](https://github.com/Redurbabat/Red-Fit/actions/runs/42718097186) ist **vollständig erfolgreich**, inkl. iOS-Simulator, iPhone-arm64-Device, Swift-Assetgenerator, aller eingebetteten originalen Watch-/Widget-/Background-Asset-Ziele und IPA-Paketvalidator. Root-CI [42718096994](https://github.com/Redurbabat/Red-Fit/actions/runs/42718096994) **erfolgreich**.
+- **Echtes heruntergeladenes IPA geprüft:** GitHub-Artifact [13718993845](https://github.com/Redurbabat/Red-Fit/actions/runs/42718097186/artifacts/13718993845); `RED-Fit-UNSIGNED.ipa` **217875794 Bytes**, SHA-256 `95e46cb065a0d9bae5e01d593732f5aa42c002351979656a750dd7ba4cff963c`. 13668 ZIP-Einträge, CRC vollständig bestanden, alle fünf nativen Apple-`Info.plist`-Bundles konsistent, iPhone/Watch/Widgets = `RED Fit`; Asset-Downloader = `RED Fit animations`. Für Details siehe `docs/agent-runs/04-iphone-first.md`.
+- **Offen:** Apple-Signierung und Provisioning aller 5 Targets, noch Upstream-IDs `ch.opengym.app*` und App Group `group.ch.opengym.app`; keine Behauptung einer Installation am iPhone, von funktionierender HealthKit-/Background-/Watch-Nutzung oder von Offline-/Sperr-/Wiederaufnahme-Abnahme. Eigentümerentscheidung zur eigenen Bundle-ID/Team-Signing und reale Gerätetests nötig. **Nicht** unüberlegt umbenennen oder App Group/Keychain-Datenzugriff zerstören. Keine Geheimnisse teilen.
+
+## 10.11.2026 — Agent 05 integration QA follow-up
+
+- PR [#17](https://github.com/Redurbabat/Red-Fit/pull/17) is the single integration draft on integration/red-fit-opengym-iphone-20261110. All five source PR heads are included; no merge into main.
+- Original frontend workflows failed due to Vitest collecting three node:test-only iOS guard suites. Changed frontend/vite.config.js on integration branch in commit ffe2902e8a24cc348601af60d960de8edb5728d0; actual rerun pending.
+- Extra failures: Tour.test.jsx:513 once in nutrition full suite and OpenGymUITests.swift:67 in original iOS onboarding/Home smoke. Both remain open.
+- Root CI and combined iOS simulator workflow were green at old integration head 9740f4bc, not confirmation of real iPhone install. Github repository visibility is public.
+- Next: confirm new CI head, then fix iOS native navigation/onboarding failure; no signed IPA or secrets release.
+
+## 2026-11-10 — PR #17: neues RED-Fit-Branding und Dock-Integration
+
+- Weiterarbeit direkt auf `integration/red-fit-opengym-iphone-20261110`, ausgehend von `a7be58b`. Alle fünf aktuellen Quell-PR-Heads (#11–#15) sind mit Git als Vorfahren bestätigt.
+- Letzte Nutzerentscheidung fürs Logo: **Bordeaux/Elfenbein, abstraktes eigenständiges Symbol aus drei fließenden Formen; kein R, keine Buchstaben und keine Hantel**. Nur dieser letzte Entwurf ist eingebaut.
+- Neue primäre und alternative App-Icons, Splash für iPhone/Watch/Android, PWA/Referenz-Icons, Onboarding, Druck-/Share-Marke; sichtbare Texte aller unterstützten Sprachen und neue Exportnamen = RED Fit. Update-/Projektlinks zeigen ins eigene Repo. Alte Daten-/URL-/Importkennungen und originale Lizenzhinweise bleiben kompatibel.
+- Echtes UIKit-`UITabBar` bleibt erhalten; Web-Fallback schwebend und >=44px. Ernährung markiert Home. Native Leiste versteckt sich auch hinter der ersten Einführungstour. Health-Origin-Erkennung umfasst neue und alte Bundle-IDs.
+- Browser-A11y belegt `Today Rest day` als Button: XCUITest nutzt nun den echten Button statt nicht vorhandenem separatem `Today`-Text, schließt die optionale Tour vor Dock-Taps und hängt bei Fehlschlag Screenshots/A11y an.
+- Tatsächlich bestanden: **218 Offline-Regressionen**, **23 native Struktur-/Identitäts-/Bundle-Guards**, **89 fokussierte Branding-/Backup-/Health-/Dock-Tests**, **28 zusätzliche Exporttests**, Original-Web-/Mobile-Build und Safari-15.5-Syntaxcheck. Chromium: vier Breiten, Navigation, 80 g = 296 kcal, Reload-Persistenz, Offline-Navigation, Reduce Motion, keine JS-Ausnahmen.
+- Root vollständig: **268/268 Tests**, Typecheck, Lint und Build bestanden. Original-Frontend-Gesamtlauf: **7.983 bestanden, 1 veraltete FIT-Dateinamensassertion fehlgeschlagen**. Diese erwartete noch `opengym-…fit`, obwohl der Export korrekt `red-fit-…fit` erzeugt. Assertion aktualisiert; anschließender Lauf der gesamten betroffenen Workout-Detail-/FIT-Suites: **36/36 bestanden**, ohne weitere Produktcodeänderung. Kein einzelner vollständig grüner Gesamtlauf nach dieser reinen Testkorrektur behauptet.
+- Zusätzlich **45/45** Nachtests der Backup-/Settings-/Routing-Korrekturen und **9/9** QA-Harness-Tests bestanden. GitHub-QA erkannte den legitim umbenannten Package-Namen zuvor nicht; der Guard erlaubt jetzt ausdrücklich das originale und das umbenannte Frontend, lehnt die Root-PWA weiterhin ab.
+- macOS-Run [42851915523](https://github.com/Redurbabat/Red-Fit/actions/runs/42851915523), Produktionsstand `b3d58a99`: **Simulator-Build, unsignierter Gerätebuild und tatsächliche IPA-Integritätsprüfung bestanden**. Der anschließende XCUITest wurde durch den neueren Branch-Stand abgelöst/abgebrochen, nicht als erfolgreich gewertet. Folgende Änderungen betreffen nur QA-Harness, Test-Erwartung und Dokumentation; nativer/Frontend-Produktcode ist unverändert. Neuester PR-Workflow bleibt maßgeblich für die UI-Abnahme.
+- Offen: macOS-Xcode-Workflow für diesen neuen Stand, echte iPhone-/Watch-Darstellung und native Minimierung, Signing/installierbare IPA, Android-/Windows-Binaries. Kein Merge, keine Veröffentlichung/kein manueller Deploy.
+- Details: `docs/design/RED-FIT-BRAND-INTEGRATION.md`, `docs/agent-runs/00-consolidated-integration.md`; reproduzierbarer Browsercheck: `E2E_BASE_URL=http://localhost:4173 node tools/redfit-original-e2e.mjs` gegen einen lokalen `VITE_MOBILE=1`-Preview.
+
+## 2026-11-10 — PR #17: iPhone-Priorität und lokale Daten ohne Drittanbieter
+
+- Alle aktuellen Heads von PR #11–#15 erneut über GitHub gelesen und als Vorfahren von PR #17 bestätigt. Integration bleibt in der Original-App. Neuer repo-lokaler Skill `skills/red-fit-ios/SKILL.md` adaptiert relevante RED-Morph-/RED-Bit-Regeln mit Quellen; keine Audio-Subsysteme oder behaupteten proprietären Xcode-Skill-Exporte.
+- Fester lokaler App-Start vor Store-/Routenimport: kein Server-/KI-Login, Tracking, externe Karten, Health-Weitergabe oder systemische Sprachausgabe. Fetch/XHR/Beacons/Sockets und native HTTP prüfen die lokale Policy; CSP blockiert externe Ressourcen. Alte Server-/Konto-Dateien bleiben erhalten und werden nur zur lokalen Zuordnung früherer Ernährungsdaten gelesen.
+- Native Hintergrund-Serverabfragen, MapKit-Suche und externe Asset-Downloads gesperrt; Apple-Asset-Autodownloads deaktiviert, altes `opengym.ch`-Associated-Domain-Entitlement entfernt. Documents/Library werden auf iOS vom Systembackup ausgeschlossen; konkreter Geräte-/iCloud-Nachweis bleibt offen. Manuelle Exporte bleiben explizite Nutzeraktionen.
+- Echtes UIKit-TabBar mit einer WKWebView erhalten; stabile Tab-Accessibility-IDs ergänzt. Optionalen Tour-Dialog vor der Home-Suche im XCUITest schließen. Historischer Simulatorvergleich mit zwei fest eingefrorenen Agenten-Commits nur noch manuell; aktuelle Abnahme über `red-fit-iphone.yml`.
+- **Bestanden auf finalem lokalen Produktstand:** 114/114 fokussierte Vitest-Tests (12 Dateien), mobiler Original-App-Vite-Build, Safari-15.5-Syntax, 23 native Quell-/Identitäts-/Bundle-Guards, 14 QA-Harness-/Baseline-Tests, 10 Progressions-/Herkunftsprüfungen, Root-Typecheck und Root-Lint. Skill-Frontmatter mit vorhandenem JS-YAML-Parser geprüft; Python-Validator mangels PyYAML nicht ausgeführt.
+- Echter isolierter Chrome-Lauf mit synthetischen Daten: vier Dockziele, 80 g = 296 kcal, Reload-Persistenz, Offline-Navigation und vier abgewiesene Übertragungswege; **0 externe Requests, 0 Server-API-Requests**. Kein nativer Traffic-Mitschnitt behauptet.
+- Lokaler Original-Gesamtlauf auf währenddessen bearbeitetem Windows-Stand: 7.981 bestanden, 23 fehlgeschlagen; enthält POSIX-/Pfad-/CRLF-Annahmen und zwei inzwischen im fokussierten Nachlauf korrigierte Startprüfungen. **Kein komplett grüner finaler Gesamtlauf behauptet.** Maßgeblich wird der saubere Linux-CI-Lauf des gepushten Commits.
+- Nutzer fordert anschließend ausdrücklich sofortigen Push und sofortigen iOS-/IPA-Start. macOS-Workflow wird auf dem Integrationsbranch gestartet/geprüft. Build-/XCUITest-Ergebnis, Apple-Signing und tatsächliche Geräteinstallation getrennt nachweisen. Keine Veröffentlichung oder Merge nach main.
+- Details und Grenzen: `docs/LOCAL-ONLY-IOS.md`. Browsercheck: `node tools/opengym-qa/local-only-browser.mjs` gegen das vorher gebaute Original-`dist/`.
+
+## 2026-11-11 — Originale Apple-Glasleiste als nativer Fenster-Container
+
+- Nutzer bestätigt: alte Leiste in der **installierten IPA**, iOS **26.6.1**. Letzten Lauf `42877430917` geprüft: Simulator-/Gerätebuild und IPA-Integrität bestanden; echter XCUITest scheiterte mit **native iPhone system tab bar is missing**. Ein Git-Push allein aktualisiert keine bereits installierte IPA.
+- Ursache in der Einbindung: `CAPBridgeViewController.view` ist die WKWebView; die bisher separat hinzugefügte `UITabBar` lag innerhalb dieser WebView. Jetzt besitzt das iPhone-Fenster einen vollständigen `REDFitNativeTabController: UITabBarController`. Fünf native Hosts verwenden denselben ursprünglichen Bridge-Controller und dieselbe WKWebView; Trainings-/Ernährungslogik bleibt im bestehenden React-Store.
+- Standard-UIKit-Glas, Form, Auswahl und Layout ohne selbst gezeichnetes Glas. System-Minimierung `.onScrollDown` konfiguriert und die echte WK-Scrollview explizit angebunden. Keine erfolgreiche visuelle Minimierungsabnahme vor Simulatorbefund behauptet.
+- Neuer nativer Readiness-Handshake: Web-Dock wird erst nach Bestätigung des tatsächlichen Root-Containers verborgen, einschließlich Accessibility. Gemessener nativer Überlappungsbereich ersetzt die pauschalen 120px-Zuschläge. Tastatur-/Modal-/Workout-Ausblendung und Original-Routen bleiben gekoppelt.
+- **Lokal bestanden:** 61/61 Dock-/Routen-/Styles-/Handshake-Vitest-Tests, 24 native Quell-/Identitäts-/Bundle-Guards, mobiler Original-App-Build und echter Chrome-Privacy-/Nutrition-/Offline-Lauf (0 externe/Server-API-Requests). Zusätzlich 52 fokussierte Datenschutz-/Store-/Routingtests während der Umsetzung bestanden. Workflow-YAML geprüft.
+- iPhone-CI ergänzt Build-Commit im sichtbaren App-Versionsstring, brauchbare Accessibility-Diagnose und einen exportierbaren Ausschnitt der nativen Leiste auf leerem synthetischem Home. Keine IPA, keine separat lizenzierten Übungsbilder und keine echten Nutzerakten öffentlich hochladen. Vollständige private Build-Artefakte bleiben an privates Repo gebunden.
+- Aktueller Agent-02-Test nutzt den integrierten Handshake statt eines eingefrorenen alten Branch-Tests. Neue native macOS-Abnahme auf dem nächsten gepushten Commit starten und Ergebnis prüfen. Apple-Signing/reale Installation weiter getrennt nachweisen.
+
+### Externer Build-Blocker nach Push
+
+- Commit `c2df7900` auf PR #17 gepusht und Lauf `42996454883` gestartet. GitHub verweigert den Start des Mac-Jobs nach 2 Sekunden, ohne Build-Schritte: **The job was not started because an Actions budget is preventing further use.** Kein neuer nativer Kompilier-/IPA-/UI-Erfolg behauptet; keine Kontolimits verändert und keine unveränderten Wiederholungen gestartet.
+- GitHub-Repository am 11.11.2026 erneut gelesen: **private**. Ältere öffentliche Sichtbarkeitsangaben bleiben historische Befunde.
+- Vorhandene `codemagic.yaml` als private Alternative um dieselbe native Simulator-/Dock-Prüfung und private XCResult-Artefakte ergänzt. Hier keine Codemagic-API-Zugangsdaten konfiguriert; Prüfung einer Browsersitzung wegen wiederholter Browser-Zeitüberschreitung nicht abschließbar. Kein Codemagic-Build gestartet.
+- Nutzer nach verfügbarem Actions-Budget oder vorhandenem Codemagic-Zugang gefragt. Alle weiteren lokalen Prüfungen/Patches weiter möglich; echte Glass-/Signierungs-/Installationsabnahme benötigt einen verfügbaren Mac-Buildweg. Retina-Crop rechnet XCTest-Punkte explizit in Screenshot-Pixel um.
+
+## 2026-11-11 — Standard-Runner läuft; integrierte Gesamttests erfolgreich
+
+- Finanzielle Vorgabe: keine Budget-/Zahlungs-/Ausgabenlimits ändern, die Rechnungen ermöglichen. Keine solche Einstellung oder Repo-Sichtbarkeit verändert. GitHub meldet das Repository jetzt unabhängig von dieser Arbeit öffentlich; Standard-Runner verfügbar.
+- [42998639557](https://github.com/Redurbabat/Red-Fit/actions/runs/42998639557) auf `64ec9b32`: echte Simulator- und Gerätekompilierung sowie IPA-Paket-/Bundle-ID-Prüfung erfolgreich. Nativer UI-Test bei Erstellung dieser Ergänzung noch in Arbeit; kein bestätigtes Dock-Bild und keine iPhone-Installation behauptet.
+- [42999856109](https://github.com/Redurbabat/Red-Fit/actions/runs/42999856109): **666 Testdateien, 8.006/8.006 Tests**, Web- und mobiler Original-App-Build erfolgreich. Heruntergeladenen JSON-Bericht und vollständigen Test-Log geprüft. Damit ist der finale Produktionscode auch auf sauberem Linux regressionsgeprüft.
+- Alter temporärer Agent-04/Nutrition-Merge-Job entfernt; die native Prüfung gehört zum integrierten `red-fit-iphone.yml`. Die Linux-Ernährungs-/Safari-Prüfungen bleiben bestehen.
+- Manueller iPhone-Export ergänzt: nur öffentlicher RSA-Empfängerschlüssel an CI, IPA mit AES-256-GCM und RSA-OAEP/SHA-256 verschlüsselt. Privater Schlüssel bleibt lokal unter ignoriertem `.red-fit-qa/`; keine öffentliche Klartext-IPA. Artefakt max. ein Tag. Lokaler Rundlauf, falscher Schlüssel, manipuliertes Chiffrat und Überschreibschutz bestanden; zusammen mit vorhandenen QA-Harness-/iOS-Baseline-Tests **15/15**.
+- Noch offen: tatsächliches natives UI-Ergebnis, lokaler Download und erneute Paketprüfung der verschlüsselten IPA, gültiges Signing sowie Installation auf dem echten iPhone. Keine neuen Zahlungs-/Signierungsdaten angefordert oder gespeichert.
+
+### Native Diagnose nach Laufabschluss
+
+- Lauf `42998639557`: UIKit-Root und beide Builds kompilieren; nativer Test findet trotzdem nur den Web-Dock. Ursache im tatsächlich installierten Capacitor-Quellcode nachvollzogen: `prepareWebView` ersetzt `userContentController` **nach** `webViewConfiguration(for:)`. Damit gingen Nachrichtenkanal und Test-Startskript verloren.
+- Handler und Startskript in späteres `webView(with:configuration:)` verschoben; dieses gibt weiterhin `super.webView` zurück. Ein neuer Guard prüft genau diese Lebenszyklusgrenze (**8/8 native Dock-Guards** bestanden). Keine zweite WebView, keine neue Fachlogik und keine Aufweichung des lokalen Datenmodus.
+- Simulator-Hierarchie enthält mehrere virtuelle AX-WebView-Knoten für dieselbe WKWebView. Test prüft deshalb die tatsächliche Anzahl nativer WKWebView-Instanzen über eine nur beim Teststart sichtbare Diagnose, einschließlich nach Tabwechseln. Die native Tab-Bar selbst muss weiterhin als echte UIKit-TabBar existieren.
+- Überholten PR-Mac-Lauf `43001236680` abgebrochen; korrigierten nativen Lauf mit verschlüsseltem IPA-Empfänger starten. Xcode-`-quiet` verhindert, dass Routine-Kompilierausgabe die aktuellen UI-Testzeilen im Live-Log verdrängt.
+
+### Native SDK-Datenschutz beim iPhone-Paket
+
+- Google ML Kit für den ursprünglichen Barcode-Scanner dokumentiert eigene Diagnose-/Nutzungsdaten (https://developers.google.com/ml-kit/ios-data-disclosure). Das wird durch JavaScript-CSP nicht verhindert. Kein tatsächlich beobachteter persönlicher Datentransfer behauptet; das SDK wird vorsorglich vollständig aus dem iOS-Plugin-Allowlist/Podfile genommen.
+- Bestehender lokaler `CameraScan`/`scan-web`-QR-/1D-Leser verarbeitet Kamera und Bilder; manuelle Eingabe bleibt erhalten. Lokaler Modus verweigert auch direkte Aufrufe des ML-Kit-Pfads vor dem Plugin-Import. Android-Paket separat prüfen, bevor es ausgeliefert wird.
+- `build:ios` prüft die tatsächlich synchronisierten Pods, Pod-Lock und Plugin-Registry. IPA-Verifier prüft das echte Archiv auf ausgeschlossene SDK-Frameworks und Scanner-Registrierung; Selbsttest **7/7** bestanden.
+- **69/69** Tests für lokalen Scanner, Channel, QR/Barcode-Decodierung und Check-In bestanden. Mobiler Vite-Produktionsbuild ebenfalls bestanden. Gesamttests auf neuem Commit erneut per CI; bisheriger voller 8.006er-Lauf bezieht sich auf den vorigen Produktionsstand.
+
+## 2026-11-15 — Startseite im Referenz-Stil, letzte sichtbare openGym-Namen
+
+- **Namen:** Die letzten sichtbaren openGym-Reste heißen jetzt RED Fit.
+  - Programm-Export `red-fit-programm-*.json`, geteiltes Trainingsbild `red-fit-training-*.png`.
+  - Fehlermeldung beim Import, Garmin-Text „Warte aufs Handy“ in 17 Sprachen (neu erzeugt), Garmin-Ersatzname für Trainings, Android-Debugname.
+  - **Unverändert:** interne Kennungen wie Dateispiegel, IndexedDB, URL-Schemes, Widget-`kind`, Xcode-Targets und Android-Paket. Ebenso der Drittlizenzhinweis „Media licensed for use in openGym only“ und der Importhinweis auf die alte openGym-App.
+- **Native Startseite** (`ios/App/App/REDFitHomeView.swift`, eingetragen in `ios/ci/add-swiftui.rb`):
+  - Begrüßung mit optionalem Namen (Mehr → Profil, nur auf dem Gerät), Wochenbalken und „n T übrig“.
+  - Streak-Flamme und Kalender als System-Toolbar (iOS-26-Glas).
+  - Karte mit Fortschrittsfoto und Wochenziel in % (aus `weekLeft`/`week`), dazu Check-in-Countdown bis Wochenende.
+  - Wasserflasche mit Füllstand im Verhältnis zum Wasserziel und +250-ml-Knopf. Die IDs `redfit-add-water` und `redfit-water-total` bleiben.
+  - Karte „Mahlzeiten des Tages“ mit kcal und % vom Ziel.
+  - Trainingsleiste mit den vorhandenen lokalen Übungsvorführungen (`RFExerciseMedia`); nur die vorderste Karte spielt.
+- **Keine Doppelungen:**
+  - Woche, Streak und nächstes Training kommen unverändert aus `buildWidgetSnapshot` (`lib/widgets.js`).
+  - `ProgressBar` und `FreezeFlakes` werden aus `WidgetViews.swift` wiederverwendet, ebenso Verlauf, Übungsdetail und 3D-Coach.
+  - Neu ist nur die Wasserflasche; eine solche Ansicht gab es nicht.
+- **Bridge:**
+  - Neues Snapshot-Feld `home` mit `widget`, `plan`, `exercises` und `latestPhoto`.
+  - Neue Aktion `photoThumb`: verkleinertes neuestes Foto, nur im Speicher.
+  - Neue Route `/progress-photos`.
+- **Behobene Prüfungsfehler:**
+  - `verify-ios-identity.mjs` lehnte die committeten Erweiterungs-IDs (`<appId>.widgets` usw.) als Haupt-ID ab. Er prüft jetzt nur die Haupt-ID; Regressionstest ergänzt.
+  - Der Bridge-Test zur Gekocht-Umrechnung war wegen zufälliger ID-Sortierung wackelig und liest den Eintrag jetzt über seine ID.
+- **Bekannt offen:** `verify-native-tabbar.test.mjs` Fall 8 erwartet eine Startargument-Zeile, die schon vor dieser Änderung fehlte (7/8).
+- **Nachweise (lokal, Mac mit Xcode 27.2, Simulator iOS 27.2 „RED Fit Native QA“):**
+  - Vitest gesamt: **670 Dateien, 8.033/8.033** bestanden. `test:ios-identity-unit`: 13/13. IPA-Verifier-Selbsttest: 7/7.
+  - Simulator- und Gerätebuild (`CODE_SIGNING_ALLOWED=NO`) erfolgreich. Unsignierte IPA mit `verify-unsigned-ipa.py` geprüft: 5 native Bundles, `ch.redurbabat.redfit`, SHA-256 `9a6e19a2…5eafaa`.
+  - XCUITest `testNativeNavigationWaterAndColdRestart` **bestanden**; er war im Lauf vom 15.11. 17 Uhr noch rot.
+  - `testHomeDashboard…` wird vom Simulatorabsturz des Systemdienstes `AppIntentsLiveEntityService` abgebrochen: XPC-Berechtigungsprüfung, kein App-Code im Stack, betrifft die unsignierte App. Die geprüften Wege (Verlauf öffnen und schließen, Mahlzeitenkarte → Ernährung, Wasser +250 ml und dauerhaft gespeichert, Tabwechsel, Übungsleiste mit Vorführung) wurden von Hand im Simulator bestätigt.
+  - `testNativePlanExerciseAndWorkout` schlägt wie schon vorher an derselben Stelle fehl („Satz abschließen“ statt „zurücknehmen“); das ist nicht Teil dieser Änderung.
+  - **Nicht nachgewiesen:** Signierung und Installation auf einem echten iPhone.
+
+## 2026-11-15 (Abend) — Grün, Animationen, Garmin-iPhone-Seite, Fotos, Wasser, Tests
+
+- **Farbe:**
+  - Standardakzent ist `lime` (#30d158); ein gespeichertes `red` der Bordeaux-Zeit wird ohne Umschreiben grün gezeichnet.
+  - Rot ist nicht mehr wählbar.
+- **Startseite:**
+  - Gestaffelter Einstieg und Zoom-Übergänge (Training, Übungsdetail).
+  - Scroll-Übergang der Übungsleiste, Druckrückmeldung, Symbol-Effekte; „Bewegung reduzieren“ wird beachtet.
+  - Alle nativen Tabs teilen Hintergrund und Kartenfarbe der Startseite (`rfScreen()`).
+- **Fortschrittsfotos nativ:**
+  - Kamera und Fotomediathek über die Bridge-Aktion `addPhoto`. Sie nutzt `ingestMediaFile`, den lokalen Medienspeicher und `fileProgressPhoto`.
+  - Der Vergleich bleibt der vorhandene der Originalansicht.
+- **Wasser:**
+  - Langes Drücken bietet 150/330/500/750 ml; „Rückgängig“ für den letzten Eintrag über die neue Aktion `removeWater`, die nur diese ID löscht.
+  - Ein älteres Backup kann einen entfernten Eintrag beim Import wieder zusammenführen.
+- **Backup:** Der Begrüßungsname steht optional als `profile.displayName` im `redfit-ios`-Backup und wird beim Import angeboten.
+- **Garmin:** Die iPhone-Seite steht in `REDFitGarminLink.swift`. Aktiv wird sie erst mit `ConnectIQ.xcframework`, das der Eigentümer nach Annahme der Garmin-Lizenz besorgen muss.
+- **Tests repariert:**
+  - `verify-native-tabbar` Fall 8 erlaubt zusätzliche Test-Startargumente (8/8).
+  - Der Plan-XCUITest wartet auf den bestätigten Satzstatus und setzt einen alten Simulatorzustand zurück.
+  - Ein doppeltes Speichern beim Abhaken mit offener Tastatur ist behoben.
+- **Start:** Ein normaler Start dauert im Simulator 6–10 s (JS-Kern ~6 s). Die ~1 min trat nur beim ersten Start nach der Installation auf.
+- **Größe:** Das IPA besteht zu ~215 MB aus den offline mitgelieferten Übungsanimationen (6.554 MP4 + WebP); ohne Verlust nicht kleiner. Der Release-Build ist ~10 MB kleiner und optimiert.
+- **Nachweise:**
+  - Vitest **670 Dateien, 8.039/8.039**.
+  - Simulator-Build sowie Debug- und Release-Gerätebuild erfolgreich; Release-IPA mit `verify-unsigned-ipa.py` geprüft.
+  - Nicht nachgewiesen: Garmin gegen das echte SDK, signierte Installation auf dem iPhone.

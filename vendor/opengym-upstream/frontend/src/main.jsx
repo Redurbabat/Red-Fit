@@ -1,3 +1,4 @@
+import './lib/local-only-bootstrap.js'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
@@ -12,6 +13,7 @@ import './coach.css'
 import './index.css'
 import { hideBoot, handOverFromLaunchScreen } from './lib/boot.js'
 import { guardFocusZoom } from './lib/viewport-zoom.js'
+import { installNativeBridge } from './native/bridge.js'
 
 // App.jsx restores per-route scroll itself; the browser's own attempt races it.
 // A script that dies before the app draws would otherwise leave the boot logo lifting forever.
@@ -26,6 +28,7 @@ if (!MOBILE) guardFocusZoom()
 createRoot(document.getElementById('root')).render(
   <StrictMode><App /></StrictMode>
 )
+installNativeBridge()
 
 // The photos and videos of custom exercises, in every build (the phone and the demo included):
 // uploads of what the server lacks, the local clean-up, and the plan's files kept offline.

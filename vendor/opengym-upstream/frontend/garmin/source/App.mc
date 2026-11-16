@@ -223,7 +223,7 @@ module Workout {
         }
         try {
             session = ActivityRecording.createSession({
-                :name => Core.strOf(w["name"]).length() > 0 ? Core.strOf(w["name"]) : "openGym",
+                :name => Core.strOf(w["name"]).length() > 0 ? Core.strOf(w["name"]) : "RED Fit",
                 :sport => Activity.SPORT_TRAINING,
                 :subSport => Activity.SUB_SPORT_STRENGTH_TRAINING
             });

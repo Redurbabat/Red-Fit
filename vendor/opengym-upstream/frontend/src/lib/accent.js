@@ -16,7 +16,12 @@
 // A grey goes further, so it never looks like a switched-off button (THEMES below, accent.test.js).
 import { ACCENTS, ACCENT_INK } from './format.js'
 
+// RED Fit's brand is the green/black/white gorilla (docs/NATIVE-SWIFTUI-MIGRATION.md). Red was the
+// default of the earlier Bordeaux brand and every fresh profile stored it, so a stored 'red' is
+// read as the default rather than as a choice; nothing is rewritten. Seasonal themes may still
+// lend a red accent for their days (lib/seasonal.js), which does not go through accentKey.
 export const DEFAULT_ACCENT = 'lime'
+export const RETIRED_ACCENTS = Object.freeze(['red'])
 export const CUSTOM = 'custom'
 
 const HEX = /^#[0-9a-f]{6}$/i
@@ -46,7 +51,7 @@ export function sanitizeAccent(s) {
 /** The choice to draw: a known preset key, 'custom' with a usable colour, or the default. */
 export function accentKey(S) {
   const k = S?.accent
-  if (typeof k === 'string' && Object.hasOwn(ACCENTS, k)) return k
+  if (typeof k === 'string' && Object.hasOwn(ACCENTS, k) && !RETIRED_ACCENTS.includes(k)) return k
   if (k === CUSTOM && cleanHex(S?.accentCustom)) return CUSTOM
   return DEFAULT_ACCENT
 }

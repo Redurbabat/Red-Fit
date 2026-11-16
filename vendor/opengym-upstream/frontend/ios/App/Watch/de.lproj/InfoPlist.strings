@@ -1,4 +1,4 @@
-/* openGym on the Apple Watch, de: Info.plist. Written by ios/ci/watch-strings.mjs. */
+/* RED Fit on the Apple Watch, de: Info.plist. Written by ios/ci/watch-strings.mjs. */
 
-"NSHealthShareUsageDescription" = "openGym zeigt deinen Puls während des Trainings und neben jedem Satz.";
-"NSHealthUpdateUsageDescription" = "openGym speichert deine Trainings in Apple Health, wenn du das einschaltest.";
+"NSHealthShareUsageDescription" = "RED Fit zeigt deinen Puls während des Trainings und neben jedem Satz.";
+"NSHealthUpdateUsageDescription" = "RED Fit speichert deine Trainings in Apple Health, wenn du das einschaltest.";

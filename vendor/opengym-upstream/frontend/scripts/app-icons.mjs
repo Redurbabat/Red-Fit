@@ -1,24 +1,12 @@
 #!/usr/bin/env node
-/* The alternate home-screen icons (Settings → Look & Home → App icon), drawn from
- * src/lib/app-icon-variants.js and the dumbbell in resources/icon.svg.
- *
- * The glyph is five rectangles, so this draws them itself (4x4 to 8x8 samples per pixel for the
- * edges) and writes the PNGs with node:zlib: no sharp or resvg to install, and the same bytes on
- * every machine, which the test checks. A variant with `art` (Halloween) is a hand-made SVG
- * instead, drawn by the small renderer below (rect, circle, line, polyline, polygon, one radial
- * gradient). Written per variant:
- *   resources/icons/<id>.svg                                  the source (the glyph ones only)
- *   public/app-icons/<id>.png                                 112 px preview for the settings row
- *   ios/App/App/Assets.xcassets/AppIcon-<Name>.appiconset/    1024 px, opaque (Apple refuses alpha)
- *   android/app/src/main/res/mipmap-<dpi>/ic_launcher_<id>{,_round,_foreground}.png
- *   android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_<id>{,_round}.xml
- *   android/app/src/main/res/values/app_icons.xml             the adaptive icons' background colours
- * The default icon keeps the files @capacitor/assets made for it (docs/MOBILE.md); only its
- * preview comes from here.
- *
- * Usage: node scripts/app-icons.mjs            write everything
- *        node scripts/app-icons.mjs --check    exit 1 when a committed file differs from a fresh draw */
+/* RED Fit platform icon variants, derived from resources/red-fit-master.png.
+ * Original native icon IDs and aliases stay compatible. Primary is the exact
+ * burgundy/ivory artwork; alternates retain their advertised palettes and use
+ * the same symbol. The existing pure SVG renderer is retained as a utility.
+ * Run node scripts/app-icons.mjs or append --check to verify committed assets.
+ */
 import { deflateSync } from 'node:zlib'
+import { decodePng, resizeRgba } from '../../../../tools/nativeIconCodec.mjs'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -42,39 +30,25 @@ export function glyph(svg = readFileSync(join(ROOT, 'resources/icon.svg'), 'utf8
 const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16))
 
 /** One icon `size` px square: the background, the glyph on it, optionally cut to a circle. */
-export function draw(v, size, { round = false, rects = glyph() } = {}) {
-  if (v.art) return drawArt(readFileSync(join(ROOT, v.art), 'utf8'), size, { round })
-  const k = size <= 256 ? 8 : 4
-  const bg = rgb(v.bg), fg = rgb(v.fg)
+// One original master for every platform, including existing alternate-icon IDs.
+// Variants map the ivory/burgundy contrast to the chosen palette; relief is retained.
+let master
+export function draw(v, size, { round = false } = {}) {
+  master ||= decodePng(readFileSync(join(ROOT, 'resources/red-fit-master.png')))
+  const rgba = resizeRgba(master, size)
   const ch = round ? 4 : 3
   const out = Buffer.alloc(size * size * ch)
-  const scale = 512 / size
-  // Per sample row, the glyph's spans across it: the inner loop then only compares numbers.
-  const spans = []
-  for (let s = 0; s < size * k; s++) {
-    const gy = (s + 0.5) / k * scale
-    spans.push(rects.filter(([, ry, , rh]) => gy >= ry && gy < ry + rh).map(([rx, , rw]) => [rx, rx + rw]))
-  }
+  const bg = rgb(v.bg), fg = rgb(v.fg)
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    let inside = 0, on = 0
-    for (let sy = 0; sy < k; sy++) {
-      const py = y + (sy + 0.5) / k
-      const row = spans[y * k + sy]
-      for (let sx = 0; sx < k; sx++) {
-        const px = x + (sx + 0.5) / k
-        if (round) {
-          const dx = px - size / 2, dy = py - size / 2
-          if (dx * dx + dy * dy > (size / 2) * (size / 2)) continue
-        }
-        inside++
-        const gx = px * scale
-        for (const [a, b] of row) if (gx >= a && gx < b) { on++; break }
-      }
+    const i = (y * size + x) * 4, o = (y * size + x) * ch
+    // Ivory has a bright green channel; the wine background has almost none.
+    const amount = Math.min(1, Math.max(0, (rgba[i + 1] - 12) / 218))
+    for (let c = 0; c < 3; c++) out[o + c] = v.id === 'default'
+      ? rgba[i + c] : Math.round(bg[c] + (fg[c] - bg[c]) * amount)
+    if (round) {
+      const distance = Math.hypot(x + .5 - size / 2, y + .5 - size / 2)
+      out[o + 3] = Math.round(255 * Math.min(1, Math.max(0, size / 2 - distance + .5)))
     }
-    const o = (y * size + x) * ch
-    const a = inside ? on / inside : 0
-    for (let c = 0; c < 3; c++) out[o + c] = Math.round(bg[c] + (fg[c] - bg[c]) * a)
-    if (round) out[o + 3] = Math.round(255 * inside / (k * k))
   }
   return png(size, size, out, ch)
 }
@@ -217,14 +191,7 @@ export function pngInfo(buf) {
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20), alpha: buf[25] === 6 || buf[25] === 4 }
 }
 
-const svgOf = (v, rects) => `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512">
-  <!-- openGym app icon "${v.id}", written by scripts/app-icons.mjs (the glyph of resources/icon.svg). -->
-  <rect width="512" height="512" fill="${v.bg}"/>
-  <g fill="${v.fg}">
-${rects.map(([x, y, w, h]) => `    <rect x="${x}" y="${y}" width="${w}" height="${h}"/>`).join('\n')}
-  </g>
-</svg>
-`
+const svgOf = () => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><image width="1024" height="1024" href="../red-fit-master.png"/></svg>\n'
 
 // The same layers as the default icon's (mipmap-anydpi-v26/ic_launcher.xml): the whole square icon
 // as the foreground, inset to the 72 dp the launcher's mask shows, so every variant sits exactly
@@ -262,7 +229,7 @@ export function files(rects = glyph()) {
   for (const v of APP_ICON_VARIANTS) {
     out.push([`public/app-icons/${v.id}.png`, () => draw(v, PREVIEW, { rects })])
     if (v.id === 'default') continue
-    if (!v.art) out.push([`resources/icons/${v.id}.svg`, () => svgOf(v, rects)])
+    out.push([`resources/icons/${v.id}.svg`, () => svgOf()])
     const set = `ios/App/App/Assets.xcassets/${v.ios}.appiconset`
     out.push([`${set}/Contents.json`, () => iosContents])
     out.push([`${set}/icon-1024.png`, () => draw(v, IOS_SIZE, { rects })])

@@ -6,8 +6,15 @@ export const SET_NOTE_MAX_LENGTH = 140;
 
 /** Remove control characters, trim, and keep short set notes predictable. */
 export function normalizeSetNote(value: string): string | undefined {
-  const normalized = value
-    .replace(/[\u0000-\u001f\u007f]/g, " ")
+  // ESLint no-control-regex rejects the original literal even though the sanitisation
+  // was intentional. Replace ASCII controls and DEL without a control-character regex.
+  const sanitized = [...value]
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      return code < 0x20 || code === 0x7f ? " " : char;
+    })
+    .join("");
+  const normalized = sanitized
     .trim()
     .slice(0, SET_NOTE_MAX_LENGTH)
     .trim();

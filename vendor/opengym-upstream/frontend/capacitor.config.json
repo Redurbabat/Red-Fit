@@ -1,8 +1,18 @@
 {
-  "appId": "ch.duartesantos.opengym",
-  "appName": "openGym",
+  "appId": "ch.redurbabat.redfit",
+  "appName": "RED Fit",
   "webDir": "dist",
   "backgroundColor": "#0c0e12",
+  "ios": {
+    "includePlugins": [
+      "@aparajita/capacitor-secure-storage",
+      "@capacitor/app",
+      "@capacitor/filesystem",
+      "@capacitor/local-notifications",
+      "@capacitor/share",
+      "@capacitor/splash-screen"
+    ]
+  },
   "android": {
     "allowMixedContent": true
   },

@@ -55,6 +55,10 @@ export const STEPS = [
 /** The steps this device still has to see, in order. Empty off the phone app. */
 export async function pendingSteps(steps = STEPS, mobile = MOBILE) {
   if (!mobile) return []
+  // The original iOS native-dock XCUITest sets this in WKWebView at document start.
+  // Do not use localStorage there: the Capacitor origin may not be ready yet.
+  // A normal app launch never sets the marker and must show real OS permission steps.
+  if (typeof window !== 'undefined' && window.__REDFitUITestSkipOnboardingPermissions === true) return []
   const seen = readSeen()
   const out = []
   for (const s of steps) {

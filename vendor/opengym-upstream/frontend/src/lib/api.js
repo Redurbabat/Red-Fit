@@ -3,6 +3,7 @@ import { t } from './i18n-core.js'
 import { MOBILE } from './mobile.js'
 import { appBase } from './app-base.js'
 import { nativeFetch } from './capacitor-fetch.js'
+import { isLocalOnly, requireNetworkFeature } from './local-only.js'
 
 export const IS_APPLE = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)
 export const IS_ANDROID = /Android/.test(navigator.userAgent)
@@ -21,7 +22,7 @@ export const webauthnOK = () => typeof window.PublicKeyCredential !== 'undefined
 // same-origin cookies, so remoteBase/remoteToken stay empty and api() behaves exactly as before.
 let remoteBase = ''
 let remoteToken = null
-export function setRemoteAuth(base, token) { remoteBase = base || ''; remoteToken = token || null }
+export function setRemoteAuth(base, token) { remoteBase = isLocalOnly() ? '' : base || ''; remoteToken = isLocalOnly() ? null : token || null }
 // A Cloudflare Access service token (lib/cf-access.js): sent only to the origin it was entered
 // for, never on a same-origin request, where the browser's own Access session cookie already
 // does the job, and never to a server that merely happens to be paired or typed in.
@@ -34,7 +35,7 @@ const remoteHeaders = () => Object.assign({}, accessFor(remoteBase), remoteToken
 // The paired server and what a request to it carries (the token, an Access service token for that
 // origin), for the phone's background check (lib/nudge-check.js), which runs with no WebView and
 // so has to be handed them. null when this is not a paired phone.
-export const remoteAuth = () => (remoteBase && remoteToken ? { base: remoteBase, headers: remoteHeaders() } : null)
+export const remoteAuth = () => (!isLocalOnly() && remoteBase && remoteToken ? { base: remoteBase, headers: remoteHeaders() } : null)
 
 export { appBase }
 
@@ -53,11 +54,12 @@ const failure = (message, code, status) => Object.assign(new Error(message), { c
 // the address they opened only ever saw "cross-origin request refused", and nobody could tell
 // what to change. The answer names ORIGIN, so the sentence can too (api/verify-error.js).
 function refusal(status, body) {
-  if (body && body.code === 'origin-mismatch') return t('This server only takes changes made at {0}. If you opened openGym at another address, whoever runs the server can set ORIGIN and RP_ID to match it (the self-hosting guide shows how).', String(body.expected || '?'))
+  if (body && body.code === 'origin-mismatch') return t('This server only takes changes made at {0}. If you opened RED Fit at another address, whoever runs the server can set ORIGIN and RP_ID to match it (the self-hosting guide shows how).', String(body.expected || '?'))
   return (body && body.error) || ('HTTP ' + status)
 }
 
 export async function api(path, opts) {
+  requireNetworkFeature()
   const { timeout, ...init } = opts || {}
   // A phone with no server to talk to: local mode, or a pairing that is gone. There is no
   // relative URL to fall back on here — the WebView's own origin is Capacitor's local asset
@@ -101,7 +103,7 @@ async function exchange(url, init) {
   const body = parsed && data && typeof data === 'object' ? data : null
   // The body rides along on the error: a 409 from /api/data carries the server's document.
   if (!r.ok) { const e = new Error(refusal(r.status, body)); e.status = r.status; e.data = body || {}; throw e }
-  if (!body) throw failure(t('The server answered with something other than openGym data.'), 'bad-response', r.status)
+  if (!body) throw failure(t('The server answered with something other than RED Fit data.'), 'bad-response', r.status)
   return body
 }
 
@@ -111,6 +113,7 @@ async function exchange(url, init) {
 // origin is Capacitor's asset server, which answers every path with index.html: the phones sent
 // every "left" to https://localhost/api/activity. The api() call beside it reaches the server.
 export function beacon(path, body) {
+  if (isLocalOnly()) return false
   if (MOBILE) return false
   try {
     if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return false
@@ -137,6 +140,7 @@ const timedOut = () => failure(t('The server did not answer in time.'), 'timeout
  * Errors carry { status, code } like api()'s: the server's code on a refusal (media-missing).
  */
 export async function apiBlob(path, { expectSize, idleMs = 30000, fetchImpl = globalThis.fetch } = {}) {
+  requireNetworkFeature()
   if (MOBILE && !remoteBase) throw notPaired()
   const max = typeof expectSize === 'number' && expectSize >= 0 ? expectSize + 1024 : Infinity
   const ctl = typeof AbortController === 'function' ? new AbortController() : null
@@ -193,6 +197,7 @@ export async function apiBlob(path, { expectSize, idleMs = 30000, fetchImpl = gl
  * `idleMs` without progress; no status at all when the network failed.
  */
 export function apiUpload(path, blob, mime, { onProgress, idleMs = 60000, XHR = globalThis.XMLHttpRequest } = {}) {
+  if (isLocalOnly()) return Promise.reject(Object.assign(new Error('RED Fit arbeitet lokal.'), { code: 'local-only', status: 0 }))
   if (MOBILE && !remoteBase) return Promise.reject(notPaired())
   return new Promise((resolve, reject) => {
     const xhr = new XHR()
@@ -211,7 +216,7 @@ export function apiUpload(path, blob, mime, { onProgress, idleMs = 60000, XHR = 
       if (body && typeof body !== 'object') body = null
       if (xhr.status >= 200 && xhr.status < 300) {
         if (body) resolve(body)
-        else reject(failure(t('The server answered with something other than openGym data.'), 'bad-response', xhr.status))
+        else reject(failure(t('The server answered with something other than RED Fit data.'), 'bad-response', xhr.status))
         return
       }
       if (xhr.status === 413 && !body) { reject(failure('HTTP 413', 'proxy-too-large', 413)); return }
@@ -232,16 +237,16 @@ export function apiUpload(path, blob, mime, { onProgress, idleMs = 60000, XHR = 
 // "Failed to fetch" is all the WebView says when pairing never got an answer (#329), and it says
 // the same for a wrong address and for a reverse proxy that answered the CORS preflight itself
 // without letting the app's origin in (a Traefik `headers` middleware with an allow-list, which
-// never passes the OPTIONS on to openGym). A no-cors request needs no preflight and tells the two
+// never passes the OPTIONS on to RED Fit). A no-cors request needs no preflight and tells the two
 // apart: it settles when the server is there at all. Its answer cannot be read, nor needs to be.
 const PROBE_MS = 5000
 const hostOfBase = base => {
   try { const u = new URL(base); return u.host + u.pathname.replace(/\/$/, '') } catch { return base || '' }
 }
 // What /api/health says when it can be read (the app's native fetch reads it past CORS):
-// 'opengym', 'front' when something in front of openGym answered in its place (a redirect, a
+// 'opengym', 'front' when something in front of RED Fit answered in its place (a redirect, a
 // 401/403 or an HTML page: an SSO login, forward-auth, a proxy rule), 'other' for an answer that
-// is just not openGym's (another app's JSON, a proxy's plain "404 page not found"), and null
+// is just not RED Fit's (another app's JSON, a proxy's plain "404 page not found"), and null
 // when nothing readable came back.
 async function healthAnswer(base, ms) {
   const ctl = typeof AbortController === 'function' ? new AbortController() : null
@@ -275,20 +280,20 @@ async function whyUnreachable(base, ms) {
     reached = true
   } catch { /* not reachable either */ }
   finally { clearTimeout(timer) }
-  // Something answered. Whether it is openGym needs a readable answer: in the app the native
-  // fetch reads /api/health past CORS. A login page or a proxy rule answering in openGym's place
-  // is not a wrong address, and a page that is simply not openGym's is (#329). No readable
+  // Something answered. Whether it is RED Fit needs a readable answer: in the app the native
+  // fetch reads /api/health past CORS. A login page or a proxy rule answering in RED Fit's place
+  // is not a wrong address, and a page that is simply not RED Fit's is (#329). No readable
   // answer at all leaves the CORS explanation.
   const answer = reached ? await healthAnswer(base, ms) : null
   if (answer === 'front') {
-    return failure(t('That address answers, but a login page or proxy rule replied instead of openGym. Let /api/ through to openGym unchanged. See “Phone app and CORS” in docs/SELF_HOSTING.md.'), 'proxy-answered')
+    return failure(t('That address answers, but a login page or proxy rule replied instead of RED Fit. Let /api/ through to RED Fit unchanged. See “Phone app and CORS” in docs/SELF_HOSTING.md.'), 'proxy-answered')
   }
   if (answer === 'other') {
-    return failure(t('That address answers, but it isn’t an openGym server. Check the URL.'), 'not-opengym')
+    return failure(t('That address answers, but it isn’t a RED Fit server. Check the URL.'), 'not-opengym')
   }
   if (reached) {
     const origin = globalThis.location?.origin || 'https://localhost'
-    return failure(t('Your server was reached, but it refused the app’s request (CORS). If a reverse proxy such as Traefik adds CORS headers, let requests from {0} through to openGym unchanged. See “Phone app and CORS” in docs/SELF_HOSTING.md.', origin), 'cors')
+    return failure(t('Your server was reached, but it refused the app’s request (CORS). If a reverse proxy such as Traefik adds CORS headers, let requests from {0} through to RED Fit unchanged. See “Phone app and CORS” in docs/SELF_HOSTING.md.', origin), 'cors')
   }
   // An address typed without a scheme is tried as https://. A home server on plain http gives
   // that try nothing to talk to, while the phone's browser, which tries http, opens it (#428).
@@ -337,7 +342,7 @@ export async function pairRedeem(serverBase, code, { probeMs = PROBE_MS } = {}) 
   }
   // Anything that is not a pairing would be saved as one — and the phone would then send every
   // change to a server that never gave it a token.
-  if (!data.token || !data.user) throw failure(t('The server answered with something other than openGym data.'), 'bad-response', 200)
+  if (!data.token || !data.user) throw failure(t('The server answered with something other than RED Fit data.'), 'bad-response', 200)
   return data
 }
 

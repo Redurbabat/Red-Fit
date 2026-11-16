@@ -244,6 +244,75 @@ describe('timed holds that run themselves', () => {
     expect(useUI.getState().countIn).toBeNull()
   })
 
+  it('cancels an automatic count-in when a different workout with identical sets is restored', () => {
+    start([hold(30, { done: true }), hold(30)])
+    useUI.getState().startCountIn({ idx: 0, i: 1, id: 'plank', plan: 30, label: 'Plank' })
+    expect(useUI.getState().countIn.owner.sessionId).toBe('w')
+    useStore.setState({ S: { ...useStore.getState().S,
+      active: { ...useStore.getState().S.active, id: 'another-workout' }
+    } })
+    expect(useUI.getState().countIn).toBeNull()
+    vi.advanceTimersByTime(5000)
+    expect(useUI.getState().work).toBeNull()
+    expect(hooks.focus).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects Go Now and Resume on a stale count-in even if it is presented again', () => {
+    start([hold(30, { done: true }), hold(30)])
+    useUI.getState().startCountIn({ idx: 0, i: 1, id: 'plank', plan: 30, label: 'Plank' })
+    const previous = useUI.getState().countIn
+    useStore.setState({ S: { ...useStore.getState().S,
+      active: { ...useStore.getState().S.active, id: 'another-workout' }
+    } })
+    expect(useUI.getState().countIn).toBeNull()
+    useUI.setState({ countIn: previous })
+    useUI.getState().goNow()
+    expect(useUI.getState().work).toBeNull()
+    expect(useUI.getState().countIn).toBeNull()
+    useUI.setState({ countIn: { ...previous, paused: true, left: 2 } })
+    useUI.getState().resumeCountIn()
+    expect(useUI.getState().countIn).toBeNull()
+    expect(useUI.getState().work).toBeNull()
+  })
+
+  it.each(['skip', 'expire'])('does not chain an old rest into another workout after %s', finish => {
+    start([hold(30, { done: true }), hold(30)])
+    useUI.getState().startRest(REST, 0, { forSet: 0 })
+    expect(useUI.getState().timer.sessionId).toBe('w')
+    useStore.setState({ S: { ...useStore.getState().S,
+      active: { ...useStore.getState().S.active, id: 'another-workout' }
+    } })
+    if (finish === 'skip') useUI.getState().skipRest()
+    else vi.advanceTimersByTime(REST * 1000 + 1000)
+    expect(useUI.getState().timer).toBeNull()
+    expect(useUI.getState().countIn).toBeNull()
+    expect(useUI.getState().work).toBeNull()
+  })
+
+  it('rejects an explicit count-in owner from a previous workout before focusing the exercise', () => {
+    start([hold(30, { done: true }), hold(30)])
+    useUI.getState().startCountIn({
+      idx: 0, i: 1, id: 'plank', plan: 30, label: 'Plank', sessionId: 'previous-workout'
+    })
+    expect(useUI.getState().countIn).toBeNull()
+    expect(useUI.getState().work).toBeNull()
+    expect(hooks.focus).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(5000)
+    expect(useUI.getState().work).toBeNull()
+  })
+
+  it('keeps a running count-in when the store clones the same workout ID', () => {
+    start([hold(30, { done: true }), hold(30)])
+    useUI.getState().startCountIn({ idx: 0, i: 1, id: 'plank', plan: 30, label: 'Plank' })
+    const prev = useStore.getState().S
+    useStore.setState({ S: { ...prev, active: { ...prev.active,
+      entries: prev.active.entries.map(e => ({ ...e, sets: e.sets.map(s => ({ ...s })) }))
+    } } })
+    expect(useUI.getState().countIn).not.toBeNull()
+    vi.advanceTimersByTime(3000)
+    expect(useUI.getState().work).toMatchObject({ total: 30, owner: { sessionId: 'w', i: 1 } })
+  })
+
   it('starts nothing without the workout screen, or with the setting off', () => {
     start([hold(30, { done: true }), hold(30)], { autoHolds: false })
     useUI.getState().startRest(REST, 0)

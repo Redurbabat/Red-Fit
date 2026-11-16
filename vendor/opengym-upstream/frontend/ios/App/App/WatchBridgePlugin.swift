@@ -57,6 +57,11 @@ public class WatchBridgePlugin: CAPPlugin, CAPBridgedPlugin, WCSessionDelegate {
     private let queue = DispatchQueue(label: "ch.opengym.watch-events")
 
     override public func load() {
+        // Garmin (docs/GARMIN.md): its events join the same queue as the Apple Watch's.
+        let garmin = RFGarminLink.shared
+        garmin.onEvents = { [weak self] events in self?.enqueue(events) }
+        garmin.onState = { [weak self] in self?.notifyListeners("watchState", data: ["garmin": RFGarminLink.shared.connected]) }
+        garmin.start()
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         session.delegate = self
@@ -66,18 +71,23 @@ public class WatchBridgePlugin: CAPPlugin, CAPBridgedPlugin, WCSessionDelegate {
     /* ---------- the page's calls ---------- */
 
     @objc func status(_ call: CAPPluginCall) {
+        let garmin = RFGarminLink.shared.status()
+        let garminReady = garmin["garmin"] as? Bool ?? false
         guard WCSession.isSupported() else {
-            call.resolve(["supported": false, "paired": false, "installed": false, "reachable": false])
+            call.resolve(["supported": garminReady, "paired": garminReady, "installed": garminReady, "reachable": garminReady].merging(garmin) { a, _ in a })
             return
         }
         let s = WCSession.default
+        // The Apple Watch keeps priority; with none paired a connected Garmin counts as the watch,
+        // so lib/watch-sync.js sends it the Garmin snapshot.
+        let apple = s.isPaired && s.isWatchAppInstalled
         call.resolve([
             "supported": true,
-            "activated": s.activationState == .activated,
-            "paired": s.isPaired,
-            "installed": s.isWatchAppInstalled,
-            "reachable": s.isReachable,
-        ])
+            "activated": s.activationState == .activated || garminReady,
+            "paired": s.isPaired || garminReady,
+            "installed": apple || garminReady,
+            "reachable": s.isReachable || garminReady,
+        ].merging(garmin) { a, _ in a })
     }
 
     /// A workout started on the phone: the watch app opens with it (Settings → Apple Watch, "Open on
@@ -109,6 +119,7 @@ public class WatchBridgePlugin: CAPPlugin, CAPBridgedPlugin, WCSessionDelegate {
             return
         }
         WatchBridgePlugin.keepActivity(of: json)
+        if let garmin = call.getString("garmin") { RFGarminLink.shared.send(snapshotJSON: garmin) }
         guard WCSession.isSupported() else { call.resolve(["sent": false]); return }
         let s = WCSession.default
         guard s.activationState == .activated, s.isPaired, s.isWatchAppInstalled else {
@@ -321,6 +332,18 @@ public class WatchBridgePlugin: CAPPlugin, CAPBridgedPlugin, WCSessionDelegate {
     public func sessionDidDeactivate(_ session: WCSession) {
         // A different watch was paired: start a session with that one.
         WCSession.default.activate()
+    }
+
+    /// Garmin events arrive on the main queue; they are written like the Apple Watch's and the page told.
+    private func enqueue(_ incoming: [[String: Any]]) {
+        queue.sync {
+            var events = self.readEvents()
+            for event in incoming where !events.contains(where: { ($0["id"] as? String) == (event["id"] as? String) }) {
+                events.append(event)
+            }
+            self.writeEvents(events)
+        }
+        for event in incoming { notifyListeners("watchEvent", data: event) }
     }
 
     /* ---------- the queue file ---------- */

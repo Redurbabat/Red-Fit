@@ -115,6 +115,17 @@ Garmin page in Settings: the watch app's one setting lives in the Connect IQ app
 Garmin Connect's. If the bridge ever needs a page of its own, it takes `mod: 'watch'` in
 views/settings-pages.js like the Apple Watch and Zepp OS pages.
 
+**RED Fit iPhone (15.11.2026):** Die iPhone-Seite ist als `ios/App/App/REDFitGarminLink.swift` vorbereitet.
+- `WatchBridge.status` meldet `garmin`, `sendSnapshot` gibt `garmin` an die Uhr weiter, und die Ereignisse der Uhr landen in der Warteschlange der Apple Watch.
+- Dazu kommen das URL-Schema `redfit-ciq` und der Knopf „Garmin-Uhr verbinden“ unter Mehr → Uhren.
+- Der Code wird nur mit `ConnectIQ.xcframework` im App-Target aktiv (`#if canImport(ConnectIQ)`); ohne das SDK baut die App unverändert.
+- Gegen das echte SDK ist der Code noch nicht kompiliert. Dafür muss der Eigentümer das SDK nach Annahme der Garmin-Lizenz herunterladen.
+
+**Uhr-App mit echtem SDK (15.11.2026, RED Fit):**
+- Mit Connect IQ SDK 9.3.0 auf macOS kompiliert für `fenix847mm` (echte Gerätedatei) und `fr970` (Ersatzdatei aus `stand-in-devices.mjs`). Ergebnis: Exit 0, nur die bekannten Typ-Warnungen.
+- Der Unit-Test-Build läuft im echten Garmin-Simulator mit **9/9 bestanden**.
+- Für die Forerunner 970 fehlt noch die echte Gerätedatei aus dem SDK Manager. Der lokale Testbuild unter `.red-fit-qa/garmin/` ist mit einem Wegwerf-Testschlüssel signiert.
+
 **The native half (to do):**
 
 1. **Android** (`android/app`, play flavour first): the Connect IQ Mobile SDK

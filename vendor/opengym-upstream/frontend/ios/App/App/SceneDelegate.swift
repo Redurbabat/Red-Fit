@@ -10,10 +10,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     // These callbacks just forward deep links / Universal Links to Capacitor,
     // since AppDelegate's equivalents are not called under the scene lifecycle.
 
-    // A link that started the app (a tap on a widget while openGym was closed) arrives here, not
+    // A link that started the app (a tap on a widget while RED Fit was closed) arrives here, not
     // in openURLContexts: handed on the same way, Capacitor keeps it as the launch URL the page
     // asks for (lib/widget-links.js, App.getLaunchUrl).
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        RFAppModel.mark("scene willConnect")
+        if #available(iOS 26.0, *), UIDevice.current.userInterfaceIdiom == .phone,
+           let bridge = window?.rootViewController as? MainViewController {
+            // Retain the original storyboard bridge; UIKit owns the visible tab
+            // container outside WKWebView. Never instantiate a second bridge.
+            if ProcessInfo.processInfo.arguments.contains("-REDFitLegacyUITest") {
+                window?.rootViewController = REDFitNativeTabController(bridge: bridge)
+            } else {
+                window?.rootViewController = RFNativeHostController(bridge: bridge)
+            }
+        }
+        RFAppModel.mark("scene root set")
         if let url = connectionOptions.urlContexts.first?.url {
             _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: url, options: [:])
         }
@@ -26,6 +38,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
         guard let url = URLContexts.first?.url else { return }
+        // Garmin Connect returning the chosen watches (REDFitGarminLink); not a page link.
+        if RFGarminLink.shared.handle(url: url) { return }
         _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: url, options: [:])
     }
 

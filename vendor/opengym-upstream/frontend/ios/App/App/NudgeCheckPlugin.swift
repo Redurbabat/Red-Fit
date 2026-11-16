@@ -31,10 +31,11 @@ public class NudgeCheckPlugin: CAPPlugin, CAPBridgedPlugin {
     ]
 
     /// Also in Info.plist (BGTaskSchedulerPermittedIdentifiers).
-    static let taskId = "ch.opengym.app.nudge-check"
+    static let taskId = "ch.redurbabat.redfit.nudge-check"
     private static let account = "nudge-check"
 
     @objc func arm(_ call: CAPPluginCall) {
+        guard !REDFitPrivacy.localOnly else { call.resolve(); return }
         guard let server = call.getString("server"), !server.isEmpty else {
             call.reject("server is required")
             return
@@ -80,6 +81,7 @@ public class NudgeCheckPlugin: CAPPlugin, CAPBridgedPlugin {
     /// quarter of an hour from now when that is already past. iOS picks the moment itself.
     static func schedule(_ config: [String: Any]) {
         BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: taskId)
+        guard !REDFitPrivacy.localOnly else { return }
         guard let next = upcoming(config).first, let at = next["at"] as? Double else { return }
         let fires = Date(timeIntervalSince1970: at / 1000)
         let request = BGAppRefreshTaskRequest(identifier: taskId)
@@ -88,6 +90,7 @@ public class NudgeCheckPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     private static func run(_ task: BGAppRefreshTask) {
+        guard !REDFitPrivacy.localOnly else { task.setTaskCompleted(success: true); return }
         guard var config = load(), let server = config["server"] as? String else {
             task.setTaskCompleted(success: true)
             return
@@ -155,7 +158,7 @@ public class NudgeCheckPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private static func query() -> [String: Any] {
         return [kSecClass as String: kSecClassGenericPassword,
-                kSecAttrService as String: Bundle.main.bundleIdentifier ?? "ch.opengym.app",
+                kSecAttrService as String: Bundle.main.bundleIdentifier ?? "ch.redurbabat.redfit",
                 kSecAttrAccount as String: account]
     }
 

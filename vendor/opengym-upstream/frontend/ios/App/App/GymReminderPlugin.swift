@@ -8,7 +8,7 @@ import UserNotifications
  * The gym reminder (#614): a notification when the iPhone arrives at one of the user's gyms
  * (frontend lib/gym-reminder.js has the page's side and the rules in words).
  *
- * iOS watches the gyms itself with region monitoring (at most 20 regions per app), with openGym
+ * iOS watches the gyms itself with region monitoring (at most 20 regions per app), with RED Fit
  * closed and at hardly any battery cost: on arriving it launches the app in the background and
  * hands GymReminderCenter the region, which decides with GymReminderRules whether to post and
  * posts a local notification. That needs "Always" location; no background location mode
@@ -202,7 +202,7 @@ final class GymReminderCenter: NSObject, CLLocationManagerDelegate {
 
     private static func serverQuery() -> [String: Any] {
         return [kSecClass as String: kSecClassGenericPassword,
-                kSecAttrService as String: Bundle.main.bundleIdentifier ?? "ch.opengym.app",
+                kSecAttrService as String: Bundle.main.bundleIdentifier ?? "ch.redurbabat.redfit",
                 kSecAttrAccount as String: "gym-reminder-server"]
     }
 
@@ -232,6 +232,7 @@ final class GymReminderCenter: NSObject, CLLocationManagerDelegate {
     /// Whether the paired server says `today` was trained or excused. Calls back false without a
     /// server, offline, on any error and after 3 seconds, always on the main queue.
     func trainedElsewhere(today: String, _ done: @escaping (Bool) -> Void) {
+        guard !REDFitPrivacy.localOnly else { done(false); return }
         guard let auth = GymReminderCenter.loadServer(), var base = auth["server"] as? String, !base.isEmpty else { done(false); return }
         while base.hasSuffix("/") { base.removeLast() }
         guard var parts = URLComponents(string: base + "/api/nudge-check") else { done(false); return }
