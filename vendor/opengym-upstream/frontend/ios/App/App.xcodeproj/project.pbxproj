@@ -126,6 +126,7 @@
 		DD1DCFC33B00B7814119318C /* es.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 05944D48CBAE6DEA0CD270D5 /* es.lproj */; };
 		DF00D5BC8E7B954029B91453 /* hu.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 06F9B2A2E7633456023C1E77 /* hu.lproj */; };
 		E60AC2D2BDFC7852F853EC90 /* OpenGymUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0301B704B7896046E47A597F /* OpenGymUITests.swift */; };
+		E74F78C8FAAF9AE09CF9D2B3 /* REDFitWorkoutViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2599D3D28D2084CEFC45AFC /* REDFitWorkoutViews.swift */; };
 		E84789243708DA773AFF02A8 /* pt-PT.lproj in Resources */ = {isa = PBXBuildFile; fileRef = 8A7AC117E705866300EB7483 /* pt-PT.lproj */; };
 		F5DB7E5842E389D840760BA2 /* pt-PT.lproj in Resources */ = {isa = PBXBuildFile; fileRef = A1165734F5E18314B11F164F /* pt-PT.lproj */; };
 		F6B2F95D89DFDED8A12E71D1 /* AnimationPacksDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E973E6CD275A24CE0AA0422 /* AnimationPacksDownloader.swift */; };
@@ -370,6 +371,7 @@
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		B0D3032019AD9FFBE039CC53 /* th.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = th.lproj; sourceTree = "<group>"; };
 		B10D5A8998FEB2D34693BB02 /* fr.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = fr.lproj; sourceTree = "<group>"; };
+		B2599D3D28D2084CEFC45AFC /* REDFitWorkoutViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = REDFitWorkoutViews.swift; sourceTree = "<group>"; };
 		BDB23C75194516310B98F5E3 /* pl.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = pl.lproj; sourceTree = "<group>"; };
 		BFA71E9EBB0A0D1A03236BDC /* pt-BR.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = "pt-BR.lproj"; sourceTree = "<group>"; };
 		C050837DF1E0529876E1F334 /* ko.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = ko.lproj; sourceTree = "<group>"; };
@@ -583,6 +585,7 @@
 				E613955E7229FC12F0603F8B /* REDFitHomeView.swift */,
 				A0FC736CECFE9301C89C3162 /* REDFitGarminLink.swift */,
 				2E392929A100979F72F98922 /* REDFitBodyView.swift */,
+				B2599D3D28D2084CEFC45AFC /* REDFitWorkoutViews.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -1061,6 +1064,7 @@
 				BBEFD2EE7B95564D1ADBD264 /* REDFitHomeView.swift in Sources */,
 				4A885B196837001DBEF6C9A1 /* REDFitGarminLink.swift in Sources */,
 				1CCCBD3CCAA9E545EA5FFCC6 /* REDFitBodyView.swift in Sources */,
+				E74F78C8FAAF9AE09CF9D2B3 /* REDFitWorkoutViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

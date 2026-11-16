@@ -237,6 +237,8 @@ export async function executeNativeCommand(action, p) {
     else if (p.operation === 'pause') ui.pauseRest()
     else if (p.operation === 'resume') ui.resumeRest()
     else if (p.operation === 'start') ui.startRest(finiteNumber(p.seconds, 1, 3600))
+    else if (p.operation === 'add') ui.addRest(Math.round(finiteNumber(p.seconds, -900, 900)))
+    else if (p.operation === 'skip') ui.skipRest()
     else throw new Error('Unbekannte Timeraktion.')
   } else if (action === 'weight') {
     finiteNumber(p.weight, 1, 700)

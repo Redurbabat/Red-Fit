@@ -91,7 +91,7 @@ struct RFRecord: Identifiable {
         }
     }
     func perform(_ action: String, _ payload: [String: Any] = [:], done: (() -> Void)? = nil) {
-        Task { do { _ = try await request(action, payload); done?() } catch { self.error = error.localizedDescription } }
+        Task { do { _ = try await request(action, payload); done?() } catch { Self.log.error("RFAction \(action) failed: \(error.localizedDescription)"); self.error = error.localizedDescription } }
     }
     func showOriginal(_ path: String, title: String) {
         Task {
@@ -320,12 +320,10 @@ struct RFWorkoutView: View {
         List {
             if model.hasActive {
                 Section {
-                    TimelineView(.periodic(from: .now, by: 1)) { timeline in
-                        LabeledContent("Trainingszeit", value: Duration.seconds(max(0, timeline.date.timeIntervalSince1970 - model.active.number("start") / 1000)).formatted(.time(pattern: .hourMinuteSecond)))
-                    }
-                    LabeledContent("Sätze", value: "\(Int(model.active.number("done"))) / \(Int(model.active.number("total")))")
-                    RFRestTimer(model: model)
+                    RFWorkoutHeader(model: model)
+                    RFRestRing(model: model)
                 }
+                .animation(RFMotion.spring, value: model.data.raw["timer"] is [String: Any])
                 ForEach(Array(model.active.records("entries").enumerated()), id: \.offset) { index, entry in
                     Section {
                         ForEach(Array(entry.records("sets").enumerated()), id: \.offset) { setIndex, row in
@@ -348,7 +346,10 @@ struct RFWorkoutView: View {
                 Button("Abschließen und speichern") { model.perform("finish", ["workoutId": model.active.id]) { summary = model.data.records("workouts").first } }
                 Button("Weiter trainieren", role: .cancel) { }
             }
-            .sheet(item: $summary) { record in NavigationStack { RFWorkoutSummary(workout: record, unit: model.data.string("unit")) } }
+            .sheet(item: $summary) { record in
+                RFFinishCelebration(workout: record, unit: model.data.string("unit"),
+                                    streak: Int(model.data.record("home").record("widget").number("streak")))
+            }
             .sheet(isPresented: $picker) { NavigationStack { RFExerciseLibrary(model: model, pick: { ex in model.perform("addExercise", ["id": ex.id, "workoutId": model.active.id]) { picker = false } }) } }
     }
 }
@@ -371,7 +372,13 @@ private struct RFSetRow: View {
             HStack(spacing: 12) {
                 VStack(alignment: .leading) { Text(unit).font(.caption2).foregroundStyle(.secondary); TextField("Gewicht", text: $weight).keyboardType(.decimalPad).focused($focused).accessibilityLabel("Gewicht Satz \(setIndex + 1)") }.frame(maxWidth: .infinity)
                 VStack(alignment: .leading) { Text(mode == "time" ? "Sekunden" : mode == "cardio" ? "Minuten" : "Wiederholungen").font(.caption2).foregroundStyle(.secondary); TextField("Anzahl", text: $amount).keyboardType(.decimalPad).focused($focused).accessibilityLabel("Anzahl Satz \(setIndex + 1)") }.frame(maxWidth: .infinity)
-                Button { toggling = true; focused = false; save(toggle: true) } label: { Image(systemName: row.bool("done") ? "checkmark.circle.fill" : "circle").font(.title2).frame(width: 48, height: 48) }.buttonStyle(.borderless).disabled(model.pending > 0).accessibilityLabel(row.bool("done") ? "Satz zurücknehmen" : "Satz abschließen").accessibilityIdentifier("redfit-set-\(entry)-\(setIndex)-\(side ?? "both")")
+                Button { toggling = true; focused = false; save(toggle: true) } label: {
+                    Image(systemName: row.bool("done") ? "checkmark.circle.fill" : "circle").font(.title2).frame(width: 48, height: 48)
+                        .foregroundStyle(row.bool("done") ? model.accent : .secondary)
+                        .contentTransition(.symbolEffect(.replace))
+                        .symbolEffect(.bounce, value: row.bool("done"))
+                }
+                .sensoryFeedback(.success, trigger: row.bool("done")) { _, now in now }.buttonStyle(.borderless).disabled(model.pending > 0).accessibilityLabel(row.bool("done") ? "Satz zurücknehmen" : "Satz abschließen").accessibilityIdentifier("redfit-set-\(entry)-\(setIndex)-\(side ?? "both")")
             }.monospacedDigit()
             if !row.string("type").isEmpty && row.string("type") != "straight" { Text(row.string("type") == "dropset" ? "Dropsatz · Details in den Trainingswerkzeugen" : "Rest-Pause · Details in den Trainingswerkzeugen").font(.caption).foregroundStyle(.secondary) }
         }.padding(.vertical, 3)
@@ -481,7 +488,7 @@ struct RFHistoryView: View {
     }
 }
 
-private struct RFWorkoutSummary: View {
+struct RFWorkoutSummary: View {
     let workout: RFRecord
     let unit: String
     var body: some View {
