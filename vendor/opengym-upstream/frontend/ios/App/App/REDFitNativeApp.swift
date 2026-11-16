@@ -254,12 +254,17 @@ private struct RFTrainingView: View {
     @State private var edit: RFRecord?
     @State private var create = false
     @State private var workout = false
+    /// Which start button the workout zooms out of.
+    @State private var source = "free"
+    @Namespace private var zoom
     var body: some View {
         List {
             Section {
                 Button(model.hasActive ? "Training fortsetzen" : "Freies Training starten", systemImage: "play.fill") {
+                    source = "free"
                     model.perform("start", ["routineIds": []]) { workout = true }
                 }.frame(minHeight: 44)
+                .matchedTransitionSource(id: "free", in: zoom)
                 NavigationLink { RFExerciseLibrary(model: model) } label: { Label("Übungen entdecken", systemImage: "magnifyingglass") }
                 NavigationLink { RFHistoryView(model: model) } label: { Label("Trainingsverlauf", systemImage: "clock.arrow.circlepath") }
             }
@@ -267,8 +272,10 @@ private struct RFTrainingView: View {
                 if model.data.records("routines").isEmpty { ContentUnavailableView("Dein erster Plan", systemImage: "list.bullet.clipboard", description: Text("Stelle deine Übungen zusammen oder starte ein freies Training.")) }
                 ForEach(model.data.records("routines")) { routine in
                     VStack(alignment: .leading, spacing: 10) {
-                        Button { edit = routine } label: { HStack { VStack(alignment: .leading) { Text(routine.string("name")).font(.headline); Text("\(routine.records("ex").count) Übungen").font(.subheadline).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").foregroundStyle(.secondary) } }.buttonStyle(.plain)
-                        Button("Plan trainieren", systemImage: "play.fill") { model.perform("start", ["routineIds": [routine.id]]) { workout = true } }.buttonStyle(.bordered).disabled(model.pending > 0)
+                        // Two buttons in one List row: .borderless/.bordered keep each tap to its own button.
+                        Button { edit = routine } label: { HStack { VStack(alignment: .leading) { Text(routine.string("name")).font(.headline); Text("\(routine.records("ex").count) Übungen").font(.subheadline).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").foregroundStyle(.secondary) }.contentShape(.rect) }.buttonStyle(.borderless).foregroundStyle(.primary)
+                        Button("Plan trainieren", systemImage: "play.fill") { source = routine.id; model.perform("start", ["routineIds": [routine.id]]) { workout = true } }.buttonStyle(.bordered).disabled(model.pending > 0)
+                            .matchedTransitionSource(id: routine.id, in: zoom)
                     }.padding(.vertical, 6)
                 }
                 Button("Plan erstellen", systemImage: "plus") { create = true }.frame(minHeight: 44)
@@ -279,7 +286,7 @@ private struct RFTrainingView: View {
         }.rfScreen().navigationTitle("Training").accessibilityIdentifier("redfit-native-training")
             .sheet(item: $edit) { RFRoutineEditor(model: model, routine: $0) }
             .sheet(isPresented: $create) { RFRoutineEditor(model: model, routine: RFRecord()) }
-            .fullScreenCover(isPresented: $workout) { NavigationStack { RFWorkoutView(model: model) } }
+            .fullScreenCover(isPresented: $workout) { NavigationStack { RFWorkoutView(model: model) }.navigationTransition(.zoom(sourceID: source, in: zoom)) }
     }
 }
 

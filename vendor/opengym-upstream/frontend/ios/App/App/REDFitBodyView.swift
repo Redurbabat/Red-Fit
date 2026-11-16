@@ -47,6 +47,27 @@ private struct RFBodyEntrance: ViewModifier {
     }
 }
 
+/// Charts draw themselves in once: a line from left to right, bars from the bottom.
+private struct RFChartReveal: ViewModifier {
+    var bars = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var progress = 0.0
+    func body(content: Content) -> some View {
+        content
+            .mask(alignment: bars ? .bottom : .leading) {
+                GeometryReader { geo in
+                    Rectangle()
+                        .frame(width: bars ? geo.size.width : geo.size.width * progress,
+                               height: bars ? geo.size.height * progress : geo.size.height)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: bars ? .bottom : .leading)
+                }
+            }
+            .onAppear {
+                if reduceMotion { progress = 1 } else { withAnimation(.easeOut(duration: 0.9).delay(0.15)) { progress = 1 } }
+            }
+    }
+}
+
 private struct RFCard<Content: View>: View {
     let title: String
     let systemImage: String
@@ -132,6 +153,7 @@ private struct RFWeightCard: View {
                     .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) { _ in AxisValueLabel(format: .dateTime.day().month(.abbreviated)) } }
                     .frame(height: 170)
                     .animation(RFMotion.spring, value: range)
+                    .modifier(RFChartReveal())
                     .accessibilityLabel("Gewichtsverlauf")
                 }
             } else {
@@ -241,6 +263,7 @@ private struct RFTrainingProgressCard: View {
             .chartXAxis { AxisMarks(values: .stride(by: .weekOfYear, count: 2)) { _ in AxisValueLabel(format: .dateTime.day().month(.abbreviated)) } }
             .chartYAxis { AxisMarks(values: .automatic(desiredCount: 3)) }
             .frame(height: 130)
+            .modifier(RFChartReveal(bars: true))
             .accessibilityLabel("Trainings pro Woche, letzte acht Wochen")
             Text("Trainings pro Woche · beste Serie \(Int(streak.number("best"))) Wochen").font(.caption).foregroundStyle(.secondary)
         }
