@@ -531,10 +531,12 @@ private struct RFMoreView: View {
                 } else {
                     Label("Garmin-Uhr", systemImage: "applewatch.radiowaves.left.and.right").foregroundStyle(.secondary)
                 }
+                Button("Apple Health · Garmin-Daten", systemImage: "heart.text.square") { model.showOriginal("/settings/apple-health", title: "Apple Health") }
+                    .accessibilityIdentifier("redfit-apple-health")
             } header: { Text("Uhren") } footer: {
                 Text(RFGarminLink.available
                      ? "Wählt deine Garmin-Uhr in Garmin Connect aus. Training und Sätze laufen dann zwischen Uhr und iPhone; die RED-Fit-App muss auf der Uhr installiert sein."
-                     : "Die Garmin-Verbindung braucht Garmins Connect-IQ-SDK in diesem Build. Die Apple Watch funktioniert unabhängig davon.")
+                     : "Garmin-Daten: In Garmin Connect unter Einstellungen → Verbundene Apps → Apple Health das Teilen einschalten, dann hier „Apple Health“ öffnen und Herzfrequenz und Gewicht lesen lassen. Die Live-Verbindung zur Uhr braucht zusätzlich Garmins Connect-IQ-SDK.")
             }
             Section("Bestehende Werkzeuge") { Button("Alle Einstellungen & Integrationen", systemImage: "gearshape") { model.showOriginal("/settings", title: "Einstellungen") } }
             Section { Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") · Build \(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "")").font(.caption).foregroundStyle(.secondary) }

@@ -4,6 +4,11 @@
 let active = false
 export const isLocalOnly = () => active
 export function requireLocalOnly() { active = true }
+// Owner decision 16.11.2026: Apple Health / Health Connect stay allowed in local mode (reading the
+// heart rate and weigh-ins other apps such as Garmin Connect saved, and writing finished workouts).
+// The health hub is on the device; nothing here contacts a server. Flip to false to block it again.
+export const LOCAL_HEALTH_ALLOWED = true
+export const healthBlockedByLocalOnly = () => active && !LOCAL_HEALTH_ALLOWED
 
 export const LOCAL_ONLY_MESSAGE = 'RED Fit arbeitet lokal. Verbindungen zu Servern und externen Diensten sind deaktiviert.'
 export const localOnlyError = () => Object.assign(new Error(LOCAL_ONLY_MESSAGE), { code: 'local-only', status: 0 })

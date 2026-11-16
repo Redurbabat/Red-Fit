@@ -81,15 +81,28 @@ describe('RED Fit local-only transport', () => {
     ]))
   })
 
-  it('does not resume saved Health sharing or hand training text to a system speech provider', async () => {
+  it('allows the on-device health hub (owner decision 16.11.2026) but no system speech provider', async () => {
     requireLocalOnly()
-    const { syncHealth, enableHealth, enableRead, loadHealth } = await import('./health-sync.js')
+    const { LOCAL_HEALTH_ALLOWED, healthBlockedByLocalOnly } = await import('./local-only.js')
+    expect(LOCAL_HEALTH_ALLOWED).toBe(true)
+    expect(healthBlockedByLocalOnly()).toBe(false)
+    const { enableHealth, enableRead, loadHealth } = await import('./health-sync.js')
+    // Allowed, but nothing turns on by itself: still off until the user switches it on, and a
+    // browser without the native plugin answers "unsupported", not "local-only".
     expect((await loadHealth()).on).toBe(false)
-    expect(await syncHealth({ workouts: [{ id: 'private' }] })).toBeNull()
-    expect(await enableHealth({})).toEqual({ ok: false, reason: 'local-only' })
-    expect(await enableRead('weight', () => ({}))).toEqual({ ok: false, reason: 'local-only' })
+    expect((await loadHealth()).error).not.toBe('local-only')
+    expect(await enableHealth({})).not.toEqual(expect.objectContaining({ reason: 'local-only' }))
+    expect(await enableRead('weight', () => ({}))).not.toEqual(expect.objectContaining({ reason: 'local-only' }))
     const { speak, speechSupported } = await import('./speech.js')
     expect(speechSupported()).toBe(false)
     expect(await speak('synthetic training detail')).toBe(false)
+  })
+  it('opens the Apple Health page directly in local mode while Integrations stays hidden', async () => {
+    requireLocalOnly()
+    const { pageOpenable, pageVisible } = await import('../views/settings-pages.js')
+    const ctx = { ios: true, mobile: true }
+    expect(pageVisible('integrations', ctx)).toBe(false)
+    expect(pageOpenable('apple-health', ctx)).toBe(true)
+    expect(pageOpenable('zepp', { ...ctx, user: {} })).toBe(false)
   })
 })

@@ -89,3 +89,11 @@ Keep `private.pem` locally until the export is recovered. It must never be commi
 Still required for installable delivery: native UI acceptance, valid Apple signing, a signed IPA or TestFlight build, real iPhone acceptance (including backup exclusion, data continuity, native traffic and VoiceOver), and any migration between the earlier and new bundle IDs. Android/Windows packaging follows the iPhone priority. No signing credentials are fabricated, exposed or committed.
 
 Apple references: [UITabBar](https://developer.apple.com/documentation/uikit/uitabbar), [UIKit Liquid Glass](https://developer.apple.com/videos/play/wwdc2025/284/), [backup exclusion](https://developer.apple.com/documentation/foundation/optimizing-your-app-s-data-for-icloud-backup).
+
+## Eigentümerentscheidung 16.11.2026: Apple Health erlaubt
+
+- **Was gilt:** Im Lokal-Modus darf RED Fit Apple Health (und auf Android Health Connect) **lesen und schreiben**. Gelesen werden Puls und Wiegungen anderer Apps, etwa Garmin Connect; geschrieben werden abgeschlossene Trainings und Wiegungen.
+- **Wo:** Die Regel steht zentral in `src/lib/local-only.js`: `LOCAL_HEALTH_ALLOWED = true`. Auf `false` gesetzt, ist alles wieder gesperrt.
+- **Standard:** Nichts schaltet sich selbst ein. Jeder Schalter ist aus, bis der Nutzer ihn einschaltet, und iOS fragt zusätzlich um Erlaubnis.
+- **Unverändert gesperrt:** Cloud-Sync, Server, externe KI, Online-Karten und Tracking. Die Seite „Integrationen“ bleibt ausgeblendet; nur die Health-Seiten öffnen direkt (Mehr → Uhren → „Apple Health · Garmin-Daten“).
+- **Hinweis:** Die Health-Datenbank liegt auf dem Gerät. Ob iOS sie über iCloud synchronisiert, entscheidet der Nutzer in den iOS-Einstellungen, nicht RED Fit.
