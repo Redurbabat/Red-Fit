@@ -7,6 +7,7 @@ import HealthKitUI
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        RFAppModel.mark("didFinishLaunching")
         // The background check before a nudge (NudgeCheckPlugin): iOS hands the task only to a
         // handler registered before launching ends.
         NudgeCheckPlugin.registerTask()

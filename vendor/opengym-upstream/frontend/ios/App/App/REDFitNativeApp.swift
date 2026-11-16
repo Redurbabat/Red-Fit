@@ -3,6 +3,7 @@ import WebKit
 import Combine
 import UniformTypeIdentifiers
 import Charts
+import os
 
 // Presentation data only. Workouts, calculations and persistence remain in the original core.
 struct RFRecord: Identifiable {
@@ -17,7 +18,26 @@ struct RFRecord: Identifiable {
 }
 
 @MainActor final class RFAppModel: ObservableObject {
+    /// Phase 0 of the performance plan: when the shell started, to measure "Home visible".
+    static let launchedAt = Date()
+    static let log = Logger(subsystem: "ch.redurbabat.redfit", category: "startup")
+    static func mark(_ step: String) { log.notice("RFStartup \(step) after \(Int(Date().timeIntervalSince(launchedAt) * 1000)) ms") }
     @Published var data = RFRecord()
+    /// False while Home shows the cached copy of the last session and the core is still loading.
+    @Published var live = false
+    private var cacheTask: Task<Void, Never>?
+
+    init() {
+        _ = Self.launchedAt
+        if let cached = RFSnapshotCache.load() {
+            var raw = cached
+            // A copy is for looking at only: no original sheets, toasts or timers from last time.
+            raw["hasOriginalSheet"] = false
+            raw["toast"] = ""
+            data = RFRecord(raw)
+            Self.log.notice("RFStartup cache shown after \(Int(Date().timeIntervalSince(Self.launchedAt) * 1000)) ms")
+        }
+    }
     @Published var error: String?
     @Published var pending = 0
     @Published var originalVisible = false
@@ -34,10 +54,27 @@ struct RFRecord: Identifiable {
         if envelope["type"] as? String == "error" { error = envelope["message"] as? String; return }
         guard let payload = envelope["payload"] as? [String: Any] else { return }
         data = RFRecord(payload)
+        if !live, data.bool("ready") {
+            live = true
+            Self.log.notice("RFStartup core ready after \(Int(Date().timeIntervalSince(Self.launchedAt) * 1000)) ms")
+        }
+        if live { saveCache(payload) }
         // Original confirmations retain their real actions, focus and undo semantics.
         if data.bool("hasOriginalSheet") { originalTitle = "Training"; originalVisible = true }
     }
+    /// The last snapshot, written at most every two seconds, off the main thread.
+    private func saveCache(_ payload: [String: Any]) {
+        cacheTask?.cancel()
+        cacheTask = Task.detached(priority: .utility) {
+            try? await Task.sleep(for: .seconds(2))
+            if !Task.isCancelled { RFSnapshotCache.save(payload) }
+        }
+    }
+
     func request(_ action: String, _ payload: [String: Any] = [:]) async throws -> [String: Any] {
+        // Taps on the cached Home wait for the core instead of failing (at most 20 s).
+        var waited = 0
+        while !live && waited < 200 { try await Task.sleep(for: .milliseconds(100)); waited += 1 }
         guard let web = bridge?.webView else { throw NSError(domain: "RED Fit", code: 1, userInfo: [NSLocalizedDescriptionKey: "Der lokale App-Kern wird noch geladen."]) }
         pending += 1
         defer { pending -= 1 }
@@ -89,12 +126,25 @@ final class RFNativeHostController: UIViewController {
     required init?(coder: NSCoder) { fatalError("Use init(bridge:)") }
     override func viewDidLoad() {
         super.viewDidLoad()
+        RFAppModel.mark("host viewDidLoad")
         view.backgroundColor = .systemBackground
-        retainRuntime()
         hosting = UIHostingController(rootView: RFRootView(model: model))
         addChild(hosting); view.addSubview(hosting.view); hosting.didMove(toParent: self)
         hosting.view.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([hosting.view.leadingAnchor.constraint(equalTo: view.leadingAnchor), hosting.view.trailingAnchor.constraint(equalTo: view.trailingAnchor), hosting.view.topAnchor.constraint(equalTo: view.topAnchor), hosting.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)])
+        // Loading the bridge's view starts the WebView and every plugin on the main thread (about
+        // 2.5 s). Done after SwiftUI's first frame, so Home (from the cache) is on screen first.
+    }
+    private var runtimeAttached = false
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        guard !runtimeAttached else { return }
+        runtimeAttached = true
+        RFAppModel.log.notice("RFStartup native shell visible after \(Int(Date().timeIntervalSince(RFAppModel.launchedAt) * 1000)) ms")
+        // Loading the bridge's view starts the WebView and every plugin on the main thread (about
+        // 2.5 s). Done once the first frame is on screen, so Home (from the cache) appears first.
+        // Wait until the render server has the frame (two display refreshes plus a margin), then load.
+        DispatchQueue.main.async { [weak self] in self?.retainRuntime() }
     }
     func retainRuntime() {
         let child = bridgeController
@@ -137,6 +187,18 @@ struct RFRootView: View {
                 }
                 .tabBarMinimizeBehavior(.onScrollDown)
                 .modifier(RFOptionalAccessory(model: model))
+                .overlay(alignment: .top) {
+                    if !model.live {
+                        Label("Aktualisiere …", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 12).padding(.vertical, 6)
+                            .glassEffect(.regular, in: .capsule)
+                            .padding(.top, 2)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .accessibilityLabel("Daten werden aktualisiert")
+                    }
+                }
+                .animation(.spring(response: 0.4, dampingFraction: 0.85), value: model.live)
             } else {
                 VStack(spacing: 22) { Image("REDFitBrand").resizable().scaledToFit().frame(width: 150, height: 150).clipShape(.rect(cornerRadius: 30)); ProgressView("Lokale Daten werden geladen …") }
                     .frame(maxWidth: .infinity, maxHeight: .infinity).background(Color(.systemBackground))
@@ -505,4 +567,30 @@ private struct RFJSONDocument: FileDocument {
     init(text: String) { self.text = text }
     init(configuration: ReadConfiguration) throws { text = String(data: configuration.file.regularFileContents ?? Data(), encoding: .utf8) ?? "" }
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper { FileWrapper(regularFileWithContents: Data(text.utf8)) }
+}
+
+/// The last native snapshot on disk, so Home appears at once on the next launch. It is a copy of
+/// what the core already holds (no new data), lives in Application Support, is excluded from iCloud
+/// backup like the rest of the app's files, and is replaced by the live state as soon as the core
+/// answers.
+enum RFSnapshotCache {
+    private static var url: URL? {
+        guard let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return nil }
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("redfit-native-snapshot.json")
+    }
+    static func load() -> [String: Any]? {
+        guard let url, let data = try? Data(contentsOf: url),
+              let raw = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              raw["ready"] as? Bool == true else { return nil }
+        return raw
+    }
+    static func save(_ payload: [String: Any]) {
+        guard var url, JSONSerialization.isValidJSONObject(payload),
+              let data = try? JSONSerialization.data(withJSONObject: payload) else { return }
+        try? data.write(to: url, options: [.atomic, .completeFileProtection])
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? url.setResourceValues(values)
+    }
 }
