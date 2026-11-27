@@ -1,0 +1,25 @@
+name: RED ID browser pilot
+on:
+  pull_request:
+    paths:
+      - 'src/features/settings/red-id/**'
+      - 'src/features/settings/SettingsPage.tsx'
+      - '.github/workflows/red-id-browser-pilot.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build and typecheck app
+        run: |
+          npm ci --ignore-scripts
+          npm run build
