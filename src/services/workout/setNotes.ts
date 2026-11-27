@@ -6,8 +6,10 @@ export const SET_NOTE_MAX_LENGTH = 140;
 
 /** Remove control characters, trim, and keep short set notes predictable. */
 export function normalizeSetNote(value: string): string | undefined {
-  const normalized = value
-    .replace(/[\u0000-\u001f\u007f]/g, " ")
+  const normalized = Array.from(value, (char) => {
+    const code = char.charCodeAt(0);
+    return code <= 31 || code === 127 ? " " : char;
+  }).join("")
     .trim()
     .slice(0, SET_NOTE_MAX_LENGTH)
     .trim();
