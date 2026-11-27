@@ -1,3 +1,4 @@
+import RedHomeIdentity from "./red-id/RedHomeIdentity";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -177,6 +178,8 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader title="Einstellungen" back backFallback="/more" />
+      <SectionHeader title="RED Home Server" />
+      <Card><RedHomeIdentity /></Card>
 
       <SectionHeader title="Darstellung" />
       <SegmentedControl
